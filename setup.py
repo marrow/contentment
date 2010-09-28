@@ -46,7 +46,7 @@ setup(
         license = license,
         keywords = '',
         
-        install_requires = [],
+        install_requires = ['WebCore', 'Mako', 'pymongo', 'marrow.util'],
         
         test_suite = 'nose.collector',
         tests_require = ['nose', 'coverage', 'nose-achievements'],
