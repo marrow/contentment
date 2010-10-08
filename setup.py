@@ -46,7 +46,7 @@ setup(
         license = license,
         keywords = '',
         
-        install_requires = ['WebCore', 'Mako', 'pymongo', 'marrow.util'],
+        install_requires = ['WebCore', 'Mako', 'pymongo<1.9', 'mongoengine', 'marrow.util'],
         
         test_suite = 'nose.collector',
         tests_require = ['nose', 'coverage', 'nose-achievements'],
@@ -71,4 +71,21 @@ setup(
         zip_safe = False,
         
         namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components'],
+        
+        entry_points = {
+                'contentment.component': [
+                        "asset = web.extras.contentment.components.asset:AssetComponent",
+                        # "folder = web.extras.contentment.components.folder:FolderComponent",
+                        # "page = web.extras.contentment.components.page.component:PageComponent",
+                        # "file = web.extras.contentment.components.file.component:FileComponent",
+                        # "extension = web.extras.contentment.components.extension:ExtensionComponent"
+                    ],
+                'contentment.renderer': [
+                        # "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
+                        # "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
+                        # "genshi = web.extras.contentment.components.page.renderers.templated:GenshiRenderer",
+                        # "rest = web.extras.contentment.components.page.renderers.rest:RestRenderer"
+                    ]
+            },
+        
     )
