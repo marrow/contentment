@@ -2,7 +2,7 @@ import pkg_resources
 
 from marrow.util.bunch import Bunch
 
-from web.extras.cmf.core.decorators import action, view
+# from web.extras.cmf.core.decorators import action, view
 
 
 
@@ -11,8 +11,9 @@ log = __import__('logging').getLogger(__name__)
 
 
 
-components = adict()
-namespace = adict()
+components = Bunch()
+models = Bunch()
+namespace = Bunch()
 
 
 # namespace.master = [dotted.get_dotted_filename(config.master)] if config.get('master', None) else []
@@ -34,6 +35,9 @@ for res in pkg_resources.iter_entry_points('contentment.component'):
         if hasattr(instance, 'enabled'):
             if hasattr(instance, 'start') and callable(instance.start):
                 instance.start()
+            
+            for i, j in instance.model.iteritems():
+                models[i] = j
             
             components[res.name] = instance
     

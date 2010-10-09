@@ -46,7 +46,7 @@ setup(
         license = license,
         keywords = '',
         
-        install_requires = ['WebCore', 'Mako', 'pymongo<1.9', 'mongoengine', 'marrow.util'],
+        install_requires = ['WebCore', 'Mako', 'pymongo<1.9', 'mongoengine', 'marrow.util', 'textile'],
         
         test_suite = 'nose.collector',
         tests_require = ['nose', 'coverage', 'nose-achievements'],
@@ -72,12 +72,15 @@ setup(
         
         namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components'],
         
+        paster_plugins = ['PasteScript', 'WebCore'],
+        
         entry_points = {
                 'contentment.component': [
                         "asset = web.extras.contentment.components.asset:AssetComponent",
-                        # "folder = web.extras.contentment.components.folder:FolderComponent",
-                        # "page = web.extras.contentment.components.page.component:PageComponent",
-                        # "file = web.extras.contentment.components.file.component:FileComponent",
+                        "folder = web.extras.contentment.components.folder:FolderComponent",
+                        "identity = web.extras.contentment.components.identity:IdentityComponent",
+                        "page = web.extras.contentment.components.page:PageComponent",
+                        # "file = web.extras.contentment.components.file:FileComponent",
                         # "extension = web.extras.contentment.components.extension:ExtensionComponent"
                     ],
                 'contentment.renderer': [

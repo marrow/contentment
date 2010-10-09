@@ -12,9 +12,11 @@ import web
 from hashlib import sha256
 from datetime import datetime
 
-from web.core import request, session
+from web.core import request, session, http
 from web.utils.string import normalize
 from web.utils.object import yield_property
+
+from marrow.util.convert import tags
 
 # from web.extras.contentment.core import components, action, view
 from web.extras.contentment.components.core import BaseController
@@ -36,14 +38,22 @@ class AssetController(BaseController):
         
         # self.api_core = CoreMethods(self)
     
-    def _template(self, name, data=None):
+    def _template(self, name, data=None, base=None):
+        from web.extras.contentment.components.asset.model import Asset
+        
         if data is None:
             data = dict()
         
         data['asset'] = self.asset
+        data['root'] = Asset.objects(path='/').first()
+        
+        if base is None:
+            base = '.'.join(self.__module__.split('.')[:-1])
+        
+        log.warn(self.__module__)
         
         return (
-                'mako:web.extras.contentment.components.' + __module__.__name__ + '.templates.' + name,
+                'mako:' + base + '.templates.' + name,
                 data
             )
     
@@ -52,15 +62,34 @@ class AssetController(BaseController):
     
     # @view("Contents") # TODO: Roll above code into @view/action decorator.
     def view_contents(self, sort=None):
-        return self._template('contents')
+        return self._template('contents', base='.'.join(AssetController.__module__.split('.')[:-1]))
     
     # @action("Create") # TODO: Make this a RESTful method for GET/POST.
     def action_create(self, **kw):
-        return self._template('create')
+        return self._template('create', base='.'.join(AssetController.__module__.split('.')[:-1]))
     
     # @action("Modify") # TODO: As per Create.
     def action_modify(self, **kw):
-        return self._template('modify')
+        asset = self.asset
+        
+        if not kw:
+            return self._template('modify', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        
+        if 'submit' in kw: del kw['submit']
+        
+        if 'tags' in kw:
+            kw['tags'] = tags(kw['tags'])
+        
+        for i, j in kw.iteritems():
+            setattr(asset, i, j)
+        
+        asset.modified = datetime.now()
+        
+        asset.save()
+        
+        raise http.HTTPFound(location=asset.path + '/')
+        
+        return self._template('modify', base='.'.join(AssetController.__module__.split('.')[:-1]))
     
     # @action("Remove")
     def action_remove(self, key=None, force=False):
@@ -76,7 +105,7 @@ class AssetController(BaseController):
         
         raise web.core.http.HTTPFound(location=parent_path)
         
-        return self._template('remove')
+        return self._template('remove', base='.'.join(AssetController.__module__.split('.')[:-1]))
 
 
 # TODO: Remove old code.

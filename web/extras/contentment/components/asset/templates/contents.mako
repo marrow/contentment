@@ -13,7 +13,7 @@
         <style type="text/css" media="screen">
             
             #contents { width: 100%; border-collapse: collapse; line-height: 100%; }
-            #contents th, #contents td { padding: 10px; border-bottom: 1px solid #444; }
+            #contents th, #contents td { text-align: left; padding: 10px; border-bottom: 1px solid #444; }
             #contents th { padding-top: 0; border-bottom: 1px solid #999; }
             #contents .actions { text-align: right; padding-right: 0; }
             #contents td.actions { padding: 0; }
@@ -40,15 +40,21 @@
                     <tbody>
 % for child in asset.children:
                         <tr id="${child.id}">
-                            <td class="name"><a href="${child.path}/view:contents" title="This is a %{child.__class__.__name__} asset.">${child.name}</a></td>
-                            <!-- <td class="title"><a py:attrs="{'href': child.path + '/'}" py:content="child.title" /></td>
-                            <td py:if="child.owner"><a py:attrs="{'href': child.owner.path + '/'}" py:content="child.owner.title">Joe Random Hacker</a></td>
-                            <td py:if="not child.owner"><i>Anonymous</i></td>
-                            <td class="date" py:if="not child.modified or child.modified == child.created"><abbr class="date" py:attrs="{'title': child.created.isoformat()}" py:content="child.created.strftime(asset.properties['cmf.formats:date'])" /></td>
-                            <td class="date" py:if="child.modified and child.modified != child.created"><abbr class="date" py:attrs="{'title': child.modified.isoformat()}" py:content="child.modified.strftime(asset.properties['cmf.formats:date'])" /></td>
+                            <td class="name"><a href="${child.path}/view:contents" title="This is a ${child.__class__.__name__} asset.">${child.name}</a></td>
+                            <td class="title"><a href="${child.path}/">${child.title}</a></td>
+%     if child.owner:
+                            <td class="owner"><a href="${child.owner.path}/">${child.owner.title}</a></td>
+%     else:
+                            <td class="owner"><em title="No owner set; anonymous, system, or automated asset.">Anonymous</em></td>
+%     endif
+%     if not child.modified or child.modified == child.created:
+                            <td class="date"><time class="created" datetime="${child.created.isoformat()}" title="Creation date.">${child.created.strftime('%B %e, %G at %H:%M:%S')}</time></td>
+%     else:
+                            <td class="date"><time class="modified" datetime="${child.modified.isoformat()}" title="Modification date.">${child.modified.strftime('%B %e, %G at %H:%M:%S')}</time></td>
+%     endif
                             <td class="actions">
-                                <a py:for="url, action in controller.actions" href="${child.path + '/action:' + url}"><img src="/static/img/actions/${action.icon}.png" /></a>
-                            </td> -->
+                                <a href="${child.path}/action:modify">Modify</a>
+                            </td>
                         </tr>
 % endfor
                     </tbody>

@@ -28,12 +28,11 @@ class Credential(db.EmbeddedDocument):
 
 class PasswordCredential(Credential):
     kind = db.StringField(max_length=48, default="password")
-    __value = db.StringField('value', max_length=250)
     
-    def _set_value(self, value):
-        self.__value = sha512(value).hexdigest()
+    def _set_password(self, value):
+        self.value = sha512(value).hexdigest()
     
-    value = property(lambda self: self.__value, _set_value)
+    passwprd = property(lambda self: self.value, _set_password)
 
 
 class Identity(Asset):
@@ -43,6 +42,6 @@ class Identity(Asset):
     
     email = db.StringField(max_length=250, required=True, unique=True)
     
-    credentials = db.ListField(db.EmbeddedDocumentField(Credential), default=[])
+    credentials = db.ListField(db.EmbeddedDocumentField(PasswordCredential), default=[])
     
     membership = db.ListField(db.GenericReferenceField(), default=[])

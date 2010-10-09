@@ -29,8 +29,20 @@ class AssetComponent(object):
     
     @property
     def model(self):
+        from web.extras.contentment.components.asset.model import Asset
         from web.extras.contentment.components.asset import model
-        return dict([(i, getattr(model, i)) for i in model.__model__])
+        
+        models = dict([(i, getattr(model, i)) for i in model.__model__])
+        
+        for i, j in models.iteritems():
+            if issubclass(j, Asset):
+                j._component = self
+                
+                if not getattr(j, 'controller', None):
+                    # We allow overriding of this.
+                    j.controller = property(lambda self: self._component.controller(self))
+        
+        return models
     
     @property
     def controller(self):

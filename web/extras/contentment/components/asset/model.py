@@ -25,11 +25,14 @@ class Asset(db.Document):
             indexes=[('parents', 'name'), 'parent', 'name', 'path', 'owner', 'created', 'modified']
         )
     
+    _component = None
+    controller = None
+    
     # Relationship information.
     parent = db.GenericReferenceField(default=None)
     parents = db.ListField(db.GenericReferenceField(), default=[])
     children = db.ListField(db.GenericReferenceField(), default=[])
-    path = db.StringField()
+    path = db.StringField(default="/")
     
     # Basic properties.
     name = db.StringField(max_length=250, required=True) # unique_with="parent"
@@ -54,7 +57,7 @@ class Asset(db.Document):
         self.parent = parent
         self.parents = (parent.parents if parent.parents else []) + [parent]
         
-        self.path = '/' + '/'.join([i.name for i in self.parents] + [self.name])
+        self.path = '/' + '/'.join([i.name for i in self.parents][1:] + [self.name])
         
         self.save()
         

@@ -1,0 +1,81 @@
+<%def name="title()"></%def>
+<%def name="header()"></%def>
+<%def name="bodyclass()"></%def>
+<!doctype html>
+<html lang="en" class="no-js">
+    <head>
+        <meta charset="utf-8">
+        
+        <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
+        
+        <title>${self.title()} - ${root.title}</title>
+        
+        <meta name="viewport" content="width=980px;">
+        
+        <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
+        <link rel="shortcut icon" href="/favicon.ico">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        
+        <link rel="stylesheet" href="/theme/css/style.css?v=1">
+        <link rel="stylesheet" href="/theme/css/handheld.css?v=1" media="handheld">
+        
+        <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
+        <script src="/theme/js/modernizr-1.5.min.js"></script>
+        
+        ${self.header()}
+    </head>
+
+<!--[if lt IE 7 ]> <body class="ie6 ${self.bodyclass()}"> <![endif]-->
+<!--[if IE 7 ]>    <body class="ie7 ${self.bodyclass()}"> <![endif]-->
+<!--[if IE 8 ]>    <body class="ie8 ${self.bodyclass()}"> <![endif]-->
+<!--[if IE 9 ]>    <body class="ie9 ${self.bodyclass()}"> <![endif]-->
+<!--[if gt IE 9]>  <body class="${self.bodyclass()}">             <![endif]-->
+<!--[if !IE]><!-->
+    <body class="${self.bodyclass()}">
+<!--<![endif]-->
+        <header id="top">
+            <hgroup class="container">
+${root.__class__.objects(path='/templates/header').first().rendered | n}
+            </hgroup>
+        </header>
+        
+        <!--
+        <section id="navigation">
+            <menu class="container">
+                <li class="nav-home"><a href="/">Home<br><label>&nbsp;</label></a></li
+                ><li class="nav-start"><a href="/start">Get Started<br><label>Deployment Options</label></a></li
+                ><li class="nav-faq"><a href="/faq">FAQ<br><label>Frequently Asked Questions</label></a></li
+                ><li class="nav-news"><a href="/news/">News<br><label>Latest News</label></a></li
+                ><li class="nav-contact"><a href="/contact">Contact<br><label>Contact MVP</label></a></li
+                ><li class="nav-features"><a href="/features">Features<br><label>What MVP Does</label></a></li>
+            </menu>
+        </section>
+        -->
+        
+        <section id="main">
+            <div class="container">
+                <div class="indent">
+                    ${next.body()}
+                    <div class="clearfix">
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <div class="container">
+${root.__class__.objects(path='/templates/footer').first().rendered | n}
+            </div>
+        </footer>
+
+        <!-- Grab Google CDN's jQuery. fall back to local if necessary -->
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script>!window.jQuery && document.write('<script src="/theme/js/jquery-1.4.2.min.js"><\/script>')</script>
+
+        <script src="/theme/js/plugins.js?v=1"></script>
+        <script src="/theme/js/script.js?v=1"></script>
+
+        <!--[if lt IE 7 ]>
+            <script src="/theme/js/dd_belatedpng.js?v=1"></script>
+        <![endif]-->
+    </body>
+</html>

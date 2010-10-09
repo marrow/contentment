@@ -25,17 +25,31 @@ __all__ = ['BaseController']
 class BaseController(Controller):
     __repr__ = lambda self: '%s(%s, %s, %r)' % (self.__class__.__name__, self.asset.id, self.asset.name, self.asset.title)
     
+    @property
+    def asset(self):
+        if self._asset:
+            log.debug("Returning cached Asset instance: %r", self._asset)
+            return self._asset
+        
+        from web.extras.contentment.components.asset.model import Asset
+        
+        self._asset = Asset.objects(path='/').first()
+        log.debug("Discovered Asset instance: %r", self._asset)
+        
+        return self._asset
+    
     def __init__(self, identifier=None):
         """Initialize the controller for the given model instance."""
+        
+        self._asset = None
         
         super(BaseController, self).__init__()
         
         try:
             from web.extras.contentment.components.asset.model import Asset
             
-            if isinstance(identifier, Asset): self.asset = identifier
-            elif not identifier: Asset.objects(name='/', parent=None).first()
-            else: self.asset = Asset.objects.with_id(identifier)
+            if isinstance(identifier, Asset): self._asset = identifier
+            elif identifier is not None: self._asset = Asset.objects.with_id(identifier)
         
         except:
             log.exception("Error loading model instance for %r instance using %r.", self.__class__.__name__, identifier)
@@ -43,10 +57,19 @@ class BaseController(Controller):
         
         # TODO: Load up the actions and views for this asset.
     
-    def __lookup__(self, node, *remainder, **kw):
+    def __lookup__(self, *remainder, **kw):
         from web.extras.contentment.components.asset.model import Asset
         
-        log.debug("Looking in %r for %r *%r...", self, node, remainder)
+        asset = self.asset
+        
+        if not remainder:
+            log.warn("Returning asset default: %r", asset.default)
+            return self, [asset.default]
+        
+        remainder = list(remainder)
+        node = remainder.pop(0)
+        
+        log.warn("Looking in %r for %r *%r...", self, node, remainder)
         
         if ":" in node:
             return self, [node.replace(":", "_")] + list(remainder)
@@ -54,7 +77,7 @@ class BaseController(Controller):
         # TODO: Path-based lookup; far more efficient!
         
         if isinstance(node, basestring):
-            record = Asset.objects(name=node, parent=self.asset).first()
+            record = Asset.objects(name=node, parent=asset).first()
             
             if not record:
                 raise http.HTTPNotFound("Unable to find resource at this location.")
