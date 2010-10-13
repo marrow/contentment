@@ -28,13 +28,11 @@ class BaseController(Controller):
     @property
     def asset(self):
         if self._asset:
-            log.debug("Returning cached Asset instance: %r", self._asset)
             return self._asset
         
         from web.extras.contentment.components.asset.model import Asset
         
         self._asset = Asset.objects(path='/').first()
-        log.debug("Discovered Asset instance: %r", self._asset)
         
         return self._asset
     
@@ -63,13 +61,12 @@ class BaseController(Controller):
         asset = self.asset
         
         if not remainder:
-            log.warn("Returning asset default: %r", asset.default)
             return self, [asset.default]
         
         remainder = list(remainder)
         node = remainder.pop(0)
         
-        log.warn("Looking in %r for %r *%r...", self, node, remainder)
+        log.debug("Looking in %r for %r *%r...", self, node, remainder)
         
         if ":" in node:
             return self, [node.replace(":", "_")] + list(remainder)

@@ -80,6 +80,7 @@ setup(
                         "folder = web.extras.contentment.components.folder:FolderComponent",
                         "identity = web.extras.contentment.components.identity:IdentityComponent",
                         "page = web.extras.contentment.components.page:PageComponent",
+                        "default_theme = web.extras.contentment.themes.default:DefaultTheme",
                         # "file = web.extras.contentment.components.file:FileComponent",
                         # "extension = web.extras.contentment.components.extension:ExtensionComponent"
                     ],

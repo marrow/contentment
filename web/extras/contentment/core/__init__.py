@@ -24,8 +24,6 @@ for res in pkg_resources.iter_entry_points('contentment.component'):
         
         if callable(instance):
             instance = instance()
-        
-        log.debug("%r: %r", instance, dir(instance))
     
     except:
         log.exception("Error scanning available CMF components.  CMF unavailable.")
