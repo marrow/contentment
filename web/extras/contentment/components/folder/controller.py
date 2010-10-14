@@ -14,6 +14,7 @@ __all__ = ['FolderController']
 
 
 class FolderController(AssetController):
-    """"""
+    # @view("Contents") # TODO: Roll above code into @view/action decorator.
+    def view_details(self, sort=None):
+        return self._template('details', base='.'.join(FolderController.__module__.split('.')[:-1]))
     
-    pass

@@ -1,0 +1,21 @@
+File
+
+Address Book (contacts) [folder]
+@ Web Links
+Guest Book [folder]
+ok Blog [folder]
+ok Knowledge Base [folder]
+ok FAQ [folder]
+WIKI
+Search Results [folder]
+Survey/Poll
+Gallery/Slide Show [folder]
+Calendar [folder]
+
+@ Google Map
+
+RSS Feed Display
+
+Site Map (display, google xml)
+Form (from form builder)
+

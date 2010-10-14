@@ -675,6 +675,30 @@ html[xmlns] .buttons {
 
 
 
+dl.details dt { font-weight: bold; margin-top: 10px; display: inline-block; }
+dl.details dt:first-child { margin-top: 0; }
+dl.details dd { margin-left: 20px; margin-top: 5px; }
+dl.details dd.byline { display: inline; margin: 0; padding: 0; font-size: inherit; color: inherit; border-width: 0; text-align: inherit; }
+dl.details dd.age { color: #666; }
+
+
+
+
+
+/* Icons */
+
+.icon { padding: 1px 0px 1px 20px; background-color: transparent; background-repeat: no-repeat; background-position: 0px center; }
+.portlet .icon, .foot .icon { padding: 2px 0 2px 20px; }
+
+a[href^="http://"] { padding: 1px 0px 1px 18px; background: transparent url('http://www.gothcandy.com/static/img/icons/world_link.png') no-repeat 0px center; }
+
+.icon.home              { background-image: url('http://www.gothcandy.com/static/img/icons/house.png'); }
+.icon.new               { background-image: url('http://www.gothcandy.com/static/img/icons/new.png'); }
+.icon.updated           { background-image: url('http://www.gothcandy.com/static/img/icons/time.png'); }
+
+
+
+
 /* 
  * print styles
  * inlined to avoid required HTTP connection www.phpied.com/delay-loading-your-print-css/ 
