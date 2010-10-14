@@ -29,7 +29,7 @@ class Textile(textile.Textile):
         >>> t.lists("* one\\n* two\\n* three")
         '\\t<ul>\\n\\t\\t<li>one</li>\\n\\t\\t<li>two</li>\\n\\t\\t<li>three</li>\\n\\t</ul>'
         """
-        pattern = re.compile(r'^([#*@]+%s .*)$(?![^#*@])' % self.c, re.U|re.M|re.S)
+        pattern = re.compile(r'^([#*-]+%s .*)$(?![^#*-])' % self.c, re.U|re.M|re.S)
         return pattern.sub(self.fList, text)
     
     def fList(self, match):
@@ -42,11 +42,11 @@ class Textile(textile.Textile):
             except IndexError:
                 nextline = ''
             
-            m = re.search(r"^([#*@]+)(%s%s) (.*)$" % (self.a, self.c), line, re.S)
+            m = re.search(r"^([#*-]+)(%s%s) (.*)$" % (self.a, self.c), line, re.S)
             if m:
                 tl, atts, content = m.groups()
                 nl = ''
-                nm = re.search(r'^([#*@]+)\s.*', nextline)
+                nm = re.search(r'^([#*-]+)\s.*', nextline)
                 if nm:
                     nl = nm.group(1)
                 if tl not in lists:
@@ -71,7 +71,7 @@ class Textile(textile.Textile):
     def lT(self, input):
         if re.search(r'^#+', input):
             return 'ol'
-        elif re.search(r'^@', input):
+        elif re.search(r'^-', input):
             return 'menu'
         else:
             return 'ul'
@@ -87,7 +87,7 @@ class Page(Asset):
         @web.core.cache.cache('page.content', expires=3600)
         def cache(name, date):
             if self.engine == 'textile':
-                return Textile().textile(self.content, head_offset=1, html_type='html')
+                return Textile().textile(self.content, html_type='html')
             
             else:
                 return self.content

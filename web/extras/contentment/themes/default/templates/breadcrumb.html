@@ -1,0 +1,9 @@
+                    <header id="breadcrumb">
+                        <label>Breadcrumb Navigation</label>
+                        <menu>
+% for i in asset.parents:
+                            <li><a href="${i.path}">${i.title}</a></li>
+% endfor
+                            <li class="current">${asset.title}</li>
+                        </menu>
+                    </header>

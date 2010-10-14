@@ -25,6 +25,8 @@ __all__ = ['BaseController']
 class BaseController(Controller):
     __repr__ = lambda self: '%s(%s, %s, %r)' % (self.__class__.__name__, self.asset.id, self.asset.name, self.asset.title)
     
+    _modify_form = None
+    
     @property
     def asset(self):
         if self._asset:

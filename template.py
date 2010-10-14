@@ -39,18 +39,33 @@ admin.credentials.append(password)
 admin.save()
 
 
-header = Page(name="header", title="Global Site Header", content="""<h1><a href="/">Contentment</a></h1>
-<form method="get" action="/search"><input type="search" autocomplete="on" autosave="search" name="q" placeholder="Site-wide search."></form>""")
+header = Page(name="header", title="Global Site Header", content="""h1. "Contentment":/""")
 
 header.save() ; header.attach(templates)
 
+menu = Page(name="menu", title="Main Menu", engine="raw", content="""
+<menu class="container">
+    <li class="nav-home"><a href="/">Home<br><label>&nbsp;</label></a></li
+    ><li class="nav-start"><a href="/start">Get Started<br><label>Deployment Options</label></a></li
+    ><li class="nav-faq"><a href="/faq">FAQ<br><label>Frequently Asked Questions</label></a></li
+    ><li class="nav-news"><a href="/news/">News<br><label>Latest News</label></a></li
+    ><li class="nav-contact"><a href="/contact">Contact<br><label>Contact MVP</label></a></li
+    ><li class="nav-features"><a href="/features">Features<br><label>What MVP Does</label></a></li>
+</menu>
+""")
+
+menu.save() ; menu.attach(templates)
+
 footer = Page(name="footer", title="Global Site Footer", content=u"""p(fr). © 2010 Alice Bevan-McGregor
 
-* "About the Site":/about/
-* "Privacy Policy":/about/privacy
+- "About the Site":/about/
+- "Privacy Policy":/about/privacy
 """)
 
 footer.save() ; footer.attach(templates)
+
+
+custom = Folder(name="custom", title="Custom Page Templates") ; custom.save() ; custom.attach(templates)
 
 
 default = Page(name="default", title="Welcome", content="""h1. Welcome to Contentment

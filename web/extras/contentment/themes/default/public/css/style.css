@@ -460,10 +460,10 @@ body.section-news       #navigation menu li.nav-news a label
 #main .indent { padding: 0 10px; }
 
 footer { padding: 10px 0; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; font-size: 77%; color: #999; }
-footer ul { list-style: none; line-height: 100%; margin: 0; padding: 0; }
-footer ul li { display: inline-block; margin-right: 1ex; padding-left: 1ex; border-left: 1px solid #999; }
-footer ul li:first-child { border-left-width: 0px; padding-left: 0; }
-footer ul li a { display: inline-block; }
+footer menu { list-style: none; line-height: 100%; margin: 0; padding: 0; }
+footer menu li { display: inline-block; margin-right: 1ex; padding-left: 1ex; border-left: 1px solid #999; }
+footer menu li:first-child { border-left-width: 0px; padding-left: 0; }
+footer menu li a { display: inline-block; }
 
 section div.container { padding-bottom: 15px; }
 

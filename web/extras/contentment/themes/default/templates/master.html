@@ -1,7 +1,4 @@
-<%def name="title()"></%def>
-<%def name="header()"></%def>
-<%def name="bodyclass()"></%def>
-<%def name="postbody()"></%def>
+<%namespace name="hook" file="web.extras.contentment.themes.default.templates.definitions" inheritable="True"/>
 <!doctype html>
 <html lang="en" class="no-js">
     <head>
@@ -9,33 +6,32 @@
         
         <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
         
-        <title>${self.title()} - ${root.title}</title>
+        <title>${self.hook.title()} - ${root.title}</title>
         
         <meta name="viewport" content="width=980px;">
         
-        <!-- Place favicon.ico and apple-touch-icon.png in the root of your domain and delete these references -->
-        <link rel="shortcut icon" href="/favicon.ico">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="shortcut icon" href="/theme/static/favicon.ico">
+        <link rel="apple-touch-icon" href="/theme/static/apple-touch-icon.png">
         
         <link rel="stylesheet" href="/theme/static/css/style.css?v=1">
         <link rel="stylesheet" href="/theme/static/css/handheld.css?v=1" media="handheld">
         
-        <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
         <script src="/theme/static/js/modernizr-1.5.min.js"></script>
         
-        ${self.header()}
+        ${self.hook.header()}
     </head>
 
-<!--[if lt IE 7 ]> <body class="ie6 ${self.bodyclass()}"> <![endif]-->
-<!--[if IE 7 ]>    <body class="ie7 ${self.bodyclass()}"> <![endif]-->
-<!--[if IE 8 ]>    <body class="ie8 ${self.bodyclass()}"> <![endif]-->
-<!--[if IE 9 ]>    <body class="ie9 ${self.bodyclass()}"> <![endif]-->
-<!--[if gt IE 9]>  <body class="${self.bodyclass()}">             <![endif]-->
+<!--[if lt IE 7 ]> <body class="ie6 ${self.hook.cls()}"> <![endif]-->
+<!--[if IE 7 ]>    <body class="ie7 ${self.hook.cls()}"> <![endif]-->
+<!--[if IE 8 ]>    <body class="ie8 ${self.hook.cls()}"> <![endif]-->
+<!--[if IE 9 ]>    <body class="ie9 ${self.hook.cls()}"> <![endif]-->
+<!--[if gt IE 9]>  <body class="${self.hook.cls()}">             <![endif]-->
 <!--[if !IE]><!-->
-    <body class="${self.bodyclass()}">
+    <body class="${self.hook.cls()}">
 <!--<![endif]-->
         <header id="top">
             <hgroup class="container">
+## TODO: Make this part of the Theme model.
 ${root.__class__.objects(path='/templates/header').first().rendered | n}
                 
                 <div class="special search">
@@ -50,28 +46,15 @@ ${root.__class__.objects(path='/templates/header').first().rendered | n}
         </header>
         
         <section id="navigation">
-            <menu class="container">
-                <li class="nav-home"><a href="/">Home<br><label>&nbsp;</label></a></li
-                ><li class="nav-start"><a href="/start">Get Started<br><label>Deployment Options</label></a></li
-                ><li class="nav-faq"><a href="/faq">FAQ<br><label>Frequently Asked Questions</label></a></li
-                ><li class="nav-news"><a href="/news/">News<br><label>Latest News</label></a></li
-                ><li class="nav-contact"><a href="/contact">Contact<br><label>Contact MVP</label></a></li
-                ><li class="nav-features"><a href="/features">Features<br><label>What MVP Does</label></a></li>
-            </menu>
+## TODO: Make this part of the Theme model.
+${root.__class__.objects(path='/templates/menu').first().rendered | n}
         </section>
         
         <section id="main">
             <div class="container">
                 <div class="indent">
-                    <header id="breadcrumb">
-                        <label>Breadcrumb Navigation</label>
-                        <menu>
-% for i in asset.parents:
-                            <li><a href="${i.path}">${i.title}</a></li>
-% endfor
-                            <li class="current">${asset.title}</li>
-                        </menu>
-                    </header>
+## TODO: Make this part of the Theme model, defaulting to True.
+<%include file="web.extras.contentment.themes.default.templates.breadcrumb"/>
                     
 ${next.body()}
                     
@@ -82,6 +65,7 @@ ${next.body()}
         
         <footer>
             <div class="container">
+## TODO: Make this part of the Theme model.
 ${root.__class__.objects(path='/templates/footer').first().rendered | n}
             </div>
         </footer>
@@ -97,6 +81,6 @@ ${root.__class__.objects(path='/templates/footer').first().rendered | n}
             <script src="/theme/static/js/dd_belatedpng.js?v=1"></script>
         <![endif]-->
         
-${postbody()}
+${self.hook.js()}
     </body>
 </html>

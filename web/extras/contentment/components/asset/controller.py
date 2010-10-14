@@ -91,8 +91,8 @@ class AssetController(BaseController):
         
         return self._template('modify', base='.'.join(AssetController.__module__.split('.')[:-1]))
     
-    # @action("Remove")
-    def action_remove(self, key=None, force=False):
+    # @action("Delete")
+    def action_delete(self, key=None, force=False):
         """Delete this asset and all descendants."""
         
         # TODO: Hash the last modification date and path and verify against `key`.

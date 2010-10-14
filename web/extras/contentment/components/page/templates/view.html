@@ -1,5 +1,7 @@
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
+<%page cached="True" cache_type="memory"/>
+
 <%def name="title()">${asset.title}</%def>
 
 ${asset.rendered | n}

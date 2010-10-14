@@ -23,31 +23,15 @@
             <dd><input type="text" id="asset-title" name="title" value="${asset.title}" style="width: 100%;"></dd>
         </div>
         
+        <dt><label for="asset-tags">Keywords / Tags</label></dt>
+        <dd><input type="text" id="asset-tags" name="keywords" value="${' '.join(asset.tags)}" style="width: 98%;"></dd>
+        
         <dt><label for="asset-description">Description</label></dt>
         <dd><textarea id="asset-description" name="description" style="height: 2.5em; width: 98%; display: block;">${asset.description or ''}</textarea></dd>
         
-% if asset.__class__.__name__ == 'Page':
-        <dt>
-            <label for="asset-content">Content</label>
-        </dt>
-        <dd><textarea id="asset-content" name="content" style="width: 98%; display: block;">${asset.content or ''}</textarea></dd>
+% if asset.controller._modify_form:
+<%include file="${context.get('asset').controller._modify_form}"/>
 % endif
-        
-        <dt><label for="asset-tags">Tags</label></dt>
-        <dd><input type="text" id="asset-tags" name="keywords" value="${' '.join(asset.tags)}" style="width: 98%;"></dd>
-        
-% if asset.__class__.__name__ == 'Page':
-        <dt><label for="asset-template">Page Template</label></dt>
-        <dd><select id="asset-template" name="template">
-            <option>Default Template</option>
-            <optgroup label="Custom Templates">
-            </optgroup>
-        </select></dd>
-% endif
-    </dl>
-    
-    <dl id="properties">
-        asdf
     </dl>
     
     <menu class="buttons">
