@@ -1,4 +1,7 @@
-<%namespace name="hook" file="web.extras.contentment.themes.default.templates.definitions" inheritable="True"/>
+<%def name="title()"></%def>
+<%def name="header()"></%def>
+<%def name="cls()"></%def>
+<%def name="js()"></%def>
 <!doctype html>
 <html lang="en" class="no-js">
     <head>
@@ -6,7 +9,7 @@
         
         <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><![endif]-->
         
-        <title>${self.hook.title()} - ${root.title}</title>
+        <title>${self.title()} - ${root.title}</title>
         
         <meta name="viewport" content="width=980px;">
         
@@ -18,28 +21,26 @@
         
         <script src="/theme/static/js/modernizr-1.5.min.js"></script>
         
-        ${self.hook.header()}
+        ${self.header()}
     </head>
 
-<!--[if lt IE 7 ]> <body class="ie6 ${self.hook.cls()}"> <![endif]-->
-<!--[if IE 7 ]>    <body class="ie7 ${self.hook.cls()}"> <![endif]-->
-<!--[if IE 8 ]>    <body class="ie8 ${self.hook.cls()}"> <![endif]-->
-<!--[if IE 9 ]>    <body class="ie9 ${self.hook.cls()}"> <![endif]-->
-<!--[if gt IE 9]>  <body class="${self.hook.cls()}">             <![endif]-->
+<!--[if lt IE 7 ]> <body class="ie6 ${self.cls()}"> <![endif]-->
+<!--[if IE 7 ]>    <body class="ie7 ${self.cls()}"> <![endif]-->
+<!--[if IE 8 ]>    <body class="ie8 ${self.cls()}"> <![endif]-->
+<!--[if IE 9 ]>    <body class="ie9 ${self.cls()}"> <![endif]-->
+<!--[if gt IE 9]>  <body class="${self.cls()}">             <![endif]-->
 <!--[if !IE]><!-->
-    <body class="${self.hook.cls()}">
+    <body class="section-home ${self.cls()}">
 <!--<![endif]-->
+
+<%include file="web.extras.contentment.themes.default.templates.assetmenu"/>
+
         <header id="top">
             <hgroup class="container">
 ## TODO: Make this part of the Theme model.
 ${root.__class__.objects(path='/templates/header').first().rendered | n}
                 
                 <div class="special search">
-                    <menu>
-                        <li><a class="create-link" href="./action:create">Create</a></li>
-                        <li><a class="modify-link" href="${asset.path}/action:modify">Modify</a></li>
-                        <li><a class="delete-link" href="${asset.path}/action:delete">Delete</a></li>
-                    </menu>
                     <form method="get" action="/search"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search."></form>
                 </div>
             </hgroup>
@@ -81,6 +82,6 @@ ${root.__class__.objects(path='/templates/footer').first().rendered | n}
             <script src="/theme/static/js/dd_belatedpng.js?v=1"></script>
         <![endif]-->
         
-${self.hook.js()}
+${self.js()}
     </body>
 </html>

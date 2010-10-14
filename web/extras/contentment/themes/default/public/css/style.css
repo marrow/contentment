@@ -405,7 +405,7 @@ hr.space {background:#fff;color:#fff;visibility:hidden;}
 
 body { background: #D0D0D0; color: #444; font-family: 'Helvetica Neue', Helvetica, sans-serif; font-size: 15px; line-height: 20px; text-shadow: rgba(0, 0, 0, 0.0078125) 0px 0px 0px; }
 
-header#top { background: #162c41 url('/theme/static/img/header_bg.gif') repeat-x; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; }
+header#top { background: #162c41 url('/theme/static/img/header_bg.gif') repeat-x; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; position: relative; z-index: 150; }
 header#top hgroup { background: transparent url('/theme/static/img/header_highlight.gif') center top no-repeat; padding-top: 20px; padding-bottom: 20px; position: relative; }
 header#top a { display: inline-block; }
 header#top h1 { display: block; font-size: 250%; font-weight: 900; color: #eee; line-height: 80%; margin: 0; padding: 0; text-shadow: black 0px 1px 3px; }
@@ -424,8 +424,8 @@ header#top div.special menu li:last-child { border-left-width: 0px; padding-left
 header#top div.special menu li a { display: inline-block; }
 header#top div.special menu li a:hover { color: white; text-decoration: none; }
 
-#navigation { background: #162c41; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; margin-top: -1px; }
-#navigation menu { background: transparent url('/theme/static/img/nav.png') center top no-repeat; list-style: none; padding-top: 3px; }
+#navigation { background: #162c41; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; margin-top: -1px; position: relative; -webkit-box-shadow: 0px 0px 50px black; z-index: 100; }
+#navigation menu { background: transparent url('/theme/static/img/nav.png') center top no-repeat; list-style: none; padding-top: 3px; position: relative; z-index: 150; }
 #navigation menu li { display: inline-block; margin-right: 3px; }
 #navigation menu li a { display: inline-block; padding: 10px 15px; color: white; text-decoration: none; font-weight: 800; line-height: 100%; -webkit-transition: background-color 0.25s linear; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; }
 #navigation menu li a label { color: #eee; text-decoration: none; font-weight: 200; font-size: 77%; }
@@ -456,7 +456,7 @@ body.section-news       #navigation menu li.nav-news a label
     { color: #444; }
 
 #main { background-color: #D0D0D0; margin-top: -1px; }
-#main .container { background-color: white; }
+#main .container { background-color: white; -webkit-box-shadow: 0 0 30px #999; }
 #main .indent { padding: 0 10px; }
 
 footer { padding: 10px 0; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; font-size: 77%; color: #999; }
@@ -497,7 +497,7 @@ form.contact input[type=text], form.contact input[type=tel], form.contact input[
 form.contact textarea { height: 100px; }
 
 
-#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: -webkit-gradient(linear, left top, left center, from(#d0d0d0), to(#fff)); }
+#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: -webkit-gradient(linear, left center, left bottom, from(#fff), to(#d0d0d0)); position: relative; z-index: 200; }
 #breadcrumb label { display: inline-block; color: white; text-shadow: 0px 1px 2px #d0d0d0; float: right; padding: 2px 5px; }
 #breadcrumb menu { display: inline-block; list-style: none; }
 #breadcrumb li { display: inline-block; }
@@ -536,6 +536,22 @@ form.contact textarea { height: 100px; }
 form .buttons { margin-top: 5px; }
 form .buttons.top { margin-bottom: 10px; margin-top: 0; }
 
+.buttons.assetmenu {
+    position: relative;
+    
+    z-index: 200;
+    
+    background: #8b8b8b; /* for non-css3 browsers */
+    filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#7a7a7a', endColorstr='#a9a9a9'); /* for IE */
+    background: -webkit-gradient(linear, left top, left bottom, from(#7a7a7a), to(#a9a9a9)); /* for webkit browsers */
+    background: -moz-linear-gradient(top,  #7a7a7a,  #a9a9a9); /* for firefox 3.6+ */
+    
+    -webkit-box-shadow: 0px 0px 4px black;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-width: 0;
+}
+
 .buttons li {
     margin: 0 4px 0 0;
     padding: 0 0 4px;
@@ -553,7 +569,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     color: #e7e5e5;
     text-decoration: none;
     display: block;
-    padding:  6px 20px;
+    padding:  6px 20px 7px;
     margin: 0;
     border: none;
     line-height: 100%;
