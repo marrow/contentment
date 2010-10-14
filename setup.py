@@ -81,6 +81,7 @@ setup(
                         "identity = web.extras.contentment.components.identity:IdentityComponent",
                         "page = web.extras.contentment.components.page:PageComponent",
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",
+                        "event = web.extras.contentment.components.event:EventComponent",
                         # "file = web.extras.contentment.components.file:FileComponent",
                         # "extension = web.extras.contentment.components.extension:ExtensionComponent"
                     ],

@@ -1,10 +1,13 @@
 # encoding: utf-8
 
+from datetime import datetime
+
 from hashlib import sha512
 
 from web.extras.contentment.components.asset.model import Asset, db
 from web.extras.contentment.components.folder.model import Folder
 from web.extras.contentment.components.page.model import Page
+from web.extras.contentment.components.event.model import Event, EventContact
 from web.extras.contentment.components.identity.model import PasswordCredential, Identity
 from web.extras.contentment.themes.default.model import DefaultTheme
 
@@ -26,6 +29,7 @@ theme = DefaultTheme(name="theme", title="Default Theme"); theme.save() ; theme.
 extensions = Folder(name="extensions", title="Site Extensions") ; extensions.save() ; extensions.attach(root)
 templates = Folder(name="templates", title="Site Templates") ; templates.save() ; templates.attach(root)
 users = Folder(name="users", title="Users") ; users.save() ; users.attach(root)
+events = Folder(name="events", title="Events") ; events.save() ; events.attach(root)
 
 
 admin = Identity(name="admin", title="Administrator", email="webmaster@example.com")
@@ -75,3 +79,20 @@ Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.""")
 
 default.save() ; default.attach(root)
+
+
+contact = EventContact(name="Howard Bevan", email="webmaster@topfloor.ca", phone="250 898-8783")
+
+event = Event(
+        name = "bob-lunch",
+        title = "Lunch with Bob",
+        content = "This is a description...",
+        starts = datetime(2010,10,1,12,0),
+        stops = datetime(2010,10,1,13,0),
+        organizer = "Top Floor Computer Systems Ltd.",
+        location = "1765 Fern Road, Courtenay, BC",
+        contact = contact
+    )
+
+event.save()
+event.attach(events)
