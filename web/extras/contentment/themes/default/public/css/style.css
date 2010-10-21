@@ -456,8 +456,8 @@ body.section-news       #navigation menu li.nav-news a label
     { color: #444; }*/
 
 #main { margin-top: -1px; }
-#main .container { -webkit-box-shadow: 0 0 30px #999; -moz-box-shadow: 0 0 30px #999; }
-#main .indent { padding: 0 10px; background-color: white; }
+#main .container { background-color: white; -webkit-box-shadow: 0 0 30px #999; -moz-box-shadow: 0 0 30px #999; }
+#main .indent { padding: 0 10px; }
 
 footer { margin-top: 10px; padding: 0 10px 0; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; font-size: 77%; color: #999; }
 footer menu { list-style: none; line-height: 100%; margin: 0; padding: 0; }
