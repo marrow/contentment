@@ -1,0 +1,27 @@
+<%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+
+<%def name="title()">Sign In</%def>
+
+<h1 class="primary">${title()}</h1>
+
+<form method="post" class="modify">
+    <dl id="tab-general">
+        <div style="float: left; width: 48%;">
+            <dt><label for="user-identity">User Name or E-Mail Address</label></dt>
+            <dd><input type="text" id="user-identity" name="identity" value="${context.get('identity') or ''}" style="width: 98%;"></dd>
+        </div>
+        <div style="float: left; width: 48%;">
+            <dt><label for="user-password">Password</label></dt>
+            <dd><input type="password" id="asset-tags" name="password" style="width: 98%;"></dd>
+        </div>
+        <div class="clearfix"></div>
+    </dl>
+    
+    <menu class="buttons footer">
+        <li class="current"><input type="submit" value="Sign In"></li>
+        <li><a href="${redirect}">Cancel</a></li>
+        <div class="fr">
+            <li><a href="/users/action:recover">Unable to sign in?</a></li>
+        </div>
+    </menu>
+</form>

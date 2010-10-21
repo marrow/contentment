@@ -4,15 +4,15 @@ from web.extras.contentment import release
 from web.extras.contentment.api import IComponent
 
 
-__all__ = ['CommentComponent', 'controller', 'model', 'templates']
+__all__ = ['AliasComponent', 'controller', 'model', 'templates']
 log = __import__('logging').getLogger(__name__)
 
 
-class CommentComponent(IComponent):
-    title = "Comment"
-    summary = None
+class AliasComponent(IComponent):
+    title = "Alias"
+    summary = "Automatically redirect to another location."
     description = None
-    icon = 'base-comment'
+    icon = 'base-alias'
     group = "Basic Types"
     
     version = release.version
@@ -24,14 +24,14 @@ class CommentComponent(IComponent):
     
     @property
     def model(self):
-        from web.extras.contentment.components.comment import model
-        return super(CommentComponent, self).model(model)
+        from web.extras.contentment.components.alias import model
+        return super(AliasComponent, self).model(model)
     
     @property
     def controller(self):
-        from web.extras.contentment.components.comment.controller import CommentController
-        CommentController._component = self
-        return CommentController
+        from web.extras.contentment.components.alias.controller import AliasController
+        AliasController._component = self
+        return AliasController
     
     def authorize(self, child):
         return False

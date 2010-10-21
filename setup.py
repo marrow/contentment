@@ -76,14 +76,18 @@ setup(
         
         entry_points = {
                 'contentment.component': [
+                        "alias = web.extras.contentment.components.alias:AliasComponent",
                         "asset = web.extras.contentment.components.asset:AssetComponent",
+                        "authenticator = web.extras.contentment.components.authenticator:AuthenticatorComponent",
+                        "comment = web.extras.contentment.components.comment:CommentComponent",
+                        "event = web.extras.contentment.components.event:EventComponent",
+                        "file = web.extras.contentment.components.file:FileComponent",
                         "folder = web.extras.contentment.components.folder:FolderComponent",
                         "identity = web.extras.contentment.components.identity:IdentityComponent",
                         "page = web.extras.contentment.components.page:PageComponent",
+                        "settings = web.extras.contentment.components.settings:SettingsComponent",
+                        
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",
-                        "event = web.extras.contentment.components.event:EventComponent",
-                        # "file = web.extras.contentment.components.file:FileComponent",
-                        # "extension = web.extras.contentment.components.extension:ExtensionComponent"
                     ],
                 'contentment.renderer': [
                         # "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",

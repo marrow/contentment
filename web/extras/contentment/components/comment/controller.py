@@ -1,9 +1,6 @@
 # encoding: utf-8
 
-"""Basic comment controller.
-
-Textual content presentation.
-"""
+"""Basic comment controller."""
 
 from web.extras.contentment.components.asset.controller import AssetController
 

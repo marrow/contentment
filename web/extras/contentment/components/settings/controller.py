@@ -1,17 +1,17 @@
 # encoding: utf-8
 
-"""Basic identity controller.
+"""Basic folder controller.
 
-User management and administration.
+Additional views on asset contents.
 """
 
 from web.extras.contentment.components.asset.controller import AssetController
 
 
 log = __import__('logging').getLogger(__name__)
-__all__ = ['IdentityController']
+__all__ = ['SettingsController']
 
 
 
-class IdentityController(AssetController):
+class SettingsController(AssetController):
     pass

@@ -4,15 +4,15 @@ from web.extras.contentment import release
 from web.extras.contentment.api import IComponent
 
 
-__all__ = ['FolderComponent', 'controller', 'model', 'templates']
+__all__ = ['FileComponent', 'controller', 'model', 'templates']
 log = __import__('logging').getLogger(__name__)
 
 
-class FolderComponent(IComponent):
-    title = "Folder"
-    summary = "A simple container."
+class FileComponent(IComponent):
+    title = "File"
+    summary = "Generic file upload."
     description = None
-    icon = 'base-folder'
+    icon = 'base-file'
     group = "Basic Types"
     
     version = release.version
@@ -24,11 +24,11 @@ class FolderComponent(IComponent):
     
     @property
     def model(self):
-        from web.extras.contentment.components.folder import model
-        return super(FolderComponent, self).model(model)
+        from web.extras.contentment.components.file import model
+        return super(FileComponent, self).model(model)
     
     @property
     def controller(self):
-        from web.extras.contentment.components.folder.controller import FolderController
-        FolderController._component = self
-        return FolderController
+        from web.extras.contentment.components.file.controller import FileController
+        FileController._component = self
+        return FileController

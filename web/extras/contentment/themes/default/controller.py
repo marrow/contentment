@@ -33,20 +33,28 @@ class DefaultThemeController(AssetController):
         log.debug(path)
         
         if not path.startswith(base):
-            raise web.core.http.HTTPForbidden()
+            raise web.core.http.HTTPForbidden("Cowardly refusing to violate base path policy.")
         
-        elif not os.path.isfile(path):
+        if not os.path.exists(path):
             raise web.core.http.HTTPNotFound()
+        
+        if not os.path.isfile(path):
+            raise web.core.http.HTTPForbidden("Cowardly refusing to open a non-file.")
         
         request = web.core.request._current_obj()
         response = web.core.response._current_obj()
         
-        # Convert to UTC.
         modified = time.mktime(time.gmtime(os.path.getmtime(path)))
+        
+        response.last_modified = datetime.datetime.fromtimestamp(modified)
+        response.cache_control = 'public'
         
         response.content_type, response.content_encoding = mimetypes.guess_type(path)
         response.content_length = os.path.getsize(path)
         response.etag = "%d" % ( modified, )
+        
+        if request.if_modified_since and request.if_modified_since >= response.last_modified:
+            raise web.core.http.HTTPNotModified()
         
         if web.core.request.method == 'HEAD':
             return ''

@@ -1,11 +1,27 @@
 $(function(){
-/*    
-    $('a[href=/login]').click(function(){
-        
-        $('form[action=/search]').replaceWith('<form action="/login" method="post"><input type="text" name="username" placeholder="username"><input type="password" name="password" placeholder="password"><input type="submit" style="visibility: hidden; width: 0px;"></form>');
-        
-        return false;
-        
-    });
-  */  
+    $.plugins({
+            plugins: [
+                    {
+                        id: 'timeago',
+                        js: ['/theme/static/js/jquery.timeago.js'],
+                        fn: ['timeago'],
+                        ext: ['timeago'],
+                        sel: 'time'
+                    },
+                    {
+                        id: 'tabify',
+                        js: ['/theme/static/js/jquery.tabify-1.4.js'],
+                        fn: ['tabify'],
+                        sel: 'menu.tabs'
+                    }
+                    // {
+                    //     id: 'upload',
+                    //     js: ['/static/js/jquery.html5upload.js'],
+                    //     fn: ['html5_upload'],
+                    //     sel: 'input[multiple=multiple]'
+                    // },
+                ]
+        });
+    
+    $('.delete-link').click(function(){ return confirm("Are you sure you wish to delete this resource?\n\nThis can not be undone, and will delete any child resources contained within."); });
 });

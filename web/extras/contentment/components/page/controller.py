@@ -14,8 +14,6 @@ __all__ = ['PageController']
 
 
 class PageController(AssetController):
-    """"""
-    
     _modify_form = "web.extras.contentment.components.page.templates.modify"
     
     def view_default(self):

@@ -3,25 +3,16 @@
 <%def name="title()">Modifying ${asset.__class__.__name__}: ${asset.title}</%def>
 
 <form method="post" class="modify">
-    <menu class="buttons top">
-        <li class="current"><input type="submit" value="Save"></li>
-        <li><a href="${asset.path if asset.parent.default != asset.name else asset.parent.path}">Cancel</a></li>
-        <div class="fr">
-            <li><a href="">Textile Reference</a></li>
-        </div>
+    <menu class="tabs">
+        <h1>${title()}</h1>
+        <li class="active"><a href="#tab-general">General</a></li>
+        <li><a href="#tab-properties">Properties</a></li>
+        <li><a href="#tab-security">Security</a></li>
     </menu>
     
-    <h1>${title()}</h1>
-    
-    <dl id="general">
-        <div style="float: left; width: 33%;">
-            <dt><label for="asset-name">Name</label></dt>
-            <dd><input type="text" id="asset-name" name="name" value="${asset.name}" style="width: 100%;">
-        </div>
-        <div style="float: left; width: 63%; padding-left: 3%;">
-            <dt><label for="asset-title">Title</label></dt>
-            <dd><input type="text" id="asset-title" name="title" value="${asset.title}" style="width: 100%;"></dd>
-        </div>
+    <dl id="tab-general">
+        <dt><label for="asset-title">Title</label></dt>
+        <dd><input type="text" id="asset-title" name="title" value="${asset.title}" style="width: 98%;"></dd>
         
         <dt><label for="asset-tags">Keywords / Tags</label></dt>
         <dd><input type="text" id="asset-tags" name="keywords" value="${' '.join(asset.tags)}" style="width: 98%;"></dd>
@@ -34,11 +25,16 @@
 % endif
     </dl>
     
-    <menu class="buttons">
+    <dl id="tab-properties">
+        <dt><label for="asset-name">Name</label></dt>
+        <dd><input type="text" id="asset-name" name="name" value="${asset.name}" style="width: 100%;">
+    </dl>
+    
+    <menu class="buttons footer">
         <li class="current"><input type="submit" value="Save"></li>
         <li><a href="${asset.path if asset.parent.default != asset.name else asset.parent.path}">Cancel</a></li>
         <div class="fr">
-            <li><a href="">Textile Reference</a></li>
+            <li><a target="_blank" href="http://redcloth.org/hobix.com/textile/">Textile Reference</a></li>
         </div>
     </menu>
 </form>

@@ -44,13 +44,11 @@ class AssetController(BaseController):
         if data is None:
             data = dict()
         
-        data['asset'] = self.asset
         data['root'] = Asset.objects(path='/').first()
+        data['asset'] = self.asset
         
         if base is None:
             base = '.'.join(self.__module__.split('.')[:-1])
-        
-        log.warn(self.__module__)
         
         return (
                 'mako:' + base + '.templates.' + name,

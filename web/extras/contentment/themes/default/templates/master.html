@@ -1,3 +1,13 @@
+<%!
+
+    from web.extras.contentment.components.asset.model import Asset
+
+%>
+<%
+
+    theme = Asset.objects(path='/theme').first()
+
+%>
 <%def name="title()"></%def>
 <%def name="header()"></%def>
 <%def name="cls()"></%def>
@@ -33,12 +43,13 @@
     <body class="section-home ${self.cls()}">
 <!--<![endif]-->
 
+% if web.auth.authenticated:
 <%include file="web.extras.contentment.themes.default.templates.assetmenu"/>
+% endif
 
         <header id="top">
             <hgroup class="container">
-## TODO: Make this part of the Theme model.
-${root.__class__.objects(path='/templates/header').first().rendered | n}
+${root.__class__.objects(path=theme.paths.header).first().rendered | n}
                 
                 <div class="special search">
                     <form method="get" action="/search"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search."></form>
@@ -47,15 +58,15 @@ ${root.__class__.objects(path='/templates/header').first().rendered | n}
         </header>
         
         <section id="navigation">
-## TODO: Make this part of the Theme model.
-${root.__class__.objects(path='/templates/menu').first().rendered | n}
+${root.__class__.objects(path=theme.paths.menu).first().rendered | n}
         </section>
         
         <section id="main">
             <div class="container">
                 <div class="indent">
-## TODO: Make this part of the Theme model, defaulting to True.
+% if theme.breadcrumb:
 <%include file="web.extras.contentment.themes.default.templates.breadcrumb"/>
+% endif
                     
 ${next.body()}
                     
@@ -66,8 +77,14 @@ ${next.body()}
         
         <footer>
             <div class="container">
-## TODO: Make this part of the Theme model.
-${root.__class__.objects(path='/templates/footer').first().rendered | n}
+${root.__class__.objects(path=theme.paths.footer).first().rendered | n}
+                <div>
+% if web.auth.anonymous:
+                    <a href="/users/action:authenticate" id="authenticate">Sign In</a>
+% else:
+                    <a href="/users/action:expire" id="deauthenticate">Sign Out</a>
+% endif
+                </div>
             </div>
         </footer>
         

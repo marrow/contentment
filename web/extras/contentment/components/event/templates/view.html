@@ -21,13 +21,13 @@
 % if asset.starts:
         <tr>
             <th>Starts</th>
-            <td><time class="starts" datetime="${asset.starts.isoformat()}" title="Modification date.">${asset.starts.strftime(root.properties['org-contentment-formats-date'])}</time></td>
+            <td><time class="starts" datetime="${asset.starts.isoformat().rsplit('.')[0]}Z" title="Modification date.">${asset.starts.strftime(root.properties['org-contentment-formats-date'])}</time></td>
         </tr>
 % endif
 % if asset.stops:
         <tr>
             <th>Stops</th>
-            <td><time class="stops" datetime="${asset.stops.isoformat()}" title="Event ends on/at.">${asset.stops.strftime(root.properties['org-contentment-formats-date'])}</time></td>
+            <td><time class="stops" datetime="${asset.stops.isoformat().rsplit('.')[0]}Z" title="Event ends on/at.">${asset.stops.strftime(root.properties['org-contentment-formats-date'])}</time></td>
         </tr>
 % endif
     </tbody>
@@ -71,9 +71,9 @@ ${asset.rendered | n}
 % endif
 
 <div class="byline">
-    Created <time class="created" datetime="${asset.created.isoformat()}" title="Creation date.">${asset.created.strftime(root.properties['org-contentment-formats-date'])}</time>.
+    Created <time class="created" datetime="${asset.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">${asset.created.strftime(root.properties['org-contentment-formats-date'])}</time>.
     
 %     if asset.modified:
-    Last modified <time class="modified" datetime="${asset.modified.isoformat()}" title="Modification date.">${asset.modified.strftime(root.properties['org-contentment-formats-date'])}</time>.
+    Last modified <time class="modified" datetime="${asset.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">${asset.modified.strftime(root.properties['org-contentment-formats-date'])}</time>.
 %     endif
 </div>

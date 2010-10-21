@@ -11,7 +11,6 @@ from web.extras.contentment.components.asset.model import Asset
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['Comment']
-__model__ = __all__
 
 
 
@@ -23,7 +22,7 @@ class CommentAuthor(db.EmbeddedDocument):
 
 class Comment(Asset):
     content = db.StringField()
-    poster = db.EmbeddedDocumentField(CommentAuthor)
+    poster = db.EmbeddedDocumentField(CommentAuthor, default=None)
     
     @property
     def rendered(self):

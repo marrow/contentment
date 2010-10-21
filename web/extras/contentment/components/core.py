@@ -8,6 +8,7 @@ Handles low-level navigation
 import re
 
 import web
+import web.auth
 
 from web.core import Controller, request, session, http
 from web.utils.string import normalize

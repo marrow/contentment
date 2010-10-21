@@ -7,5 +7,5 @@ ${asset.rendered | n}
 ## TODO: Update for global date format.
 
 <div class="byline">
-    Created <time datetime="${asset.created.isoformat().split('.')[0]} UTC">on ${asset.created.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>.
+    Created <time datetime="${asset.created.isoformat().rsplit('.')[0]}Z">on ${asset.created.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>.
 </div>

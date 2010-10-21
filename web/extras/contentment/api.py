@@ -38,17 +38,21 @@ class IComponent(object):
         
         models = dict()
         
-        for name in dir(module):
+        for name in module.__all__:
             attr = getattr(module, name)
             
-            if not issubclass(attr, Asset):
+            try:
+                if not issubclass(attr, Asset):
+                    continue
+            
+            except:
                 continue
             
             attr._component = self
             
             # Allow overriding of the assigned controller class.
             # NOTE: This prohibits the use of an attribute called 'controller' in the schema!
-            if not getattr(j, 'controller', None):
+            if not getattr(attr, 'controller', None):
                 attr.controller = property(lambda self: self._component.controller(self))
             
             models[name] = attr
@@ -91,7 +95,7 @@ class SingletonMixIn(object):
         
         model = list(models.itervalues())[0]
         
-        return not model.objects
+        return not len(model.objects)
 
 
 class ITheme(IComponent, SingletonMixIn):

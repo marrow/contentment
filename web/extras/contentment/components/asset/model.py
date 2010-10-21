@@ -14,7 +14,6 @@ import mongoengine as db
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['Asset']
-__model__ = __all__
 
 
 
@@ -28,6 +27,8 @@ class Asset(db.Document):
     _component = None
     controller = None
     
+    id = db.ObjectIdField('_id')
+    
     # Relationship information.
     parent = db.GenericReferenceField(default=None)
     parents = db.ListField(db.GenericReferenceField(), default=[])
@@ -40,13 +41,14 @@ class Asset(db.Document):
     description = db.StringField()
     
     # Magic properties.
+    immutable = db.BooleanField(default=False)
     default = db.StringField(default="view:default", max_length=128)
     tags = db.ListField(db.StringField(max_length=32), default=[])
     properties = db.DictField(default={})
     
     # Ownership and dates.
     owner = db.GenericReferenceField()
-    created = db.DateTimeField(default=datetime.now)
+    created = db.DateTimeField(default=datetime.utcnow)
     modified = db.DateTimeField()
     
     def attach(self, parent):

@@ -177,22 +177,6 @@ Releases:
 
 })(jQuery);
 
-jQuery(document).ready(function(){
-    $.plugins({
-            plugins: [
-                    {
-                        id: 'timeago',
-                        js: '/static/js/jquery.timeago.js',
-                        fn: ['timeago'],
-                        ext: ['timeago'],
-                        sel: ['abbr.datetime', 'time']
-                    }
-                ]
-        });
-});
-
-
-
 // usage: log('inside coolFunc',this,arguments);
 // paulirish.com/2009/log-a-lightweight-wrapper-for-consolelog/
 window.log = function(){

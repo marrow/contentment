@@ -14,5 +14,12 @@ __model__ = __all__
 
 
 
+class Paths(db.EmbeddedDocument):
+    header = db.StringField(max_length=250, default="/settings/templates/header")
+    menu = db.StringField(max_length=250, default="/settings/templates/menu")
+    footer = db.StringField(max_length=250, default="/settings/templates/footer")
+
+
 class DefaultTheme(Asset):
-    pass
+    breadcrumb = db.BooleanField(default=True)
+    paths = db.EmbeddedDocumentField(Paths, default=Paths())

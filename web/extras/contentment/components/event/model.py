@@ -9,7 +9,6 @@ from web.extras.contentment.components.page.model import Page
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['EventContact', 'Event']
-__model__ = __all__
 
 
 

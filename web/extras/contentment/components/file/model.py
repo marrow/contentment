@@ -12,9 +12,9 @@ from web.extras.contentment.components.asset.model import Asset
 
 
 log = __import__('logging').getLogger(__name__)
-__all__ = ['Folder']
+__all__ = ['File']
 
 
 
-class Folder(Asset):
-    sort = db.StringField(max_length=250) # default sort order
+class File(Asset):
+    content = db.FileField()

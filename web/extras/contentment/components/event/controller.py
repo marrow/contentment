@@ -11,8 +11,6 @@ __all__ = ['EventController']
 
 
 class EventController(PageController):
-    """"""
-    
     _modify_form = "web.extras.contentment.components.event.templates.modify"
     
     def view_default(self):
