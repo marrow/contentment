@@ -426,7 +426,7 @@ header#top div.special menu li a:hover { color: white; text-decoration: none; }
 #navigation { background: #162c41; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; margin-top: -1px; position: relative; -webkit-box-shadow: 0px 0px 50px black; -moz-box-shadow: 0px 0px 50px black; z-index: 100; }
 #navigation menu { background: transparent url('/theme/static/img/nav.png') center top no-repeat; list-style: none; padding-top: 3px; position: relative; z-index: 150; }
 #navigation menu li { display: inline-block; margin-right: 3px; }
-#navigation menu li a { display: inline-block; padding: 10px 15px; color: white; text-decoration: none; font-weight: 800; line-height: 100%; -webkit-transition: background-color 0.25s linear; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; }
+#navigation menu li a { display: inline-block; padding: 10px 15px; color: white; text-decoration: none; font-weight: 800; line-height: 100%; -webkit-transition: background-color 0.25s linear; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; -moz-border-radius-topleft: 8px; -moz-border-radius-topright: 8px; }
 #navigation menu li a label { color: #eee; text-decoration: none; font-weight: 200; font-size: 77%; }
 #navigation menu li a:hover { background-color: rgba(192,192,192,0.25); }
 
@@ -502,7 +502,7 @@ form.contact textarea { height: 100px; }
 #breadcrumb menu { display: inline-block; list-style: none; }
 #breadcrumb li { display: inline-block; }
 #breadcrumb li a { display: inline-block; padding: 2px 5px; }
-#breadcrumb li a:hover { color: white; background-color: #19375A; -webkit-border-radius: 4px; text-decoration: none; }
+#breadcrumb li a:hover { color: white; background-color: #19375A; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; text-decoration: none; }
 #breadcrumb li:before { content: '▹ '; }
 #breadcrumb li:first-child:before { content: '⌂ '; }
 #breadcrumb li.current { padding: 2px 0; }
@@ -529,7 +529,7 @@ h1.primary { color: white; text-align: left; padding: 8px 10px; }
 
 menu.tabs h1 { color: white; vertical-align: top; line-height: 100%; margin: 0; padding: 0; position: absolute; left: 10px; top: 10px; }
 menu.tabs li { display: inline-block; margin: 0; padding: 0; }
-menu.tabs li a { font-weight: bold; font-size: 110%; color: white; display: inline-block; padding: 5px 8px; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; }
+menu.tabs li a { font-weight: bold; font-size: 110%; color: white; display: inline-block; padding: 5px 8px; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; -moz-border-radius-topleft: 8px; -moz-border-radius-topright: 8px; }
 menu.tabs li.active a, menu.tabs li a:hover { background-color: white; text-decoration: none; color: black; }
 menu.tabs li.active a { background-color: white; }
 
@@ -541,8 +541,8 @@ menu.tabs li.active a { background-color: white; }
     margin: 0;
     padding: 4px 5px 0;
     line-height: 100%;
+    
     border-radius: 2em;
-
     -webkit-border-radius: 2em;
     -moz-border-radius: 2em;
 
@@ -573,6 +573,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     
     -webkit-box-shadow: 0px 0px 4px black;
     -moz-box-shadow: 0px 0px 4px black;
+    border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     border-width: 0;
@@ -585,6 +586,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     
     -webkit-box-shadow: 0 0 0 white;
     -moz-box-shadow: 0 0 0 white;
+    border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     border-width: 0;
@@ -611,6 +613,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     margin: 0;
     border: none;
     line-height: 100%;
+    border-radius: 1.6em;
     -webkit-border-radius: 1.6em;
     -moz-border-radius: 1.6em;
     text-shadow: 0 1px 1px rgba(0, 0, 0, .3);
@@ -647,6 +650,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     background: -moz-linear-gradient(top,  #04acec,  #0186ba) !important; /* for firefox 3.6+ */
 
     color: #fff !important;
+    border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     text-shadow: 0 1px 1px rgba(0, 0, 0, .1);
