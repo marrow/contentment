@@ -605,7 +605,6 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
 
 /* main level link */
 .buttons a, .buttons button, .buttons input[type=button], .buttons input[type=submit] {
-    -moz-box-sizing: content-box;
     font-weight: bold;
     color: #e7e5e5;
     text-decoration: none;
