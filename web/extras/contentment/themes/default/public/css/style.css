@@ -471,7 +471,7 @@ h1 { font-size: 138.5%; font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, s
 h2 { font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; margin-bottom: 5px; margin-top: 15px; text-transform: uppercase; }
 h2:first-child { margin-top: 5px; }
 h3 { font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; margin-bottom: 5px; margin-top: 0px; text-transform: lowercase; }
-p { margin-bottom: 10px; }
+p, ul, ol { margin-bottom: 10px; }
 dt { clear: both; }
 
 dl.results dt { font-weight: bold; }
