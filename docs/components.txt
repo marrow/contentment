@@ -1,12 +1,13 @@
 File
 
 Address Book (contacts) [folder]
+Comment (copy page)
 @ Web Links
 Guest Book [folder]
 ok Blog [folder]
 ok Knowledge Base [folder]
 ok FAQ [folder]
-WIKI
+@ Wiki
 Search Results [folder]
 Survey/Poll
 Gallery/Slide Show [folder]
