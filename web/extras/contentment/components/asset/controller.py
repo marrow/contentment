@@ -18,7 +18,7 @@ from web.utils.object import yield_property
 
 from marrow.util.convert import tags
 
-# from web.extras.contentment.core import components, action, view
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.core import BaseController
 # from web.extras.contentment.components.asset.core import CoreMethods
 
@@ -58,24 +58,24 @@ class AssetController(BaseController):
     def view_default(self):
         return self.view_contents()
     
-    # @view("ACL")
+    @view("ACL", "Display the access control list rules that apply to this asset.")
     def view_acl(self):
-        return self._template('acl', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        return 'acl', None
     
-    # @view("Contents") # TODO: Roll above code into @view/action decorator.
+    @view("Contents", "Display a directory listing showing the contents of this asset.")
     def view_contents(self, sort=None):
-        return self._template('contents', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        return 'contents', None
     
-    # @action("Create") # TODO: Make this a RESTful method for GET/POST.
+    @action("Create", "Create a new asset.")
     def action_create(self, **kw):
-        return self._template('create', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        return 'create', None
     
-    # @action("Modify") # TODO: As per Create.
+    @action("Modify", "Modify this asset.")
     def action_modify(self, **kw):
         asset = self.asset
         
         if not kw:
-            return self._template('modify', base='.'.join(AssetController.__module__.split('.')[:-1]))
+            return 'modify', None
         
         if 'submit' in kw: del kw['submit']
         
@@ -91,9 +91,9 @@ class AssetController(BaseController):
         
         raise http.HTTPFound(location=asset.path + '/')
         
-        return self._template('modify', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        return 'modify', None
     
-    # @action("Delete")
+    @action("Delete", "Delete this asset and all of its descendants.")
     def action_delete(self, key=None, force=False):
         """Delete this asset and all descendants."""
         
@@ -107,7 +107,7 @@ class AssetController(BaseController):
         
         raise web.core.http.HTTPFound(location=parent_path)
         
-        return self._template('remove', base='.'.join(AssetController.__module__.split('.')[:-1]))
+        return 'remove', None
 
 
 # TODO: Remove old code.
@@ -184,20 +184,6 @@ class AssetController(BaseController):
         
         return ('genshi:web.extras.cmf.components.asset.views.create',
                 dict(kinds=kinds))
-    
-    
-    @action("Remove", icon='base-delete')
-    def _action_remove(self):
-        """Delete this asset and all descendants."""
-        
-        parent = self.asset.parent
-        l, r = self.asset.l, self.asset.r
-        self.asset.delete()
-        model.session.commit()
-        model.Asset.stargate(model.Asset.l > l, model.Asset.r > r, -(r - l + 1))
-        
-        flash("success::Successfully Deleted Asset::Succesfully removed asset.")
-        redirect(url(parent.path + '/'))
     
     # TODO Rewrite this to use Sprox.
     @action("Properties", icon='base-properties')

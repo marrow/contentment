@@ -2,7 +2,11 @@
 
 """Component, theme, and extension APIs."""
 
+import inspect
+
 from functools import wraps
+
+import web
 
 from web.utils.object import CounterMeta
 
@@ -142,15 +146,16 @@ class Decorator(object):
         kind, _, self.name = f.__name__.partition('_')
         assert kind == self.kind, "Decorator doesn't match method name.  Found %r, exepected %r." % (kind, self.kind)
         
+        name = self.name
         authorized = self.authorized
         
         @wraps(f)
         def inner(self, *args, **kw):
-            if not this.authorized(self.asset, web.auth.user):
+            if not authorized(self.asset):
                 raise web.core.http.HTTPUnauthorized
             
             template = "json:"
-            data = f(*args, **kw)
+            data = f(self, *args, **kw)
             
             if isinstance(data, basestring):
                 return data
@@ -164,35 +169,52 @@ class Decorator(object):
             data['root'] = Asset.objects(path='/').first()
             data['asset'] = self.asset
             
-            base = '.'.join(self.__module__.split('.')[:-1]) + '.templates.'
+            base = '.'.join(f.__module__.split('.')[:-1]) + '.templates.'
             
             # TODO: Allow overriding of templates by the theme.
             
             return 'mako:' + base + template, data
         
         # Match wrapped function argspec.
-        inner.__func_argspec__ = getattr(f, '__func_argspec__', inspect.getargspec(func))
+        inner.__func_argspec__ = getattr(f, '__func_argspec__', inspect.getargspec(f))
         
+        inner._counter = self._counter
+        inner.kind = kind
+        inner.name = name
+        inner.name_ = kind + ":" + name
+        inner.title = self.title
+        inner.description = self.description
+        inner.icon = self.icon
         inner.authorized = self.authorized
-        inner.allowed = property(self.allowed)
         
         return inner
     
-    def authorized(self, entity, identity):
+    def authorized(self, entity, identity=None):
         """Determine if a specific entity is allowed to use this method."""
-        pass
+        
+        if identity is None:
+            identity = web.auth.user.identity if web.auth.user else None
+        
+        for owner, rule in entity.acl_:
+            result = rule(entity, identity, self.kind, self.name)
+            
+            if result is True:
+                return True
+            
+            if result is False:
+                return False
+        
+        # Just to be safe.
+        return False
 
 
 class action(Decorator):
     kind = 'action'
-    pass
 
 
 class view(Decorator):
     kind = 'view'
-    pass
 
 
 class api(Decorator):
     kind = 'api'
-    pass

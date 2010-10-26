@@ -37,8 +37,12 @@
             <td class="date"><time class="modified" datetime="${child.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">${child.modified.strftime(root.properties['org-contentment-formats-date'])}</time></td>
 %     endif
             <td class="actions">
-                <a href="${child.path}/action:modify">Modify</a>,
-                <a class="delete-link" href="${asset.path}/action:delete">Delete</a>
+% for action in asset.controller.actions:
+<%    if action.name == 'create': continue %>
+%     if action.authorized(asset):
+                <a href="${child.path}/action:${action.name}" title="${action.description}">${action.title}</a>
+%     endif
+% endfor
             </td>
         </tr>
 % endfor
