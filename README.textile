@@ -1,3 +1,61 @@
 h1. Contentment
 
 bq. Powerful and extensible content management framework.
+
+h2. Getting Started with the Developer Preview
+
+h3. Installing WebCore
+
+Download and run the "webcore-bootstrap.py":http://www.web-core.org/webcore-bootstrap.py file:
+
+<pre><code>wget http://www.web-core.org/webcore-bootstrap.py
+python webcore-bootstrap.py --production contentment
+cd contentment
+. bin/activate
+mkdir var/{data,sessions,cache,locks} # Create some useful default folders.
+cd src</code></pre>
+
+Feel free to give the virtual environment a name other than @contentment@.
+
+h3. External Dependancies
+
+Contentment requires the latest (trunk, head, tip) version of @mongoengine@, available by running the following:
+
+<pre><code>git clone http://github.com/hmarr/mongoengine.git
+(cd mongoengine; python setup.py develop)</code></pre>
+
+h3. Getting Contentment
+
+<pre><code>git clone http://github.com/GothAlice/Contentment.git
+(cd Contentment; python setup.py develop)</code></pre>
+
+h3. Getting MongoDB
+
+Download Mongo from the "official website":http://www.mongodb.org/downloads, choosing a distribution that matches your architecture, e.g. 32-bit Linux, 64-bit Mac, etc.
+
+Extract the archive somewhere reasonable, and move the contents of the extracted @bin@ folder into the @bin@ folder of the virtual environment.  A quick way to start MongoDB, with your working directory being the @src@ folder:
+
+<pre><code>bin/mongod --dbpath `pwd`/../var/data --fork --logpath `pwd`/../var/log/mongod.log</code></pre>
+
+The above will start MongoDB in the background.
+
+h3. Creating the Initial Site
+
+Run the following to create a basic site in a MongoDB database called @cms@:
+
+<pre><code>cd Contentment
+python template.py</code></pre>
+
+No output indicates success.  If you want to use a different collection name, copy @template.py@ and modify to taste.
+
+h3. Starting the Site
+
+To use a site powered entirely by Contentment and Contentment modules (components, themes, extensions, etc.) all you need is an INI file.  Make sure you are in the Contentment folder and run:
+
+<pre><code>paster serve --reload development.ini</code></pre>
+
+The above will start a development web server serving on "@http://localhost:8080/@":http://localhost:8080/ and will monitor files for modification and restart as needed.
+
+Congratulations, Contentment is now running!
+
+If, in the previous step, you chose a different database name, you'll want to make a copy of @development.ini@ for yourself and update that, too.
