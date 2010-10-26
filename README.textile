@@ -12,7 +12,7 @@ Download and run the "webcore-bootstrap.py":http://www.web-core.org/webcore-boot
 python webcore-bootstrap.py --production contentment
 cd contentment
 . bin/activate
-mkdir var/{data,sessions,cache,locks} # Create some useful default folders.
+mkdir -p var/{data,sessions,cache,locks,log} # Create some useful default folders.
 cd src</code></pre>
 
 Feel free to give the virtual environment a name other than @contentment@.
