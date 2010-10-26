@@ -5,6 +5,7 @@
 Additional views on asset contents.
 """
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
 
 
@@ -14,6 +15,6 @@ __all__ = ['FolderController']
 
 
 class FolderController(AssetController):
-    # @view("Contents")
+    @view("Details", "A detailed contents view.")
     def view_details(self, sort=None):
-        return self._template('details', base='.'.join(FolderController.__module__.split('.')[:-1]))
+        return 'details', None

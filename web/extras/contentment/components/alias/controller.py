@@ -7,6 +7,7 @@ Referral tracking and link aggregation.
 
 import web
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
 
 
@@ -16,7 +17,7 @@ __all__ = ['AliasController']
 
 
 class AliasController(AssetController):
-    # @view("Default")
+    @view("Redirect", "Redirect automatically to a new location.")
     def view_default(self, sort=None):
         # TODO: Track link usage.
         # TODO: Optionally track via session.

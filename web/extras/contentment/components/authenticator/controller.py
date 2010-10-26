@@ -7,6 +7,7 @@ Handle login/logout, joining, and password recovery.
 
 import web
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
 
 from marrow.util.bunch import Bunch
@@ -18,11 +19,6 @@ __all__ = ['AuthenticatorController']
 
 
 class LoginMethod(web.core.RESTMethod):
-    def __init__(self, parent):
-        super(LoginMethod, self).__init__()
-        self.parent = parent
-        self._template = parent._template
-    
     def get(self, redirect=None):
         referrer = web.core.request.referrer or '/'
         referrer = '/' if referrer.endswith(web.core.request.script_name) else referrer
@@ -33,7 +29,7 @@ class LoginMethod(web.core.RESTMethod):
         if redirect is None:
             redirect = referrer
         
-        return self._template('login', dict(redirect=redirect), base='.'.join(LoginMethod.__module__.split('.')[:-1]))
+        return 'login', dict(redirect=redirect)
     
     def post(self, ajax=False, **kw):
         data = Bunch(kw)
@@ -45,17 +41,19 @@ class LoginMethod(web.core.RESTMethod):
         
         if not web.auth.authenticate(data.identity, data.password):
             log.warn("Authentication failed for %s.", data.identity)
-            return self._template('login', dict(redirect=data.redirect, identity=data.identity), base='.'.join(LoginMethod.__module__.split('.')[:-1]))
+            return 'login', dict(redirect=data.redirect, identity=data.identity)
         
         raise web.core.http.HTTPFound(location=data.redirect)
 
 
 class AuthenticatorController(AssetController):
-    def __init__(self, *args, **kw):
-        super(AuthenticatorController, self).__init__(*args, **kw)
-        
-        self.action_authenticate = LoginMethod(self)
+    _action = LoginMethod()
     
+    @action("Sign In", "Sign into an account on this site.")
+    def action_authenticate(self, *args, **kw):
+        return self._action(*args, **kw)
+    
+    @action("Sign Out", "Expire your session, signing you out.")
     def action_expire(self, ajax=False):
         if web.auth.authenticated:
             web.auth.deauthenticate()

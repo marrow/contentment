@@ -133,8 +133,8 @@ class Decorator(object):
     description = None
     icon = None
     
-    def __init__(self, title=None, description=None, icon=None):
-        self.name = None
+    def __init__(self, title=None, description=None, icon=None, name=None):
+        self.name = name
         
         if title: self.title = title
         if description: self.description = description
@@ -143,8 +143,9 @@ class Decorator(object):
     def __call__(self, f):
         from web.extras.contentment.components.asset.model import Asset
         
-        kind, _, self.name = f.__name__.partition('_')
-        assert kind == self.kind, "Decorator doesn't match method name.  Found %r, exepected %r." % (kind, self.kind)
+        if not self.name:
+            kind, _, self.name = f.__name__.partition('_')
+            assert kind == self.kind, "Decorator doesn't match method name.  Found %r, exepected %r." % (kind, self.kind)
         
         name = self.name
         authorized = self.authorized

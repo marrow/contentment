@@ -2,6 +2,7 @@
 
 """Basic comment controller."""
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
 
 
@@ -13,5 +14,6 @@ __all__ = ['CommentController']
 class CommentController(AssetController):
     _modify_form = "web.extras.contentment.components.comment.templates.modify"
     
+    @view("Comment", "Display comment with replies.")
     def view_default(self):
-        return self._template('view', base='.'.join(CommentController.__module__.split('.')[:-1]))
+        return 'view', None
