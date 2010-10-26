@@ -12,7 +12,7 @@
         <tr>
             <th class="handle"></th>
             <th class="name">Rule Owner</th>
-            <th class="detail">Asset Title</th>
+            <th class="detail">Rule</th>
         </tr>
     </thead>
     
@@ -23,7 +23,13 @@
 % for owner, rule in acl:
         <tr>
             <td class="handle">&#x2af6;&#x2af6;</td>
+%     if owner.path == '/':
+            <td class="name"><a href="${owner.path}/view:acl" title="View the acl of this ${owner.__class__.__name__} asset."><em>Site Root</em></a></td>
+%     elif not owner.name:
+            <td class="name"><a href="${owner.path}/view:acl" title="View the acl of this ${owner.__class__.__name__} asset."><em>No Name</em></a> (${owner.path})</td>
+%     else:
             <td class="name"><a href="${owner.path}/view:acl" title="View the acl of this ${owner.__class__.__name__} asset.">${owner.name}</a></td>
+%     endif
             <td class="detal">${rule}</td>
         </tr>
 % endfor
