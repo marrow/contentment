@@ -24,7 +24,7 @@ class LoginMethod(web.core.RESTMethod):
         self._template = parent._template
     
     def get(self, redirect=None):
-        referrer = web.core.request.referrer
+        referrer = web.core.request.referrer or '/'
         referrer = '/' if referrer.endswith(web.core.request.script_name) else referrer
         
         if web.auth.authenticated:
@@ -45,7 +45,7 @@ class LoginMethod(web.core.RESTMethod):
         
         if not web.auth.authenticate(data.identity, data.password):
             log.warn("Authentication failed for %s.", data.identity)
-            return self._template('login', dict(redirect=redirect, identity=data.identity), base='.'.join(LoginMethod.__module__.split('.')[:-1]))
+            return self._template('login', dict(redirect=data.redirect, identity=data.identity), base='.'.join(LoginMethod.__module__.split('.')[:-1]))
         
         raise web.core.http.HTTPFound(location=data.redirect)
 

@@ -40,7 +40,7 @@ class PasswordCredential(Credential):
 class Identity(Asset):
     meta = dict(indexes=[('credentials.kind', 'credentials.identity')])
     
-    email = db.StringField(max_length=250, required=True, unique=True)
+    email = db.StringField(max_length=250, required=True)
     
     credentials = db.ListField(db.EmbeddedDocumentField(PasswordCredential), default=[])
     

@@ -4,7 +4,8 @@ from datetime import datetime
 
 from hashlib import sha512
 
-from web.extras.contentment.components.asset.model import Asset, db
+from web.extras.contentment.components.asset.model import db
+from web.extras.contentment.components.asset.model import *
 from web.extras.contentment.components.folder.model import Folder
 from web.extras.contentment.components.page.model import Page
 from web.extras.contentment.components.event.model import Event, EventContact
@@ -27,8 +28,26 @@ root = Asset(name="", title="Contentment", default="default", immutable=True, pr
         'org-contentment-cache': True
     }) ; root.save()
 
+admin = Identity(name="admin", title="Administrator", email="webmaster@example.com")
+admin.save()
+
+root.acl.append(AdvancedACLRule(allow=False, permission="action:delete", attributes={'immutable': True}))
+        
+root.acl.append(OwnerACLRule(allow=True, permission="*"))
+root.acl.append(UserACLRule(allow=True, permission="*", reference=admin))
+        
+root.acl.append(InheritACLRules()) # child asset rules get inserted here. We want ^ to always take presidence.
+        
+root.acl.append(AllUsersACLRule(allow=True, permission="view:*"))
+        
+root.acl.append(AllUsersACLRule(allow=False, permission="*"))
+
+root.save()
+
+
 theme = DefaultTheme(name="theme", title="Default Theme", immutable=True); theme.save() ; theme.attach(root)
 users = Authenticator(name="users", title="Users", immutable=True) ; users.save() ; users.attach(root)
+
 events = Folder(name="events", title="Events") ; events.save() ; events.attach(root)
 
 settings = Settings(name="settings", title="Site Settings", immutable=True) ; settings.save() ; settings.attach(root)
@@ -36,8 +55,6 @@ extensions = Folder(name="extensions", title="Site Extensions", immutable=True) 
 templates = Folder(name="templates", title="Site Templates", immutable=True) ; templates.save() ; templates.attach(settings)
 
 
-admin = Identity(name="admin", title="Administrator", email="webmaster@example.com")
-admin.save()
 admin.attach(users)
 
 password = PasswordCredential(identity="admin")

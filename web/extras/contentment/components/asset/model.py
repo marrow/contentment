@@ -13,8 +13,54 @@ import mongoengine as db
 
 
 log = __import__('logging').getLogger(__name__)
-__all__ = ['Asset']
+__all__ = [
+        'Asset', 'ChangeSet', 'ACLRule',
+        'InheritACLRules', 'BaseACLRule', 'TargetedACLRule',
+        'AllUsersACLRule',
+        'AnonymousUsersACLRule',
+        'AuthenticatedUsersACLRule',
+        'OwnerACLRule',
+        'UserACLRule',
+        'GroupACLRule',
+        'AdvancedACLRule'
+    ]
 
+
+
+class ACLRule(db.EmbeddedDocument):
+    pass
+
+class InheritACLRules(ACLRule):
+    pass
+
+class BaseACLRule(ACLRule):
+    allow = db.BooleanField()
+    permission = db.StringField(max_length=250)
+    inheritable = db.BooleanField(default=True)
+
+class AllUsersACLRule(BaseACLRule):
+    pass
+
+class AnonymousUsersACLRule(BaseACLRule):
+    pass
+
+class AuthenticatedUsersACLRule(BaseACLRule):
+    pass
+
+class OwnerACLRule(BaseACLRule):
+    pass
+
+class TargetedACLRule(BaseACLRule):
+    reference = db.GenericReferenceField()
+
+class UserACLRule(TargetedACLRule):
+    pass
+
+class GroupACLRule(TargetedACLRule):
+    pass
+
+class AdvancedACLRule(BaseACLRule):
+    attributes = db.DictField(default=dict)
 
 
 class Asset(db.Document):
@@ -31,8 +77,8 @@ class Asset(db.Document):
     
     # Relationship information.
     parent = db.GenericReferenceField(default=None)
-    parents = db.ListField(db.GenericReferenceField(), default=[])
-    children = db.ListField(db.GenericReferenceField(), default=[])
+    parents = db.ListField(db.GenericReferenceField(), default=list)
+    children = db.ListField(db.GenericReferenceField(), default=list)
     path = db.StringField(default="/")
     
     # Basic properties.
@@ -43,13 +89,47 @@ class Asset(db.Document):
     # Magic properties.
     immutable = db.BooleanField(default=False)
     default = db.StringField(default="view:default", max_length=128)
-    tags = db.ListField(db.StringField(max_length=32), default=[])
-    properties = db.DictField(default={})
+    tags = db.ListField(db.StringField(max_length=32), default=list)
+    properties = db.DictField(default=dict)
+    acl = db.ListField(db.EmbeddedDocumentField(ACLRule), default=list)
     
     # Ownership and dates.
     owner = db.GenericReferenceField()
     created = db.DateTimeField(default=datetime.utcnow)
     modified = db.DateTimeField()
+    
+    @property
+    def acl_(self):
+        """Determine the canonical ACL for the current Asset instance.
+        
+        The method:
+        
+            1. Load the ACLs (just the ACLs) for all nodes from the current node to the root.
+            2. Separate the root ACL (it's special).
+            3. Iterate through the root ACL until hitting the 'inherit' node.
+            4. Iterate through the ACL for the current node.
+            5. If the current node inherits, change the current node to be its parent and repeat #4.
+            6. If we run out, continue processing the root ACL's final entries.
+        
+        The first ACL rule to return True or False wins.
+        """
+        
+        nodes = self.parents + [self]
+        root = nodes.pop(0)
+        
+        current = self
+        
+        
+        
+        while True:
+            for rule in current.acl.rules:
+                if current is self or rule.inheritable:
+                    yield current, rule
+            
+            if not current.parent:
+                break
+            
+            current = current.parent
     
     def attach(self, parent):
         if self.parent:
@@ -99,6 +179,20 @@ class Asset(db.Document):
     def descendants(self):
         """Return all descendants of this asset."""
         pass
+
+
+class ChangeSet(db.Document):
+    meta = dict(
+            collection="changesets",
+            ordering=['asset', 'date'],
+            indexes=[('asset', 'date')]
+        )
+    
+    id = db.ObjectIdField('_id')
+    
+    asset = db.ReferenceField(Asset)
+    date = db.DateTimeField(default=datetime.utcnow)
+    changes = db.DictField(default=dict)
 
 
 '''

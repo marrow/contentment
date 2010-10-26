@@ -58,6 +58,10 @@ class AssetController(BaseController):
     def view_default(self):
         return self.view_contents()
     
+    # @view("ACL")
+    def view_acl(self):
+        return self._template('acl', base='.'.join(AssetController.__module__.split('.')[:-1]))
+    
     # @view("Contents") # TODO: Roll above code into @view/action decorator.
     def view_contents(self, sort=None):
         return self._template('contents', base='.'.join(AssetController.__module__.split('.')[:-1]))

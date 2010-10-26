@@ -2,9 +2,14 @@
 
 """Component, theme, and extension APIs."""
 
+from functools import wraps
 
-__all__ = ['IComponent', 'ITheme', 'IExtension']
+from web.utils.object import CounterMeta
+
+
+__all__ = ['IComponent', 'ITheme', 'IExtension', 'action', 'view']
 log = __import__('logging').getLogger(__name__)
+
 
 
 class IComponent(object):
@@ -108,3 +113,86 @@ class IExtension(IComponent, SingletonMixIn):
     def authorize(self, container, child):
         """Extensions can not have child nodes."""
         return False
+
+
+
+
+
+class Decorator(object):
+    """Implements method security, convienent template lookup, and theme-override of templates."""
+    
+    __metaclass__ = CounterMeta
+    
+    kind = None
+    
+    title = None
+    description = None
+    icon = None
+    
+    def __init__(self, title=None, description=None, icon=None):
+        self.name = None
+        
+        if title: self.title = title
+        if description: self.description = description
+        if icon: self.icon = icon
+    
+    def __call__(self, f):
+        from web.extras.contentment.components.asset.model import Asset
+        
+        kind, _, self.name = f.__name__.partition('_')
+        assert kind == self.kind, "Decorator doesn't match method name.  Found %r, exepected %r." % (kind, self.kind)
+        
+        authorized = self.authorized
+        
+        @wraps(f)
+        def inner(self, *args, **kw):
+            if not this.authorized(self.asset, web.auth.user):
+                raise web.core.http.HTTPUnauthorized
+            
+            template = "json:"
+            data = f(*args, **kw)
+            
+            if isinstance(data, basestring):
+                return data
+            
+            if isinstance(data, tuple):
+                template, data = data
+            
+            if data is None:
+                data = dict()
+            
+            data['root'] = Asset.objects(path='/').first()
+            data['asset'] = self.asset
+            
+            base = '.'.join(self.__module__.split('.')[:-1]) + '.templates.'
+            
+            # TODO: Allow overriding of templates by the theme.
+            
+            return 'mako:' + base + template, data
+        
+        # Match wrapped function argspec.
+        inner.__func_argspec__ = getattr(f, '__func_argspec__', inspect.getargspec(func))
+        
+        inner.authorized = self.authorized
+        inner.allowed = property(self.allowed)
+        
+        return inner
+    
+    def authorized(self, entity, identity):
+        """Determine if a specific entity is allowed to use this method."""
+        pass
+
+
+class action(Decorator):
+    kind = 'action'
+    pass
+
+
+class view(Decorator):
+    kind = 'view'
+    pass
+
+
+class api(Decorator):
+    kind = 'api'
+    pass
