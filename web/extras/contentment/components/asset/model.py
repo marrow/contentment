@@ -28,12 +28,16 @@ __all__ = [
 
 
 class ACLRule(db.EmbeddedDocument):
-    pass
+    def __str__(self):
+        return self.__class__.__name__
 
 class InheritACLRules(ACLRule):
     pass
 
 class BaseACLRule(ACLRule):
+    def __str__(self):
+        return self.__class__.__name__ + "(" + ("allow" if self.allow else "deny") + ", " + self.permission + ")"
+    
     allow = db.BooleanField()
     permission = db.StringField(max_length=250)
     inheritable = db.BooleanField(default=True)
@@ -51,6 +55,9 @@ class OwnerACLRule(BaseACLRule):
     pass
 
 class TargetedACLRule(BaseACLRule):
+    def __str__(self):
+        return "%s(%s, %s, %r)" % (self.__class__.__name__, "allow" if self.allow else "deny", self.permission, self.reference)
+    
     reference = db.GenericReferenceField()
 
 class UserACLRule(TargetedACLRule):
@@ -60,6 +67,9 @@ class GroupACLRule(TargetedACLRule):
     pass
 
 class AdvancedACLRule(BaseACLRule):
+    def __str__(self):
+        return "AdvancedACLRule(%s, %s, %r)" % ("allow" if self.allow else "deny", self.permission, self.attributes)
+    
     attributes = db.DictField(default=dict)
 
 
@@ -119,17 +129,14 @@ class Asset(db.Document):
         
         current = self
         
-        
-        
-        while True:
-            for rule in current.acl.rules:
-                if current is self or rule.inheritable:
-                    yield current, rule
+        for rule in root.acl:
+            if not isinstance(rule, InheritACLRules):
+                yield root, rule
+                continue
             
-            if not current.parent:
-                break
-            
-            current = current.parent
+            for node in reversed(nodes):
+                for rule in node.acl:
+                    yield node, rule
     
     def attach(self, parent):
         if self.parent:
