@@ -241,6 +241,15 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     
     padding-top: 5px; padding-bottom: 7px;
 }
+.buttons.assetmenu > li.nested:hover > a, .buttons > li.nested:hover > button, .buttons > li.nested:hover > input[type=button], .buttons > li.nested:hover > input[type=submit] {
+    border-radius: 1em;
+    -webkit-border-radius: 1em;
+    -moz-border-radius: 1em;
+    -moz-border-radius-bottomleft: 0;
+    -moz-border-radius-bottomright: 0;
+    -webkit-border-bottom-left-radius: 0;
+    -webkit-border-bottom-right-radius: 0;
+}
 /* sub levels link hover */
 .buttons menu li:hover a, .buttons li:hover li a {
     background: none;
@@ -286,6 +295,9 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
     box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
     z-index: 1000;
+    
+    -webkit-border-top-left-radius: 0;
+    -moz-border-radius-topleft: 0;
 }
 .buttons label { display: block; font-weight: normal; font-size: 80%; padding: 0; margin: 5px 0 0; line-height: 100%; }
 .buttons li.label label { display: block; font-weight: bold; font-size: inherit; padding: 10px; margin: 0 0 0; line-height: 100%; cursor: inherit; border-top: 2px groove white; }
@@ -314,13 +326,13 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     top: -3px;
 }
 /* rounded corners for first and last child */
-.buttons menu li:first-child > a {
-    -webkit-border-top-left-radius: 9px;
-    -moz-border-radius-topleft: 9px;
+.buttons menu li:first-child > a, .buttons.assetmenu menu li:first-child > a {
+    -webkit-border-top-left-radius: 0;
+    -moz-border-radius-topleft: 0;
     -webkit-border-top-right-radius: 9px;
     -moz-border-radius-topright: 9px;
 }
-.buttons menu li:last-child > a {
+.buttons menu li:last-child > a, .buttons.assetmenu menu li:last-child > a {
     -webkit-border-bottom-left-radius: 9px;
     -moz-border-radius-bottomleft: 9px;
     -webkit-border-bottom-right-radius: 9px;
