@@ -38,23 +38,6 @@ class AssetController(BaseController):
         
         # self.api_core = CoreMethods(self)
     
-    def _template(self, name, data=None, base=None):
-        from web.extras.contentment.components.asset.model import Asset
-        
-        if data is None:
-            data = dict()
-        
-        data['root'] = Asset.objects(path='/').first()
-        data['asset'] = self.asset
-        
-        if base is None:
-            base = '.'.join(self.__module__.split('.')[:-1])
-        
-        return (
-                'mako:' + base + '.templates.' + name,
-                data
-            )
-    
     def view_default(self):
         return self.view_contents()
     
