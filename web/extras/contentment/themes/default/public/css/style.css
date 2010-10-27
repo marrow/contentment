@@ -103,7 +103,7 @@ form.contact input[type=text], form.contact input[type=tel], form.contact input[
 form.contact textarea { height: 100px; }
 
 
-#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: -webkit-gradient(linear, left center, left bottom, from(#fff), to(#d0d0d0)); position: relative; z-index: 200; }
+#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: -webkit-gradient(linear, left center, left bottom, from(#fff), to(#d0d0d0)); }
 #breadcrumb label { display: inline-block; color: white; text-shadow: 0px 1px 2px #d0d0d0; float: right; padding: 2px 5px; }
 #breadcrumb menu { display: inline-block; list-style: none; }
 #breadcrumb li { display: inline-block; }
@@ -270,19 +270,26 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
 
     display: none;
     margin: 0;
-    padding: 0;
-    width: 185px;
+    padding: 2px;
+    width: auto;
+    height: auto;
+    white-space: nowrap;
     position: absolute;
     top: 2em;
     left: 0;
-    border: solid 1px #b4b4b4;
+    line-height: 100%;
+    border: solid 0px #b4b4b4;
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     border-radius: 10px;
     -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
     -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
     box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+    z-index: 1000;
 }
+.buttons label { display: block; font-weight: normal; font-size: 80%; padding: 0; margin: 5px 0 0; line-height: 100%; }
+.buttons li.label label { display: block; font-weight: bold; font-size: inherit; padding: 10px; margin: 0 0 0; line-height: 100%; cursor: inherit; border-top: 2px groove white; }
+.buttons li a span { margin-left: 0.5ex; color: #bbb; font-weight: normal; }
 .buttons .fr menu {
     left: auto;
     right: 0;
@@ -297,8 +304,9 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
     padding: 0;
 }
 .buttons menu a {
-    font-weight: normal;
+    font-weight: bold;
     text-shadow: 0 1px 1px rgba(255, 255, 255, .9);
+    padding: 10px;
 }
 /* level 3+ list */
 .buttons menu menu {

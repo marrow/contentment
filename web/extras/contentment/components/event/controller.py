@@ -2,6 +2,7 @@
 
 """Basic event controller."""
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.page.controller import PageController
 
 
@@ -13,5 +14,6 @@ __all__ = ['EventController']
 class EventController(PageController):
     _modify_form = "web.extras.contentment.components.event.templates.modify"
     
+    @view("Event", "Display event details.")
     def view_default(self):
-        return self._template('view', base='.'.join(EventController.__module__.split('.')[:-1]))
+        return 'view', None

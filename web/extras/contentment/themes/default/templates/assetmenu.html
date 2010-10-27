@@ -1,8 +1,32 @@
 <menu class="buttons assetmenu">
-    <li class="nested"><a href="#">View</a></li>
-    <li class="nested"><a class="create-link" href="./action:create">Create</a></li>
-    <li><a class="modify-link" href="${asset.path}/action:modify">Modify</a></li>
-    <li><a class="delete-link" href="${asset.path}/action:delete">Delete</a></li>
+    <li class="nested"><a href="#">View</a><menu>
+% for view in asset.controller.views:
+%     if view.authorized(asset):
+            <li><a href="${asset.path if asset.parents else ''}/view:${view.name}" title="${view.description}">
+                ${view.title}
+%         if asset.default == view.name_:
+                <span>Default</span>
+%         endif
+                <label>${view.description}</label>
+            </a></li>
+%     endif
+% endfor
+% if asset.parent and asset.name == asset.parent.default:
+            <li class="label"><label>Parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>
+%     for view in asset.parent.controller.views:
+%         if view.authorized(asset):
+            <li><a href="${asset.parent.path if asset.parent.parents else ''}/view:${view.name}" title="${view.description}">${view.title}<label>${view.description}</label></a></li>
+%         endif
+%     endfor
+% endif
+        </menu></li>
+    
+% for action in asset.controller.actions:
+%     if action.authorized(asset):
+    <li><a href="${asset.path}/action:${action.name}" title="${action.description}">${action.title}</a></li>
+%     endif
+% endfor
+    
     <div class="fr">
         <li><a href="/settings">Settings</a></li>
     </div>

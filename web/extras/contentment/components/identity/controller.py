@@ -5,6 +5,7 @@
 User management and administration.
 """
 
+from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
 
 

@@ -56,7 +56,29 @@ class BaseController(Controller):
             log.exception("Error loading model instance for %r instance using %r.", self.__class__.__name__, identifier)
             raise http.HTTPNotFound("Unable to find resource at this location.")
         
-        # TODO: Load up the actions and views for this asset.
+        
+        def find_instances(kind):
+            items = []
+            
+            for name in dir(self):
+                if not name.startswith('action_') and not name.startswith('view_') and not name.startswith('api_'):
+                    continue
+                
+                try:
+                    value = getattr(self, name)
+                
+                except:
+                    continue
+                
+                if hasattr(value, 'kind') and value.kind == kind:
+                    items.append(value)
+            
+            items.sort(key=lambda i: i._counter)
+            
+            return items
+        
+        self.actions = find_instances('action')
+        self.views = find_instances('view')
     
     def __lookup__(self, *remainder, **kw):
         from web.extras.contentment.components.asset.model import Asset
