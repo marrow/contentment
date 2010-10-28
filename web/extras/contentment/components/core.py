@@ -30,32 +30,26 @@ class BaseController(Controller):
     
     @property
     def asset(self):
-        if self._asset:
-            return self._asset
-        
         from web.extras.contentment.components.asset.model import Asset
         
-        self._asset = Asset.objects(path='/').first()
-        
-        return self._asset
-    
-    def __init__(self, identifier=None):
-        """Initialize the controller for the given model instance."""
-        
-        self._asset = None
-        
-        super(BaseController, self).__init__()
+        identifier = self._identifier
         
         try:
-            from web.extras.contentment.components.asset.model import Asset
+            if isinstance(identifier, Asset): return identifier
+            elif identifier is not None: return Asset.objects.with_id(identifier)
             
-            if isinstance(identifier, Asset): self._asset = identifier
-            elif identifier is not None: self._asset = Asset.objects.with_id(identifier)
+            return Asset.objects(path='/').first()
         
         except:
             log.exception("Error loading model instance for %r instance using %r.", self.__class__.__name__, identifier)
             raise http.HTTPNotFound("Unable to find resource at this location.")
+    
+    def __init__(self, identifier=None):
+        """Initialize the controller for the given model instance."""
         
+        self._identifier = identifier
+        
+        super(BaseController, self).__init__()
         
         def find_instances(kind):
             items = []
@@ -89,6 +83,28 @@ class BaseController(Controller):
             return self, [asset.default]
         
         remainder = list(remainder)
+        
+        if web.core.request.script_name == '':
+            # Path-based lookup, used only when starting from the site root.
+            
+            paths = []
+            
+            for i in xrange(1, len(remainder) + (0 if ':' in remainder[-1] else 1)):
+                paths.append('/' + '/'.join(remainder[:i]))
+            
+            nearest = Asset.objects(path__in=paths).order_by('-path').first()
+            
+            if nearest:
+                consumed = paths.index(nearest.path) + 1
+                
+                remainder = remainder[consumed:]
+                for i in range(consumed):
+                    web.core.request.path_info_pop()
+                
+                return nearest.controller, remainder if remainder else [nearest.default]
+        
+        # Attribute-based lookup.
+        
         node = remainder.pop(0)
         
         log.debug("Looking in %r for %r *%r...", self, node, remainder)
@@ -96,46 +112,14 @@ class BaseController(Controller):
         if ":" in node:
             return self, [node.replace(":", "_")] + list(remainder)
         
-        # TODO: Path-based lookup; far more efficient!
-        
         if isinstance(node, basestring):
             record = Asset.objects(name=node, parent=asset).first()
             
             if not record:
                 raise http.HTTPNotFound("Unable to find resource at this location.")
             
+            web.core.request.path_info_pop()
+            
             return record.controller, remainder if remainder else [record.default]
         
         raise http.HTTPNotFound("Unable to find resource at this location.")
-
-
-'''
-    
-    
-    
-    
-    def __init__(self, guid=None):
-        # Load up the actions and views for this asset.  TODO: Load them from available hooks, too, to allow extensions to extend/override base classes.
-        
-        def find_instances(kind):
-            items = []
-            
-            for name in dir(self):
-                value = getattr(self, name)
-                #if callable(value) and name.startswith('_view_'):
-                #    log.debug("Property called %r is callable: %r", name, value.__dict__)
-                
-                if hasattr(value, 'kind') and value.kind[0] == kind:
-                    items.append((name, value))
-            
-            items.sort(key=lambda i: i[1]._counter, reverse=True)
-            # items = [i for i in items if i[1].authorized(self.asset)]
-            
-            return items
-        
-        self.actions = find_instances('action')
-        self.views = find_instances('view')
-    
-
-
-'''

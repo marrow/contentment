@@ -19,6 +19,8 @@ class EventContact(db.EmbeddedDocument):
 
 
 class Event(Page):
+    default = db.StringField(default="view:event", max_length=128)
+    
     organizer = db.StringField(max_length=250)
     location = db.StringField(max_length=250)
     starts = db.DateTimeField()

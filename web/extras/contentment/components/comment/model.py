@@ -21,6 +21,8 @@ class CommentAuthor(db.EmbeddedDocument):
 
 
 class Comment(Asset):
+    default = db.StringField(default="view:comment", max_length=128)
+    
     content = db.StringField()
     poster = db.EmbeddedDocumentField(CommentAuthor, default=None)
     

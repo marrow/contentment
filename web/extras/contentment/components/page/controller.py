@@ -18,5 +18,5 @@ class PageController(AssetController):
     _modify_form = "web.extras.contentment.components.page.templates.modify"
     
     @view("Page", "View rendered version of this page.")
-    def view_default(self):
+    def view_page(self):
         return 'view', None

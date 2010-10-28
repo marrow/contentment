@@ -9,37 +9,8 @@ from web.extras.cmf                             import model as db
 from sqlalchemy                                 import func, or_, and_
 
 
-
 log = __import__('logging').getLogger(__name__)
 
-
-# TODO: Split this into a separate decorator.
-cache = """
-def cache():
-    # Determine the latest creation/modification time.
-    # TODO: Otptimize this to return a single value from the query rather than an object.
-    if scope == "asset":
-        latest = max([self.asset.modified if self.asset.modified else datetime(1984, 9, 21), self.asset.created if self.asset.created else datetime(1984, 9, 21)])
-        
-    else:
-        latest = getattr(self.asset, scope)
-        latest = latest.order_by(func.if_(Asset.modified > Asset.created, Asset.modified, Asset.created).desc()).first()
-        latest = max([latest.modified if latest.modified else datetime(1984, 9, 21), latest.created if latest.created else datetime(1984, 9, 21)])
-    
-    # Get a canonicalized set of arguments.
-    hashable = [(i, j) for i, j in kw.iteritems()]
-    hashable.sort()
-    hashable = tuple([self.asset.id, scope, latest] + list(args) + hashable)
-    
-    log.debug("Cache hashable: %r", hashable)
-    
-    def createfunc():
-        log.debug("Cache invalid or non-existant for %r, generating.", self.asset)
-        return fn(self, *args, **kw)
-    
-    result = viewcache.get_value(key=hashable, createfunc=createfunc, expiretime=cache)
-    if isinstance(result, dict): result.update(cmf=cmf_namespace, asset=self.asset, controller=self)
-    return result"""
 
 
 class BaseDecorator(object):
@@ -62,36 +33,6 @@ class BaseDecorator(object):
     def prepare(self, controller):
         cmf_namespace = adict(web.extras.cmf.core.namespace)
         cmf_namespace.root = db.session.query(db.Asset).filter_by(l=1).one()
-        # cmf_namespace.flash = AttrDict(dict(status=tg.get_status(), message=tg.get_flash())) if tg.get_flash() else AttrDict()
-        
-        """
-        query = db.session.query(db.Extension).filter(
-                db.Extension.published <= func.now()
-            ).filter(
-                or_(
-                        db.Extension.retracted == None,
-                        db.Extension.retracted >= func.now()
-                    )
-            )
-        """
-        
-        query = []
-        for extension in query:
-            log.debug("Processing extension %r for request.", extension)
-            ec = extension.controller
-            
-            if hasattr(ec, 'namespace'):
-                log.debug("Extension has namespace components.")
-                cmf_namespace.update(ec.namespace)
-            
-            if hasattr(ec, 'inject'):
-                log.debug("Extension has ToscaWidgets injection components.")
-                ec.inject(controller)
-            
-            if hasattr(ec, 'template'):
-                log.debug("Extension has Genshi template components.")
-                if not isinstance(cmf_namespace.master, list): cmf_namespace.master = [cmf_namespace.master]
-                if dotted.get_dotted_filename(ec.template) not in cmf_namespace.master: cmf_namespace.master.append(dotted.get_dotted_filename(ec.template))
         
         return cmf_namespace
     
@@ -125,3 +66,62 @@ class view(BaseDecorator):
 
 class action(BaseDecorator):
     kind = 'action'
+
+
+
+'''
+def cache():
+    # Determine the latest creation/modification time.
+    # TODO: Otptimize this to return a single value from the query rather than an object.
+    if scope == "asset":
+        latest = max([self.asset.modified if self.asset.modified else datetime(1984, 9, 21), self.asset.created if self.asset.created else datetime(1984, 9, 21)])
+        
+    else:
+        latest = getattr(self.asset, scope)
+        latest = latest.order_by(func.if_(Asset.modified > Asset.created, Asset.modified, Asset.created).desc()).first()
+        latest = max([latest.modified if latest.modified else datetime(1984, 9, 21), latest.created if latest.created else datetime(1984, 9, 21)])
+    
+    # Get a canonicalized set of arguments.
+    hashable = [(i, j) for i, j in kw.iteritems()]
+    hashable.sort()
+    hashable = tuple([self.asset.id, scope, latest] + list(args) + hashable)
+    
+    log.debug("Cache hashable: %r", hashable)
+    
+    def createfunc():
+        log.debug("Cache invalid or non-existant for %r, generating.", self.asset)
+        return fn(self, *args, **kw)
+    
+    result = viewcache.get_value(key=hashable, createfunc=createfunc, expiretime=cache)
+    if isinstance(result, dict): result.update(cmf=cmf_namespace, asset=self.asset, controller=self)
+    return result
+
+"""
+query = db.session.query(db.Extension).filter(
+        db.Extension.published <= func.now()
+    ).filter(
+        or_(
+                db.Extension.retracted == None,
+                db.Extension.retracted >= func.now()
+            )
+    )
+"""
+
+query = []
+for extension in query:
+    log.debug("Processing extension %r for request.", extension)
+    ec = extension.controller
+    
+    if hasattr(ec, 'namespace'):
+        log.debug("Extension has namespace components.")
+        cmf_namespace.update(ec.namespace)
+    
+    if hasattr(ec, 'inject'):
+        log.debug("Extension has ToscaWidgets injection components.")
+        ec.inject(controller)
+    
+    if hasattr(ec, 'template'):
+        log.debug("Extension has Genshi template components.")
+        if not isinstance(cmf_namespace.master, list): cmf_namespace.master = [cmf_namespace.master]
+        if dotted.get_dotted_filename(ec.template) not in cmf_namespace.master: cmf_namespace.master.append(dotted.get_dotted_filename(ec.template))
+'''

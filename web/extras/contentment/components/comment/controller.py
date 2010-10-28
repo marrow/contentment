@@ -15,5 +15,5 @@ class CommentController(AssetController):
     _modify_form = "web.extras.contentment.components.comment.templates.modify"
     
     @view("Comment", "Display comment with replies.")
-    def view_default(self):
+    def view_comment(self):
         return 'view', None

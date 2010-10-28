@@ -11,6 +11,8 @@ __all__ = ['Alias']
 
 
 class Alias(Asset):
+    default = db.StringField(default="view:redirect", max_length=128)
+    
     target = db.StringField()
     
     hits = db.IntField(min_value=0, default=0)

@@ -18,7 +18,7 @@ __all__ = ['AliasController']
 
 class AliasController(AssetController):
     @view("Redirect", "Redirect automatically to a new location.")
-    def view_default(self, sort=None):
+    def view_redirect(self, sort=None):
         # TODO: Track link usage.
         # TODO: Optionally track via session.
         raise web.core.http.HTTPSeeOther(location=self.asset.target)

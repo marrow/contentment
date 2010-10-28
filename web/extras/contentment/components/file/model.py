@@ -17,4 +17,5 @@ __all__ = ['File']
 
 
 class File(Asset):
+    default = db.StringField(default="view:preview", max_length=128)
     content = db.FileField()

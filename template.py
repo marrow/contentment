@@ -11,6 +11,7 @@ from web.extras.contentment.components.page.model import Page
 from web.extras.contentment.components.event.model import Event, EventContact
 from web.extras.contentment.components.identity.model import PasswordCredential, Identity
 from web.extras.contentment.components.authenticator.model import Authenticator
+from web.extras.contentment.components.search.model import Search
 from web.extras.contentment.components.settings.model import Settings
 from web.extras.contentment.themes.default.model import DefaultTheme
 
@@ -22,13 +23,13 @@ Asset.drop_collection()
 root = Asset(name="", title="Contentment", default="default", immutable=True, properties={
         'org-contentment-formats-date': '%B %e, %G at %H:%M:%S',
         'org-contentment-theme': 'web.extras.contentment.themes.default',
-        'org-contentment-option-attribution': False,
+        'org-contentment-option-attribution': True,
         'org-contentment-option-showdates': True,
         'org-contentment-lang': 'en',
         'org-contentment-cache': True
     })
 
-admin = Identity(name="admin", title="Administrator", email="webmaster@example.com") ; admin.save()
+admin = Identity(name="admin", title="Site Administrator", email="webmaster@example.com") ; admin.save()
 
 root.acl.append(AdvancedACLRule(allow=False, permission="action:delete", attributes={'immutable': True}))
 root.acl.append(OwnerACLRule(allow=True, permission="*"))
@@ -88,9 +89,15 @@ footer = Page(name="footer", title="Global Site Footer", engine="raw", content=u
 ) ; footer.save() ; footer.attach(templates)
 
 
-default = Page(name="default", title="Welcome", content="""h1. Welcome to Contentment
+search = Search(name="search", title="Site Search", default="view:search") ; search.save() ; search.attach(root)
+
+
+default = Page(name="default", title="Welcome", owner=admin, content="""h1. Welcome to Contentment
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."""
 ) ; default.save() ; default.attach(root)
+
+
+_ = Page(name="delete-me", title="Delete me!", content="""h1. Welcome to Contentment""") ; _.save() ; _.attach(root)

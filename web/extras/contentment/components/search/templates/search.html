@@ -1,16 +1,14 @@
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
 <%def name="title()">${asset.title}</%def>        
+<%def name="bodyclass()">search</%def>
 
-<h1 class="primary">${asset.title}</h1>
-
-% if not asset.contents:
-<h2>This folder is empty.</h2>
-% else:
+% if q:
+<h1 class="primary">Search results for: ${q}</h1>
 
 <dl class="details">
 <% skipped = 0 %>
-% for child in asset.contents:
+% for child in results:
 <% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
 %   if child.owner:
@@ -29,13 +27,23 @@
 %   if child.modified:
   <dd class="age icon updated">Last modified <time class="modified" datetime="${child.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">on ${child.modified.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
 %   endif
-%   endif
 % endfor
 </dl>
 
 <div class="byline tc">
-<% count = len(asset.contents) - skipped %>
-    Contains <strong>${count}</strong> Asset${'' if count == 1 else 's'}
+<% count = len(results) - skipped %>
+    <strong>${count if count else 'No'}</strong> Search Result${'' if count == 1 else 's'}
 </div>
+
+% if not count and asset.query is None:
+<h2>No results found.  Please widen your search criteria.</h2>
+
+<form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
+% endif
+
+% else:
+
+<h1 class="primary">${title()}</h1>
+<form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
 
 % endif
