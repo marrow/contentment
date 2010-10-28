@@ -133,6 +133,7 @@ class AdvancedACLRule(BaseACLRule):
     attributes = db.DictField(default=dict)
 
 
+
 class Asset(db.Document):
     def __repr__(self):
         return '%s(%s, "%s")' % (self.__class__.__name__, self.path, self.title)
@@ -242,7 +243,13 @@ class Asset(db.Document):
         # Re-index indexable columns.
         index = []
         
-        for i in self._indexable:
+        indexable = []
+        for base in reversed(type.mro(type(self))):
+            indexable.extend(getattr(base, '_indexable', []))
+        
+        indexable = set(indexable)
+        
+        for i in indexable:
             value = getattr(self, i)
             
             if isinstance(value, basestring):

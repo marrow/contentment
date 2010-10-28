@@ -20,9 +20,12 @@ __all__ = ['Page']
 
 
 class Page(Asset):
+    _indexable = ['content']
+    
     content = db.StringField()
     engine = db.StringField(max_length=250, default="textile")
     template = db.StringField(max_length=250)
+    related = db.ListField(db.ReferenceField(Asset), default=list)
     
     @property
     def rendered(self):

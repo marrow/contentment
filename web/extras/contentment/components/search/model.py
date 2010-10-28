@@ -4,6 +4,7 @@ import mongoengine as db
 
 from marrow.util.convert import terms as keywords
 
+from web.extras.contentment.components.asset.model import Asset
 from web.extras.contentment.components.folder.model import Folder
 
 
@@ -20,14 +21,20 @@ class Search(Folder):
     contents = property(lambda self: self.results())
     
     def results(self, query=None):
-        from web.extras.contentment.components.asset.model import Asset
-        
         if query is None: query = self.query
         if query is None: return []
         
         terms = keywords(query.lower())
         terms = (set(terms[0] + terms[1]), set(terms[2]))
         query = {}
+        
+        for term in list(terms[0]):
+            if ':' in term:
+                terms[0].remove(term)
+            
+            if term.startswith('tag:'):
+                if 'tags__all' not in query: query['tags__all'] = []
+                query['tags__all'].append(term[4:])
         
         if terms[0]: query['index__in'] = terms[0]
         if terms[1]: query['index__nin'] = terms[1]
