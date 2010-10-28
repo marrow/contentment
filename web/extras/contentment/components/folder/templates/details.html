@@ -29,7 +29,6 @@
 %   if child.modified:
   <dd class="age icon updated">Last modified <time class="modified" datetime="${child.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">on ${child.modified.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
 %   endif
-%   endif
 % endfor
 </dl>
 
