@@ -89,7 +89,7 @@ footer = Page(name="footer", title="Global Site Footer", engine="raw", content=u
 ) ; footer.save() ; footer.attach(templates)
 
 
-search = Search(name="search", title="Site Search", default="view:search") ; search.save() ; search.attach(root)
+search = Search(name="search", title="Site Search") ; search.save() ; search.attach(root)
 
 
 default = Page(name="default", title="Welcome", owner=admin, content="""h1. Welcome to Contentment
