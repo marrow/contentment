@@ -4,11 +4,12 @@
 <%def name="bodyclass()">search</%def>
 
 % if q:
-<h1 class="primary">${count if count else 'No'} search result${'' if count == 1 else 's'} for: ${q}</h1>
+<h1 class="primary">Search results for: ${q}</h1>
 
-% if count:
 <dl class="details">
+<% skipped = 0 %>
 % for child in results:
+<% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
 %   if child.owner:
   <dd class="byline">by <a href="">${child.owner.name}</a> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
@@ -30,16 +31,16 @@
 </dl>
 
 <div class="byline tc">
-    <strong>${count if count else 'No'}</strong> search result${'' if count == 1 else 's'}.
+<% count = len(results) - skipped %>
+    <strong>${count if count else 'No'}</strong> Search Result${'' if count == 1 else 's'}
 </div>
 
-% elif asset.query is None:
-
+% if not count and asset.query is None:
 <h2>No results found.  Please widen your search criteria.</h2>
 
 <form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
-
 % endif
+
 % else:
 
 <h1 class="primary">${title()}</h1>

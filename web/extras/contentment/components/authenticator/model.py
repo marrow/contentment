@@ -11,4 +11,6 @@ __all__ = ['Authenticator']
 
 
 class Authenticator(Asset):
+    default = db.StringField(default="action:authenticate", max_length=128)
+    
     registering = db.BooleanField(default=False)

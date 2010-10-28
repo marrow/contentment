@@ -4,7 +4,8 @@
 
 <h1 class="primary">${title()}</h1>
 
-<form method="post" class="modify">
+<form method="post" action="${asset.path}/action:authenticate" class="modify">
+    <input type="hidden" name="redirect" value="${redirect}">
     <dl id="tab-general">
         <div style="float: left; width: 48%;">
             <dt><label for="user-identity">User Name or E-Mail Address</label></dt>

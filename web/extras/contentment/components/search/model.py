@@ -14,6 +14,8 @@ __all__ = ['Search']
 
 
 class Search(Folder):
+    default = db.StringField(default="view:search", max_length=128)
+    
     query = db.StringField(max_length=250)
     where = db.ListField(db.StringField(max_length=250), default=lambda: ['/'])
     exclude = db.ListField(db.StringField(max_length=250), default=list)

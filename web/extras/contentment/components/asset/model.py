@@ -168,7 +168,7 @@ class Asset(db.Document):
     
     # Magic properties.
     immutable = db.BooleanField(default=False)
-    default = db.StringField(default="view:default", max_length=128)
+    default = db.StringField(default="view:contents", max_length=128)
     tags = db.ListField(db.StringField(max_length=32), default=list)
     properties = db.DictField(default=dict)
     acl = db.ListField(db.EmbeddedDocumentField(ACLRule), default=list)

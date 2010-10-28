@@ -18,10 +18,12 @@
     </thead>
     
     <tbody>
+<% skipped = 0 %>
 % if not asset.children:
         <tr><td colspan="6" style="text-align: center; padding: 2em;"><em>Asset has no child nodes.</em></td></tr>
 % endif
 % for child in asset.children:
+<% if not child.controller.allowed: skipped += 1; continue %>
         <tr id="${child.id}">
             <td class="handle">&#x2af6;&#x2af6;</td>
             <td class="name"><a href="${child.path}/view:contents" title="View the contents of this ${child.__class__.__name__} asset.">${child.name}</a></td>
@@ -50,4 +52,5 @@
 </table>
 </div>
 
-<div class="byline tc">Contains <b>${len(asset.children)}</b> Asset${'s' if len(asset.children) != 1 else ''}</div>
+<% count = len(asset.children) - skipped %>
+<div class="byline tc">Contains <b>${count}</b> Asset${'s' if count != 1 else ''}</div>

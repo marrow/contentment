@@ -17,4 +17,5 @@ __all__ = ['Folder']
 
 
 class Folder(Asset):
+    # default = db.StringField(default="view:contents", max_length=128)
     sort = db.StringField(max_length=250) # default sort order

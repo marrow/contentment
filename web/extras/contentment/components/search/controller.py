@@ -18,10 +18,10 @@ __all__ = ['SearchController']
 
 class SearchController(FolderController):
     @view("Search", "Display a search form and search results.")
-    def view_default(self, q=None):
+    def view_search(self, q=None):
         asset = self.asset
         
         if q is None: q = asset.query
         results = asset.results(q)
         
-        return 'search', dict(q=q if q else "", results=results, count=len(results))
+        return 'search', dict(q=q if q else "", results=results)

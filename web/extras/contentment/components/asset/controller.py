@@ -38,8 +38,14 @@ class AssetController(BaseController):
         
         # self.api_core = CoreMethods(self)
     
-    def view_default(self):
-        return self.view_contents()
+    @property
+    def allowed(self):
+        asset = self.asset
+        
+        method = getattr(self, asset.default.replace(':', '_'), None)
+        if not method: return True # TODO
+        
+        return method.authorized(asset)
     
     @view("ACL", "Display the access control list rules that apply to this asset.")
     def view_acl(self):
@@ -84,17 +90,24 @@ class AssetController(BaseController):
         # TODO: Allow overriding of the key check using the `force` value.
         # TODO: If `key` not present, display 
         
-        kind = self.asset.__class__.__name__
-        title = self.asset.title
-        path = self.asset.path
+        asset = self.asset
         
-        parent_path = self.asset.parent.path
+        kind = asset.__class__.__name__
+        title = asset.title
+        path = asset.path
         
-        self.asset.delete()
+        path = asset.path
+        parent_path = asset.parent.path
+        
+        asset.delete()
         
         web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully deleted %s \"%s\", located at %s." % (kind, title, path))
         
-        raise web.core.http.HTTPFound(location=parent_path)
+        if web.core.request.referrer.startswith(path):
+            raise web.core.http.HTTPFound(location=parent_path)
+        
+        else:
+            raise web.core.http.HTTPFound(location=web.core.request.referrer)
         
         return 'remove', None
 

@@ -89,7 +89,7 @@ footer = Page(name="footer", title="Global Site Footer", engine="raw", content=u
 ) ; footer.save() ; footer.attach(templates)
 
 
-search = Search(name="search", title="Site Search") ; search.save() ; search.attach(root)
+search = Search(name="search", title="Site Search", default="view:search") ; search.save() ; search.attach(root)
 
 
 default = Page(name="default", title="Welcome", owner=admin, content="""h1. Welcome to Contentment
@@ -98,16 +98,6 @@ Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."""
 ) ; default.save() ; default.attach(root)
-
-
-news = Folder(name="_news", title="News", default="view:details") ; news.save() ; news.attach(root)
-
-_ = Page(name="foo", title="Foo", tags=['news', 'foo'], content="h1. Foo") ; _.save() ; _.attach(news)
-_ = Page(name="bar", title="Bar", tags=['news'], content="h1. Bar") ; _.save() ; _.attach(news)
-_ = Page(name="baz", title="Baz", tags=['news', 'baz'], content="h1. Baz") ; _.save() ; _.attach(news)
-
-
-news = Search(name="news", title="News", default="view:details", query="tag:news") ; news.save() ; news.attach(root)
 
 
 _ = Page(name="delete-me", title="Delete me!", content="""h1. Welcome to Contentment""") ; _.save() ; _.attach(root)

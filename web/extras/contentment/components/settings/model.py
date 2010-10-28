@@ -17,4 +17,4 @@ __all__ = ['Settings']
 
 
 class Settings(Asset):
-    pass
+    default = db.StringField(default="action:modify", max_length=128)

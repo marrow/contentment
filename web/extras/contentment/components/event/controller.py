@@ -15,5 +15,5 @@ class EventController(PageController):
     _modify_form = "web.extras.contentment.components.event.templates.modify"
     
     @view("Event", "Display event details.")
-    def view_default(self):
+    def view_event(self):
         return 'view', None
