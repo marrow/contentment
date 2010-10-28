@@ -1,6 +1,6 @@
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
-<%def name="title()">Contents of ${asset.__class__.__name__}: ${asset.title}</%def>        
+<%def name="title()">Contents of ${asset.__class__.__name__}: ${asset.title}</%def>
 
 <h1 class="primary">${title()}</h1>
 
@@ -39,7 +39,7 @@
             <td class="actions">
 % for action in asset.controller.actions:
 <%    if action.name == 'create': continue %>
-%     if action.authorized(asset):
+%     if action.authorized(child):
                 <a href="${child.path}/action:${action.name}" title="${action.description}">${action.title}</a>
 %     endif
 % endfor

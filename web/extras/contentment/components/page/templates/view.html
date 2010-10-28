@@ -4,10 +4,4 @@
 
 ${asset.rendered | n}
 
-<div class="byline">
-    Created <time datetime="${asset.created.isoformat().split('.')[0].rsplit('.')[0]}Z">on ${asset.created.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>.
-    
-%     if asset.modified:
-    Last modified <time datetime="${asset.modified.isoformat().split('.')[0].rsplit('.')[0]}Z">on ${asset.modified.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>.
-%     endif
-</div>
+<%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

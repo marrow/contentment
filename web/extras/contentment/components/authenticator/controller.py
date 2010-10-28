@@ -34,14 +34,14 @@ class LoginMethod(web.core.RESTMethod):
     def post(self, ajax=False, **kw):
         data = Bunch(kw)
         
-        log.info("Attempting to login as %s...", data.identity)
-        
         if 'redirect' not in data:
             data.redirect = '/'
         
         if not web.auth.authenticate(data.identity, data.password):
-            log.warn("Authentication failed for %s.", data.identity)
+            web.core.session['flash'] = dict(cls="error", title="Authentication Failure", message="Invalid username or password.")
             return 'login', dict(redirect=data.redirect, identity=data.identity)
+        
+        web.core.session['flash'] = dict(cls="success", title="Success", message="Successful authentication.")
         
         raise web.core.http.HTTPFound(location=data.redirect)
 
@@ -57,6 +57,7 @@ class AuthenticatorController(AssetController):
     def action_expire(self, ajax=False):
         if web.auth.authenticated:
             web.auth.deauthenticate()
+            web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully signed out and cleared session.")
         
         raise web.core.http.HTTPSeeOther(
                 location = web.core.request.referrer if web.core.request.referrer else '/'

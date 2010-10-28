@@ -68,13 +68,13 @@ class AssetController(BaseController):
         for i, j in kw.iteritems():
             setattr(asset, i, j)
         
-        asset.modified = datetime.now()
+        asset.modified = datetime.utcnow()
         
         asset.save()
         
-        raise http.HTTPFound(location=asset.path + '/')
+        web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully updated %s \"%s\", located at %s." % (asset.__class__.__name__, asset.title, asset.path))
         
-        return 'modify', None
+        raise http.HTTPFound(location=asset.path + '/')
     
     @action("Delete", "Delete this asset and all of its descendants.")
     def action_delete(self, key=None, force=False):
@@ -84,9 +84,15 @@ class AssetController(BaseController):
         # TODO: Allow overriding of the key check using the `force` value.
         # TODO: If `key` not present, display 
         
+        kind = self.asset.__class__.__name__
+        title = self.asset.title
+        path = self.asset.path
+        
         parent_path = self.asset.parent.path
         
         self.asset.delete()
+        
+        web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully deleted %s \"%s\", located at %s." % (kind, title, path))
         
         raise web.core.http.HTTPFound(location=parent_path)
         

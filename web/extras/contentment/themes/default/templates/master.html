@@ -68,6 +68,12 @@ ${root.__class__.objects(path=theme.paths.menu).first().rendered | n}
 <%include file="web.extras.contentment.themes.default.templates.breadcrumb"/>
 % endif
                     
+                    <div id="flash"> \
+% if web.session.get('flash', None):
+<div id="message" class="${web.session['flash']['cls']}" title="${web.session['flash']['title']}">${web.session['flash']['message']}</div> \
+% endif
+</div>
+                    
 ${next.body()}
                     
                     <div class="clearfix"></div>
@@ -102,3 +108,4 @@ ${root.__class__.objects(path=theme.paths.footer).first().rendered | n}
 ${self.js()}
     </body>
 </html>
+<% if 'flash' in web.session: del web.session['flash'] %>

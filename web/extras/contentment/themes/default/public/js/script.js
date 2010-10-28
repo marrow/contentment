@@ -3,16 +3,22 @@ $(function(){
             plugins: [
                     {
                         id: 'timeago',
-                        js: ['/theme/static/js/jquery.timeago.js'],
-                        fn: ['timeago'],
-                        ext: ['timeago'],
+                        js: '/theme/static/js/jquery.timeago.js',
+                        fn: 'timeago',
+                        ext: 'timeago',
                         sel: 'time'
                     },
                     {
                         id: 'tabify',
-                        js: ['/theme/static/js/jquery.tabify-1.4.js'],
-                        fn: ['tabify'],
+                        js: '/theme/static/js/jquery.tabify-1.4.js',
+                        fn: 'tabify',
                         sel: 'menu.tabs'
+                    },
+                    {
+                        id: 'flash',
+                        js: '/theme/static/js/jquery.flash.js',
+                        ext: 'flash',
+                        sel: '#message'
                     }
                     // {
                     //     id: 'upload',
