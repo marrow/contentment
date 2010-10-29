@@ -14,12 +14,14 @@ body { background: #d0d0d0; background: -webkit-gradient(linear, center top, cen
 
 h1, h2, h3, form a { font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; }
 h1, h2, h3 { margin-bottom: 5px; }
-h1 { font-size: 138.5%; color: black; text-shadow: rgba(0, 0, 0, 0.25) 0px 1px 3px; }
-h2 { margin-top: 15px; text-transform: uppercase; }
+h1 { font-size: 138.5%; color: black; text-shadow: rgba(0, 0, 0, 0.25) 0px 1px 3px; margin-top: 10px; }
+h1:first-child { margin-top: 0; }
+h2 { margin-top: 10px; text-transform: uppercase; }
 h2:first-child { margin-top: 5px; }
 h3 { margin-top: 0px; text-transform: lowercase; }
-p, ul, ol, blockquote, dl, table { margin-bottom: 10px; }
+p, ul, ol, blockquote, dl, table, pre { margin-bottom: 10px; }
 dt { clear: both; }
+pre { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; font-family: 'Inconsolata XL', Inconsolata, Monaco, Couier, 'Courier New', fixed; line-height: 150%; height: auto; overflow: auto; }
 blockquote { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; }
 form a { font-size: 93%; vertical-align: middle; }
 
@@ -99,6 +101,8 @@ footer menu li { margin-right: 1ex; padding-left: 1ex; border-left: 1px solid #9
 footer menu li:first-child { border-left-width: 0px; padding-left: 0; }
 
 section div.container { padding-bottom: 15px; }
+#navigation div.container { position: relative; padding-bottom: 0; }
+.seo { position: absolute; right: 0; top: 14px; z-index: 200; }
 
 dl.results dt { font-weight: bold; }
 dl.results dd { margin-bottom: 10px; padding-left: 25px; }

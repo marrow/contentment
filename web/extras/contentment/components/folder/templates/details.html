@@ -9,8 +9,8 @@
 % else:
 
 <dl class="details">
-<% skipped = 0 %>
-% for child in asset.contents:
+<% skipped = 0 ; contents = asset.contents.order_by(asset.sort) if asset.sort else asset.contents %>
+% for child in contents:
 <% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
 %   if child.owner:
@@ -33,7 +33,7 @@
 </dl>
 
 <div class="byline tc">
-<% count = len(asset.contents) - skipped %>
+<% count = len(contents) - skipped %>
     Contains <strong>${count}</strong> Asset${'' if count == 1 else 's'}
 </div>
 

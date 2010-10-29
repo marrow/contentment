@@ -19,6 +19,12 @@ $(function(){
                         js: '/theme/static/js/jquery.flash.js',
                         ext: 'flash',
                         sel: '#message'
+                    },
+                    {
+                        id: 'gist',
+                        js: '/theme/static/js/jquery.gist.min.js',
+                        fn: ['gist'],
+                        sel: '.gist[id]'
                     }
                     // {
                     //     id: 'upload',
@@ -30,4 +36,6 @@ $(function(){
         });
     
     $("a[href$='/action:delete']").click(function(){ return confirm("Are you sure you wish to delete this resource?\n\nThis can not be undone, and will delete any child resources contained within."); });
+    
+    $('#redirect').each(function(){ window.location = $(this).text().substr(new String("Redirecting to ").length); });
 });
