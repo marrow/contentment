@@ -87,8 +87,33 @@ header#top div.special menu li a:hover { color: white; text-decoration: none; }
 #navigation menu li a label { color: #eee; text-decoration: none; font-weight: 200; font-size: 77%; }
 #navigation menu li a:hover { background-color: rgba(192,192,192,0.25); }
 
-.nav-home a { background: transparent url('/theme/static/img/home.png') center center no-repeat; text-indent: -10000em; width: 32px; }
-.nav-home a label { visibility: hidden; }
+#navigation menu li.nav-default a { background: transparent url('/theme/static/img/home.png') center center no-repeat; text-indent: -10000em; width: 32px; }
+#navigation menu li.nav-default a label { visibility: hidden; }
+
+body.nav-default    #navigation menu li.nav-default,
+body.nav-features   #navigation menu li.nav-features,
+body.nav-download   #navigation menu li.nav-download,
+body.nav-docs       #navigation menu li.nav-docs,
+body.nav-community  #navigation menu li.nav-community,
+body.nav-wiki       #navigation menu li.nav-wiki
+    { background-color: white; -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px; }
+
+body.nav-default    #navigation menu li.nav-default   a,
+body.nav-features   #navigation menu li.nav-features  a,
+body.nav-download   #navigation menu li.nav-download  a,
+body.nav-docs       #navigation menu li.nav-docs      a,
+body.nav-community  #navigation menu li.nav-community a,
+body.nav-wiki       #navigation menu li.nav-wiki      a
+    { color: black; }
+
+body.nav-default    #navigation menu li.nav-default   a label,
+body.nav-features   #navigation menu li.nav-features  a label,
+body.nav-download   #navigation menu li.nav-download  a label,
+body.nav-docs       #navigation menu li.nav-docs      a label,
+body.nav-community  #navigation menu li.nav-community a label,
+body.nav-wiki       #navigation menu li.nav-wiki      a label
+    { color: #444; }
+
 
 
 #main { margin-top: -1px; }

@@ -6,6 +6,8 @@
 <%
 
     theme = Asset.objects(path='/theme').first()
+    
+    _nav = asset.path[1:].replace('/', '-') or 'root'
 
 %>
 <%def name="title()"></%def>
@@ -34,13 +36,13 @@
         ${self.header()}
     </head>
 
-<!--[if lt IE 7 ]> <body class="ie6 ${self.cls()}"> <![endif]-->
-<!--[if IE 7 ]>    <body class="ie7 ${self.cls()}"> <![endif]-->
-<!--[if IE 8 ]>    <body class="ie8 ${self.cls()}"> <![endif]-->
-<!--[if IE 9 ]>    <body class="ie9 ${self.cls()}"> <![endif]-->
-<!--[if gt IE 9]>  <body class="${self.cls()}">             <![endif]-->
+<!--[if lt IE 7 ]> <body class="ie6 nav-${_nav} ${self.cls()}"> <![endif]-->
+<!--[if IE 7 ]>    <body class="ie7 nav-${_nav} ${self.cls()}"> <![endif]-->
+<!--[if IE 8 ]>    <body class="ie8 nav-${_nav} ${self.cls()}"> <![endif]-->
+<!--[if IE 9 ]>    <body class="ie9 nav-${_nav} ${self.cls()}"> <![endif]-->
+<!--[if gt IE 9]>  <body class="nav-${_nav} ${self.cls()}">     <![endif]-->
 <!--[if !IE]><!-->
-    <body class="section-home ${self.cls()}">
+    <body class="nav-${_nav} ${self.cls()}">
 <!--<![endif]-->
 
 % if web.auth.authenticated:
