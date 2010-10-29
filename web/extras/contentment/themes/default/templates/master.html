@@ -7,7 +7,7 @@
 
     theme = Asset.objects(path='/theme').first()
     
-    _nav = asset.path[1:].replace('/', '-') or 'root'
+    _nav = asset.path[1:].partition('/')[0] or 'default'
 
 %>
 <%def name="title()"></%def>
