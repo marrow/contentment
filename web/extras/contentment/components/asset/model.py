@@ -13,6 +13,10 @@ from datetime import datetime
 
 import mongoengine as db
 
+from widgets import fields
+
+from copy import copy, deepcopy
+
 
 log = __import__('logging').getLogger(__name__)
 __all__ = [
@@ -145,6 +149,7 @@ class Asset(db.Document):
         )
     
     _indexable = ['title', 'description', 'tags']
+    _widgets = fields
     
     _component = None
     controller = None
@@ -207,6 +212,33 @@ class Asset(db.Document):
             for node in reversed(nodes):
                 for rule in node.acl:
                     yield node, rule
+    
+    def _form(self, action, submit="Save", referrer=None):
+        from alacarte.template.simplithe.widgets import Form, FieldSet, DefinitionListLayout
+        from web.extras.contentment.widgets import ContentmentFooter
+        
+        order = []
+        groups = {}
+        seen = []
+        
+        for base in reversed(type.mro(type(self))):
+            try:
+                widgets = getattr(base, '_widgets', None)
+                if not widgets or widgets in seen or not hasattr(widgets, '__call__'): continue
+                seen.append(widgets)
+                
+                for name, title, fields in widgets(self):
+                    if name not in groups:
+                        order.append(name)
+                        groups[name] = FieldSet(name, title, DefinitionListLayout, children=copy(fields))
+                        continue
+                    
+                    groups[name].children.extend(copy(fields))
+            
+            except AttributeError:
+                pass
+        
+        return Form('asset', action=action, footer=ContentmentFooter('asset', submit, referrer=referrer), children=[groups[i] for i in order])
     
     def attach(self, parent):
         if self.parent:

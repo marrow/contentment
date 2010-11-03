@@ -4,7 +4,7 @@
 
 <% acl = [i for i in asset.acl_] %>
 
-<h1 class="primary">${title()}</h1>
+<h1>${title()}</h1>
 
 <div id="contents">
 <table>

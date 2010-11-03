@@ -2,7 +2,7 @@
 
 <%def name="title()">Contents of ${asset.__class__.__name__}: ${asset.title}</%def>
 
-<h1 class="primary">${title()}</h1>
+<h1>${title()}</h1>
 
 <div id="contents">
 <table>

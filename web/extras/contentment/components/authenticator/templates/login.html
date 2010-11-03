@@ -2,7 +2,7 @@
 
 <%def name="title()">Sign In</%def>
 
-<h1 class="primary">${title()}</h1>
+<h1>${title()}</h1>
 
 <form method="post" action="${asset.path}/action:authenticate" class="modify">
     <input type="hidden" name="redirect" value="${redirect}">

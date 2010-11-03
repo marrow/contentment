@@ -13,6 +13,8 @@ import mongoengine as db
 
 from web.extras.contentment.components.asset.model import Asset
 
+from widgets import fields
+
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['Page']
@@ -20,7 +22,8 @@ __all__ = ['Page']
 
 
 class Page(Asset):
-    _indexable = ['content']
+    _indexable = ['_content']
+    _widgets = fields
     
     default = db.StringField(default="view:page", max_length=128)
     
@@ -42,3 +45,25 @@ class Page(Asset):
                 return self.content
         
         return cache(self.path, self.modified if self.modified else self.created)
+    
+    @property
+    def _content(self):
+        """A HTML-stripped version of the rendered content for indexing."""
+        
+        from HTMLParser import HTMLParser
+        
+        class Stripper(HTMLParser):
+            def __init__(self):
+                self.reset()
+                self.fed = []
+            
+            def handle_data(self, d):
+                self.fed.append(d)
+            
+            def get_data(self):
+                return ''.join(self.fed)
+        
+        s = Stripper()
+        s.feed(self.rendered)
+        
+        return s.get_data()
