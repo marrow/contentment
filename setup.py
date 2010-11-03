@@ -70,7 +70,7 @@ setup(
             },
         zip_safe = False,
         
-        namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components'],
+        namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components', 'alacarte', 'alacarte.template'],
         
         paster_plugins = ['PasteScript', 'WebCore'],
         
@@ -91,10 +91,9 @@ setup(
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",
                     ],
                 'contentment.renderer': [
-                        # "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
-                        # "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
-                        # "genshi = web.extras.contentment.components.page.renderers.templated:GenshiRenderer",
-                        # "rest = web.extras.contentment.components.page.renderers.rest:RestRenderer"
+                        "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
+                        "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
+                        "textile = web.extras.contentment.components.page.renderers.textile_:TextileRenderer"
                     ]
             },
         
