@@ -39,7 +39,7 @@ class AssetPathTransform(BaseTransform):
         value = super(AssetList, self).native(value)
         if value is None: return None
         
-        return Asset.objects(path=i).first()
+        return Asset.objects(path=value).first()
 
 
 class AssetListTransform(BaseTransform):
