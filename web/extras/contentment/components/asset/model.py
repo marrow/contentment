@@ -180,7 +180,7 @@ class Asset(db.Document):
     
     # Ownership and dates.
     owner = db.GenericReferenceField()
-    created = db.DateTimeField(default=datetime.utcnow)
+    created = db.DateTimeField(default=lambda: datetime.utcnow().replace(microsecond=0))
     modified = db.DateTimeField()
     
     @property
@@ -271,8 +271,12 @@ class Asset(db.Document):
             
             node.save()
     
-    def save(self, safe=True, force_insert=False, validate=True):
+    def save(self, safe=True, force_insert=False, validate=True, dirty=None):
+        if not dirty:
+            return super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
+        
         # Re-index indexable columns.
+        # TODO: Store as dict of {name: occurances} for search result weighting.
         index = []
         
         indexable = []
@@ -280,6 +284,9 @@ class Asset(db.Document):
             indexable.extend(getattr(base, '_indexable', []))
         
         indexable = set(indexable)
+        
+        if not indexable.union(set(dirty)):
+            return super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
         
         for i in indexable:
             value = getattr(self, i)
@@ -326,7 +333,7 @@ class ChangeSet(db.Document):
     id = db.ObjectIdField('_id')
     
     asset = db.ReferenceField(Asset)
-    date = db.DateTimeField(default=datetime.utcnow)
+    date = db.DateTimeField(default=lambda: datetime.utcnow().replace(microsecond=0))
     changes = db.DictField(default=dict)
 
 

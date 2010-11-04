@@ -12,7 +12,7 @@
 <% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
 %   if child.owner:
-  <dd class="byline">by <a href="">${child.owner.name}</a> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
+  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.title}</a> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
 %   else:
   <dd class="byline">by <em>Anonymous</em> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
 %   endif

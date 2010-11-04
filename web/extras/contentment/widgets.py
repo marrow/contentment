@@ -36,7 +36,7 @@ class AssetPathTransform(BaseTransform):
     def native(self, value):
         from web.extras.contentment.components.asset.model import Asset
         
-        value = super(AssetList, self).native(value)
+        value = super(AssetPathTransform, self).native(value)
         if value is None: return None
         
         return Asset.objects(path=value).first()
@@ -51,7 +51,7 @@ class AssetListTransform(BaseTransform):
     def native(self, value):
         from web.extras.contentment.components.asset.model import Asset
         
-        value = super(AssetList, self).native(value)
+        value = super(AssetListTransform, self).native(value)
         if value is None: return []
         
         result = []

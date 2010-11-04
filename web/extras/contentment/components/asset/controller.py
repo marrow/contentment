@@ -64,19 +64,43 @@ class AssetController(BaseController):
         asset = self.asset
         
         if not kw:
-            return 'modify', None
+            return 'modify', dict(data=asset._data)
         
         if 'submit' in kw: del kw['submit']
         
-        if 'tags' in kw:
-            kw['tags'] = tags(kw['tags'])
+        try:
+            result, remaining = asset._form(None).native(kw)
         
-        for i, j in kw.iteritems():
-            setattr(asset, i, j)
+        except:
+            log.exception("Error processing form.")
+            return 'modify', dict(data=asset._data)
         
-        asset.modified = datetime.utcnow()
         
-        asset.save()
+        # Handle special fields.
+        
+        rename = False
+        reindex = False
+        dirty = []
+        
+        # Root node must not be renamed.
+        if asset.path == '/': del result['name']
+        else: rename = asset.name != result['name']
+        
+        result['tags'] = sorted(result['tags'])
+        
+        # Handle explicit setting of the modification time.
+        if not result['modified'] or result['modified'] == asset.modified.replace(microsecond=0):
+            result['modified'] = datetime.utcnow()
+        
+        for field, value in result.iteritems():
+            if getattr(asset, field) == value: continue
+            
+            dirty.append(field)
+            setattr(asset, field, value)
+        
+        # return repr((dirty, dict([(i, j) for i, j in result.iteritems() if i in dirty])))
+        
+        asset.save(dirty=dirty)
         
         web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully updated %s \"%s\", located at %s." % (asset.__class__.__name__, asset.title, asset.path))
         

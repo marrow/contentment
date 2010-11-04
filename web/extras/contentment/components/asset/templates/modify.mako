@@ -21,4 +21,4 @@
 % endfor
 </menu>
 
-${unicode(form(asset._data)) | n}
+${unicode(form(data)) | n}

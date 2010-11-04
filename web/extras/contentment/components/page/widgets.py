@@ -13,7 +13,7 @@ def iter_templates():
     container = Asset.objects(path='/settings/templates/custom').first()
     assert container
     
-    yield None, "Default Template"
+    yield '', "Default Template"
     
     custom = Asset.objects(parent=container).order_by('title')
     
