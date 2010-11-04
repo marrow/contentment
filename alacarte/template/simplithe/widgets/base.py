@@ -59,6 +59,24 @@ class NestedWidget(Widget):
     def __init__(self, name_, title_=None, children=None, *args, **kw):
         self.children = children if children else list()
         super(NestedWidget, self).__init__(name_, title_, *args, **kw)
+    
+    def native(self, data):
+        result = dict()
+        
+        for child in self.children:
+            if isinstance(child, NestedWidget):
+                result.update(child.native(data)[0])
+                continue
+            
+            result[child.name] = child.native(data)
+        
+        remaining = dict()
+        
+        for i in data:
+            if i not in result:
+                remaining[i] = data[i]
+        
+        return result, remaining
 
 
 class Form(NestedWidget):

@@ -3,9 +3,10 @@
 import datetime
 
 from marrow.util.convert import KeywordProcessor
+from marrow.util.time import UTC
 
 
-__all__ = ['TransformException', 'Transform', 'BaseTransform', 'ListTransform', 'TagsTransform', 'IntegerTransform']
+__all__ = ['TransformException', 'Transform', 'BaseTransform', 'ListTransform', 'TagsTransform', 'IntegerTransform', 'FloatTransform', 'DateTimeTransform']
 
 
 
@@ -65,7 +66,7 @@ class ListTransform(BaseTransform):
         return unicode(self.processor(value))
     
     def native(self, value):
-        value = super(ListTransform).native(value)
+        value = super(ListTransform, self).native(value)
         if value is None: return value
         
         return self.processor(value)
@@ -88,15 +89,30 @@ class IntegerTransform(Transform):
         return int(value)
 
 
-# 1582-10-15T00:00Z
+class FloatTransform(Transform):
+    def __call__(self, value):
+        if value is None: return u''
+        
+        return unicode(value)
+    
+    def native(self, value):
+        value = value.strip()
+        if not value: return None
+        
+        return float(value)
 
 
 class DateTimeTransform(Transform):
     base = datetime.datetime
-    format = "1582-10-15T00:00Z"
+    format = "%Y-%m-%d %H:%M:%S"
     
     def __call__(self, value):
-        pass
+        if value is None: return u''
+        
+        return unicode(value.strftime(self.format))
     
     def native(self, value):
-        pass
+        value = value.strip()
+        if not value: return None
+        
+        return datetime.datetime.strptime(value, self.format)

@@ -1,11 +1,12 @@
 # encoding: utf-8
 
 from alacarte.template.simplithe import html5 as tag
+from alacarte.template.simplithe.widgets import transforms as t
 
 from base import Input, BooleanInput
 
 
-__all__ = ['TextField', 'HiddenField', 'SearchField', 'URLField', 'PhoneField', 'EmailField', 'PasswordField', 'DateTimeField', 'DateField', 'MonthField', 'WeekField', 'TimeField', 'DateTimeLocalField', 'NumberField', 'RangeField', 'ColorField', 'FileField', 'RadioField', 'CheckboxField', 'TextArea', 'SelectField']
+__all__ = ['TextField', 'HiddenField', 'SearchField', 'URLField', 'PhoneField', 'EmailField', 'PasswordField', 'DateTimeField', 'DateField', 'MonthField', 'WeekField', 'TimeField', 'DateTimeLocalField', 'NumberField', 'FloatField', 'RangeField', 'FloatRangeField', 'ColorField', 'FileField', 'RadioField', 'CheckboxField', 'TextArea', 'SelectField']
 
 
 
@@ -38,35 +39,51 @@ class PasswordField(Input):
 
 
 class DateTimeField(Input):
+    transform = t.DateTimeTransform()
     type_ = 'datetime'
 
 
 class DateField(Input):
+    # transform = t.URLTransform()
     type_ = 'date'
 
 
 class MonthField(Input):
+    # transform = t.URLTransform()
     type_ = 'month'
 
 
 class WeekField(Input):
+    # transform = t.URLTransform()
     type_ = 'week'
 
 
 class TimeField(Input):
+    # transform = t.URLTransform()
     type_ = 'time'
 
 
 class DateTimeLocalField(Input):
+    # transform = t.URLTransform()
     type_ = 'datetimelocal'
 
 
 class NumberField(Input):
+    transform = t.IntegerTransform()
     type_ = 'number'
 
 
+class FloatField(NumberField):
+    transform = t.FloatTransform()
+
+
 class RangeField(Input):
+    transform = t.IntegerTransform()
     type_ = 'range'
+
+
+class FloatRangeField(RangeField):
+    transform = t.FloatTransform()
 
 
 class ColorField(Input):
