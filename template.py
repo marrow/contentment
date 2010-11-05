@@ -20,7 +20,7 @@ conn = db.connect('cms')
 Asset.drop_collection()
 
 
-root = Asset(name="", title="Contentment", default="default", immutable=True, properties={
+root = Asset(name="", path="/", title="Contentment", default="default", immutable=True, properties={
         'org-contentment-formats-date': '%B %e, %G at %H:%M:%S',
         'org-contentment-theme': 'web.extras.contentment.themes.default',
         'org-contentment-option-attribution': True,

@@ -161,7 +161,7 @@ class Asset(db.Document):
     parents = db.ListField(db.GenericReferenceField(), default=list)
     children = db.ListField(db.GenericReferenceField(), default=list)
     contents = property(lambda self: Asset.objects(parent=self))
-    path = db.StringField(default=None)
+    path = db.StringField(default='')
     
     # Basic properties.
     name = db.StringField(max_length=250, required=True) # unique_with="parent"

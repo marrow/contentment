@@ -52,7 +52,7 @@ class BaseController(Controller):
             if isinstance(identifier, Asset): return identifier
             elif identifier is not None: return Asset.objects.with_id(identifier)
             
-            return Asset.objects(path=None).first()
+            return Asset.objects(path='/').first()
         
         except:
             log.exception("Error loading model instance for %r instance using %r.", self.__class__.__name__, identifier)
