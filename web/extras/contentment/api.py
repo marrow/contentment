@@ -169,7 +169,7 @@ class Decorator(object):
             if data is None:
                 data = dict()
             
-            data['root'] = Asset.objects(path='/').first()
+            data['root'] = Asset.objects(path=None).first()
             data['asset'] = self.asset
             
             base = '.'.join(f.__module__.split('.')[:-1]) + '.templates.'
