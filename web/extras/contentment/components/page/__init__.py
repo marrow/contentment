@@ -33,6 +33,11 @@ class PageComponent(IComponent):
         PageController._component = self
         return PageController
     
-    def authorize(self, child):
-        return False # TODO: Check for File instance and allow.
+    def authorize(self, container, child):
+        from web.extras.contentment.components.file import FileComponent
+        
+        if isinstance(child, FileComponent):
+            return True
+        
+        return False
 

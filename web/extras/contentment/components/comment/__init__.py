@@ -33,5 +33,8 @@ class CommentComponent(IComponent):
         CommentController._component = self
         return CommentController
     
-    def authorize(self, child):
+    def authorize(self, container, child):
+        return False
+    
+    def authorized(self, parent):
         return False

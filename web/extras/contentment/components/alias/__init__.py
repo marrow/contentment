@@ -33,5 +33,5 @@ class AliasComponent(IComponent):
         AliasController._component = self
         return AliasController
     
-    def authorize(self, child):
+    def authorize(self, container, child):
         return False

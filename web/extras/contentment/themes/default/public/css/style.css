@@ -195,6 +195,7 @@ form .buttons.top { margin-bottom: 10px; margin-top: 0; }
 
 .buttons label { display: block; font-weight: normal; font-size: 80%; padding: 0; margin: 5px 0 0; line-height: 100%; }
 .buttons li.label label { display: block; font-weight: bold; font-size: inherit; padding: 10px; margin: 0 0 0; line-height: 100%; cursor: inherit; border-top: 2px groove white; }
+.buttons li:first-child.label label { border-top-width: 0; }
 .buttons li a span { margin-left: 0.5ex; color: #bbb; font-weight: normal; }
 .buttons .fr menu { left: auto; right: 0; }
 
@@ -246,7 +247,9 @@ dl.details dd.age { color: #666; }
 #asset-form input[type=datetime], #asset-form input[type=date] { -webkit-appearance: textfield; }
 #asset-form input:disabled { background-color: #ddd; -webkit-box-shadow: none; color: black; font-style: italic; }
 #asset-form input:disabled::-webkit-input-placeholder { color: black; font-style: italic; }
-
+#asset-form div input[type=checkbox] { float: left; margin: 0 5px 0 0; padding: 0; width: auto; vertical-align: baseline; }
+#asset-form div label { font-weight: normal; display: inline !important; vertical-align: baseline; }
+#asset-form input[required] { border-color: #C99; }
 
 
 /* 

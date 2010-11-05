@@ -17,7 +17,10 @@ log = __import__('logging').getLogger(__name__)
 
 
 class IComponent(object):
-    """Component declaration."""
+    """A high-level component comprised of a controller and at least one descendant of the Asset model.
+    
+    A component ties these two primary elements together; when an instance of the Asset descendant is loaded, the controller identified here is used to process front-end requests.
+    """
     
     title = None
     summary = None
@@ -107,13 +110,13 @@ class SingletonMixIn(object):
         return not len(model.objects)
 
 
-class ITheme(IComponent, SingletonMixIn):
+class ITheme(SingletonMixIn, IComponent):
     def authorize(self, container, child):
         """Themes can not have child nodes."""
         return False
 
 
-class IExtension(IComponent, SingletonMixIn):
+class IExtension(SingletonMixIn, IComponent):
     def authorize(self, container, child):
         """Extensions can not have child nodes."""
         return False
@@ -158,11 +161,10 @@ class Decorator(object):
             template = "json:"
             data = f(self, *args, **kw)
             
-            if isinstance(data, basestring):
+            if not isinstance(data, tuple):
                 return data
             
-            if isinstance(data, tuple):
-                template, data = data
+            template, data = data
             
             if data is None:
                 data = dict()

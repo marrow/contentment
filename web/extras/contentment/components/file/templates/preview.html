@@ -1,0 +1,24 @@
+<%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+
+<%def name="title()">${asset.title}</%def>
+
+<h1>${title()}</h1>
+
+<table>
+    <tbody>
+        <tr>
+            <th class="tr">File Name</th>
+            <td>${asset.filename}</td>
+        </tr>
+        <tr>
+            <th class="tr">Mime Type</th>
+            <td>${asset.mimetype}</td>
+        </tr>
+        <tr>
+            <th class="tr">File Size</th>
+            <td>${asset.size}</td>
+        </tr>
+    </tbody>
+</table>
+
+<%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

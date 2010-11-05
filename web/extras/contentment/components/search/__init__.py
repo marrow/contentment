@@ -33,5 +33,5 @@ class SearchComponent(IComponent):
         SearchController._component = self
         return SearchController
     
-    def authorize(self, child):
+    def authorize(self, container, child):
         return False

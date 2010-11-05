@@ -35,16 +35,17 @@ def fields(asset):
     
     return [
             ('general', "General", [
-                    TextField('title', "Title", title="Appears in window titles, breadcrumb navigation, and directory listings."),
+                    TextField('title', "Title", title="Appears in window titles, breadcrumb navigation, and directory listings.", required=True),
                     TextArea('description', "Description", title="Plain text description which appears in listings.", rows=3)
                 ]),
-        
+            
             ('properties', "Properties", [
                     TextField(
                             'name', "Name",
-                            title = "The web site root has no name, and as such, the name can not be modified." if root else "Modify this to re-name the asset.",
+                            title = "The web site root has no name, and as such, the name can not be modified." if root else "When creating a new asset, the name will be generated from the title if missing.",
                             disabled = True if root else None,
-                            placeholder = "Web Site Root" if root else None
+                            placeholder = "Web Site Root" if root else None,
+                            required = None if root else True
                         ),
                     TagField('tags', "Keywords / Tags", class_="tags", title="Used for searches, both live and saved."), # TODO: tag parsing
                     SelectField('owner', "Author / Owner", values=iter_owners, transform=AssetPathTransform()), # TODO: Path-based asset conversion.

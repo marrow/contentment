@@ -7,7 +7,7 @@ Handles low-level common tasks such as creation, deletion, modification form dis
 
 import re
 
-import web
+import web.core
 
 from hashlib import sha256
 from datetime import datetime
@@ -19,6 +19,7 @@ from web.utils.object import yield_property
 from marrow.util.convert import tags
 
 from web.extras.contentment.api import action, view
+from web.extras.contentment.core import components
 from web.extras.contentment.components.core import BaseController
 # from web.extras.contentment.components.asset.core import CoreMethods
 
@@ -55,9 +56,66 @@ class AssetController(BaseController):
     def view_contents(self, sort=None):
         return 'contents', None
     
+    def _form(self, asset=None, referrer=None, label="Save"):
+        from alacarte.template.simplithe.widgets import Link
+        
+        if asset is None:
+            asset = self.asset
+        
+        form = asset._form(None, submit=label, referrer=referrer)
+        form.footer.children.append(Link('textile', "Textile Reference", class_='button', target='_blank', href="http://redcloth.org/hobix.com/textile/"))
+        
+        return form
+    
     @action("Create", "Create a new asset.")
-    def action_create(self, **kw):
-        return 'create', None
+    def action_create(self, kind=None, **kw):
+        from web.extras.contentment.components.asset.model import Asset
+        
+        if kind is None:
+            return ''
+        
+        asset = [j for i, j in components[kind].model.iteritems() if issubclass(j, Asset)][0]
+        asset = asset(owner=web.auth.user.identity)
+        form = self._form(asset, web.core.request.referrer, "Create")
+        
+        if not kw:
+            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+        
+        if 'submit' in kw: del kw['submit']
+        
+        try:
+            result, remaining = form.native(kw)
+        
+        except:
+            log.exception("Error processing form.")
+            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+        
+        dirty = []
+        
+        if 'name' not in result or not result['name']:
+            replacement = re.compile('\W+')
+            result['name'] = replacement.sub('-', result['title'].lower())
+        
+        if result.get('tags', None) is None: result['tags'] = []
+        
+        result = asset.process(result)
+        
+        for name, value in result.iteritems():
+            dirty.append(name)
+            setattr(asset, name, value)
+        
+        try:
+            asset.save(dirty=dirty)
+        
+        except:
+            log.exception('Error creating record.')
+            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+        
+        asset.attach(self.asset)
+        
+        web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully created %s \"%s\", located at %s." % (asset.__class__.__name__, asset.title, asset.path))
+        
+        raise http.HTTPFound(location=asset.path + '/')
     
     @action("Modify", "Modify this asset.")
     def action_modify(self, **kw):
@@ -75,7 +133,6 @@ class AssetController(BaseController):
             log.exception("Error processing form.")
             return 'modify', dict(data=asset._data)
         
-        
         # Handle special fields.
         
         rename = False
@@ -86,11 +143,13 @@ class AssetController(BaseController):
         if asset.path == '/': del result['name']
         else: rename = asset.name != result['name']
         
-        result['tags'] = sorted(result['tags'])
+        result['tags'] = sorted(result['tags']) if result['tags'] else []
         
         # Handle explicit setting of the modification time.
         if not result['modified'] or result['modified'] == asset.modified.replace(microsecond=0):
             result['modified'] = datetime.utcnow()
+        
+        result = asset.process(result)
         
         for field, value in result.iteritems():
             if getattr(asset, field) == value: continue
@@ -134,140 +193,3 @@ class AssetController(BaseController):
             raise web.core.http.HTTPFound(location=web.core.request.referrer)
         
         return 'remove', None
-
-
-# TODO: Remove old code.
-'''
-    OLD CODE
-
-    @action("Create", icon='base-create')
-    def action_create(self, **kw):
-        """Create new assets."""
-        
-        from itertools import groupby
-        
-        component = None
-        for i in components.itervalues():
-            if isinstance(self, i.controller):
-                component = i
-                break
-        if not component: log.error("Unable to find component for %r!", self)
-        
-        tmp = [(j.group, i, j) for i, j in components.iteritems()]
-        tmp.sort()
-        
-        kinds = []
-        for k, g in groupby(tmp, lambda i: i[0]):
-            kinds.append((k, [(i, j) for x, i, j in g if j.authorized(self.asset) and component.authorize(j)]))
-        
-        
-        return ('genshi:web.extras.cmf.components.asset.views.create',
-                dict(kinds=kinds))
-    
-    # TODO Rewrite this to use Sprox.
-    def _action_create(self, **kw):
-        # if 'cmf.authentication.account' not in session:
-            # flash("You do not have sufficient priveledges to create assets here.", 'error')
-            # session['cmf.authentication.target.asset'] = self.asset.guid
-            # session['cmf.authentication.target'] = self.asset.path_info
-            # session.save()
-            # redirect('/action:authenticate')
-        
-        if 'name' in kw:
-            from cmf.components.asset.model import session as DBSession, Tag
-            
-            try:
-                if 'name' not in kw or not kw['name']:
-                    kw['name'] = normalize(kw['title'], yield_property(self.asset.children, 'name'))
-                else: kw['name'] = normalize(kw['name'], yield_property(self.asset.children, 'name'))
-                
-                log.debug("Creating asset of kind %r: %r", components[kw['kind']], kw)
-                
-                kw['owner_guid'] = session['cmf.authentication.account'].id
-                
-                tags = None
-                if 'tags' in kw:
-                    tags = kw['tags']
-                    del kw['tags']
-                
-                asset = components[kw['kind']].constructor(**kw)
-                
-                self.asset.attach(asset, after=kw['direction'] == 'after')
-                
-                if tags:
-                    asset.tags.extend(Tag.split(tags))
-            
-            except:
-                DBSession.rollback()
-                log.exception("Error creating asset.")
-            
-            else:
-                DBSession.commit()
-                redirect(asset.path + '/action:modify')
-        
-        
-        log.debug("Kinds: %r", kinds)
-        
-        return ('genshi:web.extras.cmf.components.asset.views.create',
-                dict(kinds=kinds))
-    
-    # TODO Rewrite this to use Sprox.
-    @action("Properties", icon='base-properties')
-    def _action_properties(self, **kw):
-        """Modify behind-the-scenes information about the asset."""
-        
-        from cmf.components.asset.model import Tag
-        from elixir import session as DBSession
-        
-        if 'name' in kw:
-            self.asset.modified = datetime.now()
-            
-            for i, j in kw.iteritems():
-                if i in ['name', 'default']:
-                    setattr(self.asset, i, j)
-                
-                elif i == 'tags':
-                    del self.asset.tags[:]
-                    self.asset.tags.extend(Tag.split(kw['tags']))
-                
-                elif i in ['published', 'retracted']:
-                    try:
-                        from tw.forms.validators import DateTimeConverter
-                        setattr(self.asset, i, DateTimeConverter().to_python(j.strip()) if j.strip() else None)
-                        
-                    except:
-                        log.exception("Invalid date given, date dropped.")
-                        pass
-            
-            DBSession.commit()
-            
-            flash("Changes made successfully.", 'success')
-            redirect(self.asset.path + '/')
-        
-        return ('genshi:cmf.components.asset.views.properties',
-                dict())
-    
-    
-    # TODO
-    @action("Security", icon='base-security')
-    def _action_security(self, **kw):
-        """Modify permissions and other security settings for this asset."""
-        
-        if kw.get('action', None) == "save":
-            if kw.get('guest', False):
-                if kw.get('password', None):
-                    self.asset.properties['cmf.authentication.guestpass'] = md5.md5(kw['password']).hexdigest()
-                    flash("success::Saved Changes::Successfully updated guest pass.")
-            
-            elif 'cmf.authentication.guestpass' in self.asset.properties:
-                del self.asset.properties['cmf.authentication.guestpass']
-                flash("success::Saved Changes::Successfully removed guest pass.")
-            
-            model.session.commit()
-            
-            redirect(self.asset.path + '/')
-        
-        return ('genshi:cmf.components.asset.views.security',
-                dict())
-    
-'''

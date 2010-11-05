@@ -32,3 +32,11 @@ class AuthenticatorComponent(IExtension):
         from web.extras.contentment.components.authenticator.controller import AuthenticatorController
         AuthenticatorController._component = self
         return AuthenticatorController
+    
+    def authorize(self, container, child):
+        from web.extras.contentment.components.identity import IdentityComponent
+        
+        if isinstance(child, IdentityComponent):
+            return True
+        
+        return False

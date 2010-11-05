@@ -10,7 +10,7 @@ log = __import__('logging').getLogger(__name__)
 
 class IdentityComponent(IComponent):
     title = "Identity"
-    summary = None
+    summary = "A user with login credentials."
     description = None
     icon = 'base-identity'
     group = "Basic Types"
@@ -32,3 +32,9 @@ class IdentityComponent(IComponent):
         from web.extras.contentment.components.identity.controller import IdentityController
         IdentityController._component = self
         return IdentityController
+    
+    def authorized(self, container):
+        if container.path == '/users':
+            return True
+        
+        return False

@@ -23,7 +23,34 @@
     
 % for action in asset.controller.actions:
 %     if action.authorized(asset):
+%         if action.name == 'create':
+    <li class="nested"><a href="#" title="${view.description}">${action.title}</a><menu>
+<% types = sorted([i for i in asset.controller._create_types]) %>
+%             if len(types):
+        <li class="label"><label>Create in ${asset.__class__.__name__}: ${asset.title}</label></li>
+%             for name, kind in types:
+%                 if kind.summary:
+        <li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>
+%                 else:
+        <li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>
+%                 endif
+%             endfor
+%             endif
+<% types = sorted([i for i in asset.parent.controller._create_types]) if asset.parent else [] %>
+%             if len(types):
+        <li class="label"><label>Create in parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>
+%                 for name, kind in types:
+%                     if kind.summary:
+        <li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>
+%                     else:
+        <li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>
+%                     endif
+%                 endfor
+%             endif
+    </menu></li>
+%         else:
     <li><a href="${asset.path}/action:${action.name}" title="${action.description}">${action.title}</a></li>
+%         endif
 %     endif
 % endfor
     

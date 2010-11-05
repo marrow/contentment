@@ -5,6 +5,7 @@
 import mongoengine as db
 
 from web.extras.contentment.components.page.model import Page
+from widgets import fields
 
 
 log = __import__('logging').getLogger(__name__)
@@ -19,6 +20,8 @@ class EventContact(db.EmbeddedDocument):
 
 
 class Event(Page):
+    _widgets = fields
+    
     default = db.StringField(default="view:event", max_length=128)
     
     organizer = db.StringField(max_length=250)

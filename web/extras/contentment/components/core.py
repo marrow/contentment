@@ -14,6 +14,8 @@ from web.core import Controller, request, session, http
 from web.utils.string import normalize
 from web.utils.object import yield_property
 
+from web.extras.contentment.core import components, models
+
 # from web.extras.contentment.core import components, action, view
 # from web.extras.contentment.components.asset.core import CoreMethods
 
@@ -24,9 +26,21 @@ __all__ = ['BaseController']
 
 
 class BaseController(Controller):
-    __repr__ = lambda self: '%s(%s, %s, %r)' % (self.__class__.__name__, self.asset.id, self.asset.name, self.asset.title)
+    __repr__ = lambda self: '%s(%s, "%s")' % (self.__class__.__name__, self.asset.path, self.asset.title)
     
-    _modify_form = None
+    @property
+    def _create_types(self):
+        asset = self.asset
+        allowed = []
+        
+        for name, component in components.iteritems():
+            if not component.authorized(asset):
+                continue
+            
+            if not asset._component.authorize(asset, component):
+                continue
+            
+            yield name, component
     
     @property
     def asset(self):

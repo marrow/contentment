@@ -33,5 +33,5 @@ class EventComponent(IComponent):
         EventController._component = self
         return EventController
     
-    def authorize(self, child):
+    def authorize(self, container, child):
         return False # TODO: Check for File instance and allow.
