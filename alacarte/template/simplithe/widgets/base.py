@@ -5,7 +5,7 @@ from copy import copy, deepcopy
 from alacarte.template.simplithe import NoDefault
 from alacarte.template.simplithe import html5 as tag
 
-from transforms import BaseTransform
+from transforms import BaseTransform, BooleanTransform
 
 
 __all__ = ['Widget', 'NestedWidget', 'Form', 'FieldSet', 'Label', 'Layout', 'Input', 'BooleanInput', 'Link']
@@ -153,15 +153,19 @@ class Input(Widget):
 
 
 class BooleanInput(Input):
+    transform = BooleanTransform()
+    
     @property
     def template(self):
-        return tag.input (
-                type_ = self.type_,
-                name = self.name,
-                id = self.name + '-field',
-                checked = self.value,
-                **self.args
-            )
+        return tag.div [[ tag.input (
+                    type_ = self.type_,
+                    name = self.name,
+                    id = self.name + '-field',
+                    checked = self.value,
+                    **self.args
+                )] + [
+                    tag.label ( for_ = self.name + '-field' ) [ self.args.get('title') ]
+                ] if 'title' in self.args else []]
 
 
 class Link(Widget):

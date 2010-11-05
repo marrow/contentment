@@ -76,6 +76,15 @@ class TagsTransform(ListTransform):
     processor = KeywordProcessor(' \t,', normalize=lambda s: s.lower().strip('"'), sort=True, result=list)
 
 
+class BooleanTransform(Transform):
+    def __call__(self, value):
+        if value: return 'True'
+        return ''
+    
+    def native(self, value):
+        if not value: return False
+        return True
+
 class IntegerTransform(Transform):
     def __call__(self, value):
         if value is None: return u''
