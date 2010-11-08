@@ -314,3 +314,9 @@ dl.details dd.age { color: #666; }
 #flash.failure div, #flash.error div { background-color: #800; }
 #flash.failure:hover div, #flash.error:hover div { background-color: #a00; }
 #flash.subtle, #flash.success, #flash.failure, #flash.error { text-shadow: black 0 1px 1px; }
+
+
+menu.inline, ul.inline, ol.inline { margin: 0; padding: 0; display: inline-block; }
+.inline li { margin: 0; padding: 0; display: inline-block; }
+.inline li:before { content: ', '; }
+.inline li:first-child:before { content: ''; }

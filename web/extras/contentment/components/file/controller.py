@@ -2,6 +2,8 @@
 
 """Basic file controller."""
 
+import webob
+
 import web.core
 
 from web.extras.contentment.api import action, view
@@ -19,15 +21,21 @@ class FileController(AssetController):
         return 'preview', None
     
     @view('Download', "Download this file.")
-    def view_download(self):
+    def view_download(self, filename=None, inline=False):
         asset = self.asset
-        response = web.core.response._current_obj()
+        response = webob.Response(request=web.core.request, conditional_response=True)
+        filename = asset.filename if filename is None else filename
         
-        response.conditional_response = True
         response.content_type = asset.mimetype
         response.content_length = asset.size
         response.last_modified = asset.modified if asset.modified else asset.created
-        response.etag = '%s-%s-%s' % (asset.modified if asset.modified else asset.created, asset.size, hash(asset.filename))
+        response.accept_ranges = 'bytes'
+        response.etag = '%s-%s-%s' % (asset.modified if asset.modified else asset.created, asset.size, hash(filename))
+        response.cache_control = 'public'
+        response.content_transfer_encoding = 'binary'
+        response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
+        response.range = (0, asset.size)
+        
         response.app_iter = asset.content.get()
         
         return response

@@ -46,7 +46,7 @@ setup(
         license = license,
         keywords = '',
         
-        install_requires = ['WebCore', 'Mako', 'pymongo<1.9', 'mongoengine', 'marrow.util', 'textile'],
+        install_requires = ['WebCore', 'Mako', 'pymongo', 'mongoengine', 'marrow.util', 'textile'],
         
         test_suite = 'nose.collector',
         tests_require = ['nose', 'coverage', 'nose-achievements'],
@@ -94,6 +94,12 @@ setup(
                         "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
                         "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
                         "textile = web.extras.contentment.components.page.renderers.textile_:TextileRenderer"
+                    ],
+                'contentment.file.format': [
+                        "audio = web.extras.contentment.components.file.formats.audio:AudioFileFormat",
+                        "image = web.extras.contentment.components.file.formats.image:ImageFileFormat",
+                        "pdf = web.extras.contentment.components.file.formats.pdf:PDFFileFormat",
+                        "video = web.extras.contentment.components.file.formats.video:VideoFileFormat",
                     ]
             },
         

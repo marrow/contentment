@@ -1,7 +1,11 @@
 # encoding: utf-8
 
+import pkg_resources
+
 from web.extras.contentment import release
 from web.extras.contentment.api import IComponent
+
+from collections import defaultdict
 
 
 __all__ = ['FileComponent', 'controller', 'model', 'templates']
@@ -22,6 +26,31 @@ class FileComponent(IComponent):
     copyright = release.copyright
     license = release.license
     
+    def __init__(self):
+        mimetypes = self.mimetypes = defaultdict(dict)
+        
+        for res in pkg_resources.iter_entry_points('contentment.file.format'):
+            try:
+                instance = res.load()()
+            
+            except:
+                log.exception("Error scanning for file format handlers.")
+                break
+            
+            try:
+                for top, bottom in instance.mimetypes.iteritems():
+                    if bottom is "*":
+                        mimetypes[top] = defaultdict(lambda: instance, mimetypes[top])
+                        continue
+                    
+                    if isinstance(bottom, list):
+                        for b in bottom:
+                            mimetypes[top][b] = instance
+            
+            except:
+                log.exception("Error initializing file format handler %r.", instance)
+                continue
+    
     @property
     def model(self):
         from web.extras.contentment.components.file import model
@@ -32,3 +61,6 @@ class FileComponent(IComponent):
         from web.extras.contentment.components.file.controller import FileController
         FileController._component = self
         return FileController
+    
+    def authorize(self, container, child):
+        return False

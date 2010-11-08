@@ -30,7 +30,15 @@ class File(Asset):
     mimetype = db.StringField(max_length=250)
     size = db.IntField()
     
+    backend = db.StringField(max_length=128, default="gridfs")
+    
     content = db.FileField()
+    
+    @property
+    def format(self):
+        top, _, bottom = self.mimetype.partition('/')
+        
+        return self._component.mimetypes.get(top, dict()).get(bottom, None)
     
     def delete(self, *args, **kw):
         if self.content: self.content.delete()
@@ -40,6 +48,10 @@ class File(Asset):
         # web.core.request.POST['content']
         
         if formdata.get('content', None) is None:
+            try:
+                del formdata['content']
+            except:
+                pass
             return formdata
         
         var = formdata.get('content', None)
@@ -47,14 +59,10 @@ class File(Asset):
         
         del formdata['content']
         
-        if self.content:
-            self.content.replace(var.file, content_type=mimetype, filename=var.filename)
+        self.content = var.file
+        self.content.content_type = formdata['mimetype'] = mimetype
+        self.content.filename = formdata['filename'] = var.filename
         
-        else:
-            self.content.put(var.file, content_type=mimetype, filename=var.filename)
-        
-        formdata['filename'] = var.filename
-        formdata['mimetype'] = mimetype
-        formdata['size'] = self.content.length
+        formdata['size'] = self.content.get().length
         
         return formdata

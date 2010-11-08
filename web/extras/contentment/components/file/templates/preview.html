@@ -4,6 +4,12 @@
 
 <h1>${title()}</h1>
 
+% if asset.description:
+<p>${asset.description}</p>
+% endif
+
+<h2>Basic Information</h2>
+
 <table>
     <tbody>
         <tr>
@@ -20,5 +26,26 @@
         </tr>
     </tbody>
 </table>
+
+% if asset.properties.get('org-contentment-file-metadata', None):
+<h2>Advanced Metadata</h2>
+
+<table>
+    <tbody>
+%   for name, value in asset.properties['org-contentment-file-metadata'].iteritems():
+        <tr>
+            <th class="tr">${name}</th>
+            <td>${value}</td>
+        </tr>
+%   endfor
+    </tbody>
+</table>
+% endif
+
+% if asset.format:
+<h2>Embedded Preview</h2>
+
+${unicode(asset.format.embed(asset)) | n}
+% endif
 
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

@@ -44,9 +44,11 @@ class AssetPathTransform(BaseTransform):
 
 class AssetListTransform(BaseTransform):
     def __call__(self, value):
+        from web.extras.contentment.components.asset.model import Asset
+        
         if not value: return u''
         
-        return u", ".join([i.path for i in value])
+        return u", ".join([Asset.objects(id=i.id).first().path for i in value])
     
     def native(self, value):
         from web.extras.contentment.components.asset.model import Asset

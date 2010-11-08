@@ -4,4 +4,26 @@
 
 ${asset.rendered | n}
 
+% if asset.children:
+<div class="byline tl attachments" style="margin-bottom: 5px;">
+    <h4 class="fl">Attachments</h4>
+    <menu class="inline">
+% for child in asset.children:
+        ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
+% endfor
+    ></menu>
+</div>
+% endif
+
+% if asset.related:
+<div class="byline tl" style="margin-bottom: 5px;">
+    <h4 class="fl">Related</h4>
+    <menu class="inline">
+%   for child in asset.related:
+        ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
+%   endfor
+    ></menu>
+</div>
+% endif
+
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

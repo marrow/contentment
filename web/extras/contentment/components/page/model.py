@@ -32,6 +32,8 @@ class Page(Asset):
     template = db.StringField(max_length=250)
     related = db.ListField(db.ReferenceField(Asset), default=list)
     
+    attachments = db.BooleanField(default=True)
+    
     @property
     def rendered(self):
         @web.core.cache.cache('page.content', expires=3600)
