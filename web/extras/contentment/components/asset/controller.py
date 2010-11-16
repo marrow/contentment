@@ -87,7 +87,11 @@ class AssetController(BaseController):
             result, remaining = form.native(kw)
         
         except:
+            if web.core.config.get('debug', False):
+                raise
+            
             log.exception("Error processing form.")
+            web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to create asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
             return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
         
         dirty = []
@@ -108,7 +112,11 @@ class AssetController(BaseController):
             asset.save(dirty=dirty)
         
         except:
+            if web.core.config.get('debug', False):
+                raise
+            
             log.exception('Error creating record.')
+            web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to create asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
             return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
         
         asset.attach(self.asset)

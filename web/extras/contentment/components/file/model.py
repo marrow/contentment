@@ -80,3 +80,6 @@ class File(Asset):
             log.exception("Unable to index content type.")
         
         return formdata
+    
+    def embed(self, **kw):
+        return self.format.embed(self, **kw)

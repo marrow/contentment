@@ -28,8 +28,6 @@ class ThemeController(AssetController):
         base = os.path.join(self._component.path, 'public')
         path = os.path.normpath(os.path.join(base, *parts))
         
-        log.debug(path)
-        
         if not path.startswith(base):
             raise web.core.http.HTTPForbidden("Cowardly refusing to violate base path policy.")
         
@@ -58,7 +56,6 @@ class ThemeController(AssetController):
             return ''
         
         if response.etag in request.if_none_match:
-            log.debug("Raising not modified.")
             raise web.core.http.HTTPNotModified()
         
         def iterable():
