@@ -5,7 +5,7 @@
 
 import mongoengine as db
 
-from web.extras.contentment.components.asset.model import Asset
+from web.extras.contentment.components.theme.model import Theme
 
 
 log = __import__('logging').getLogger(__name__)
@@ -20,6 +20,6 @@ class Paths(db.EmbeddedDocument):
     footer = db.StringField(max_length=250, default="/settings/templates/footer")
 
 
-class DefaultTheme(Asset):
+class DefaultTheme(Theme):
     breadcrumb = db.BooleanField(default=True)
     paths = db.EmbeddedDocumentField(Paths, default=Paths())

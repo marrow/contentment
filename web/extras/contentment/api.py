@@ -111,6 +111,11 @@ class SingletonMixIn(object):
 
 
 class ITheme(SingletonMixIn, IComponent):
+    def authorized(self, parent):
+        """Only one theme may be active at a time."""
+        from web.extras.contentment.components.theme.model import Theme
+        return not len(Theme.objects)
+    
     def authorize(self, container, child):
         """Themes can not have child nodes."""
         return False

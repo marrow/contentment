@@ -87,6 +87,7 @@ setup(
                         "page = web.extras.contentment.components.page:PageComponent",
                         "search = web.extras.contentment.components.search:SearchComponent",
                         "settings = web.extras.contentment.components.settings:SettingsComponent",
+                        "theme = web.extras.contentment.components.theme:ThemeComponent",
                         
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",
                     ],
