@@ -4,6 +4,8 @@ from api import FileFormat
 
 from alacarte.template.simplithe import html5 as tag
 
+from marrow.util.convert import boolean
+
 
 __all__ = ['AudioFileFormat']
 
@@ -14,6 +16,11 @@ class AudioFileFormat(FileFormat):
     
     def embed(self, asset, preload=True, autoplay=False, loop=False, controls=True):
         path = asset.path + '/view:download/' + asset.filename + "?inline=True"
+        
+        preload = boolean(preload)
+        autoplay = boolean(autoplay)
+        loop = boolean(loop)
+        controls = boolean(controls)
         
         return tag.audio (
                 preload = preload,
