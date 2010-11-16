@@ -25,7 +25,7 @@ h3 { margin-top: 0px; text-transform: lowercase; }
 p, ul, ol, blockquote, dl, table, pre { margin-bottom: 10px; }
 dt { clear: both; }
 pre { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; font-family: 'Inconsolata XL', Inconsolata, Monaco, Couier, 'Courier New', fixed; line-height: 150%; height: auto; overflow: auto; }
-blockquote { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; }
+blockquote { padding: 0 15px; margin: 10px 5px; border-left: 5px solid #eee; }
 form a { font-size: 93%; vertical-align: middle; }
 acronym { border-bottom: 1px dotted #ccc; }
 
