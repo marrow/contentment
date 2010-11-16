@@ -14,10 +14,16 @@
 % for child in contents:
 <% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
-%   if child.owner:
-  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.name}</a> ${render(asset.created, 'on ', "created")}.</dd>
-%   else:
+%   if root.properties['org-contentment-option-attribution']:
+%     if child.owner:
+  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.title}</a>\
+%       if root.properties['org-contentment-option-showdates']:
+ ${render(asset.created, 'on ', "created")}\
+%       endif
+.</dd>
+%     else:
   <dd class="byline">by <em>Anonymous</em> ${render(asset.created, 'on ', "created")}.</dd>
+%     endif
 %   endif
 %   if child.description:
   <dd class="description">${child.description}</dd>
@@ -27,7 +33,7 @@
 %   if child.tags:
   <dd class="tags"><ul class="tags"></ul></dd>
 %   endif
-%   if child.modified:
+%   if root.properties['org-contentment-option-showdates'] and child.modified:
   <dd class="age icon updated">Last modified ${render(asset.modified, 'on ', "modified")}.</dd>
 %   endif
 % endfor
