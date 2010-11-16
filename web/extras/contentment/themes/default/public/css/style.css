@@ -36,7 +36,7 @@ table { margin-top: 10px; border-collapse: collapse; }
 table th, table td { vertical-align: top; padding: 3px 5px; }
 
 table.dl, table.lines, table.matrix { width: 100%; }
-table.dl th { white-space: nowrap; }
+table.dl th { white-space: nowrap; text-align: right; }
 table.dl th, table.dl td { vertical-align: top !important; }
 
 table.lines th, table.lines td, { text-align: left; padding: 10px; border-top: 1px solid #999; }
