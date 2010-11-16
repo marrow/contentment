@@ -27,6 +27,7 @@ dt { clear: both; }
 pre { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; font-family: 'Inconsolata XL', Inconsolata, Monaco, Couier, 'Courier New', fixed; line-height: 150%; height: auto; overflow: auto; }
 blockquote { padding: 0 15px; margin-left: 5px; border-left: 5px solid #eee; }
 form a { font-size: 93%; vertical-align: middle; }
+acronym { border-bottom: 1px dotted #ccc; }
 
 form fieldset { border: 0; padding: 0; margin: 0; }
 form fieldset legend { display: none; }
