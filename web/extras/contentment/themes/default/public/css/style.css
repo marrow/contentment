@@ -149,7 +149,7 @@ dl.results dd { margin-bottom: 10px; padding-left: 25px; }
 #article-description { width: 890px; height: 50px; padding: 5px; }
 #article-content { width: 890px; height: 350px; padding: 5px; }
 
-div.byline { margin: 5px -10px -10px; padding: 10px 10px 5px; text-align: right; font-size: 77%; line-height: 100%; border-top: 1px solid #ccc; background: -webkit-gradient(linear, left top, left center, from(#ddd), to(#fff)); }
+div.byline { margin: 5px -10px -10px; padding: 10px 10px 5px; text-align: right; font-size: 77%; line-height: 100%; border-top: 1px solid #ccc; background: #fff; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ddd', endColorstr='#fff'); background: -webkit-gradient(linear, left top, left bottom, from(#ddd), to(#fff)); background: -moz-linear-gradient(top, #ddd, #fff); }
 
 
 form.contact { font-size: 93%; }
@@ -157,7 +157,7 @@ form.contact input[type=text], form.contact input[type=tel], form.contact input[
 form.contact textarea { height: 100px; }
 
 
-#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: -webkit-gradient(linear, left center, left bottom, from(#fff), to(#d0d0d0)); }
+#breadcrumb { font-family: 'Trebuchet MS'; margin: 0px -10px 10px; padding: 5px 10px 5px; border-bottom: 1px solid #ccc; background: #fff; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fff', endColorstr='#d0d0d0'); background: -webkit-gradient(linear, left center, left bottom, from(#fff), to(#d0d0d0)); background: -moz-linear-gradient(top, #fff, #d0d0d0); }
 #breadcrumb label { color: white; text-shadow: 0px 1px 2px #d0d0d0; float: right; padding: 2px 5px; }
 #breadcrumb menu { list-style: none; }
 #breadcrumb li a { padding: 2px 5px; }
