@@ -10,9 +10,11 @@ __all__ = ['VideoFileFormat']
 
 
 class VideoFileFormat(FileFormat):
-    mimetypes = {'video': ['mp4', 'ogg']}
+    mimetypes = {'video': ['mpeg', 'mp4', 'quicktime', 'ogg']}
     
     def embed(self, asset, preload=True, autoplay=False, loop=False, controls=True, width=None, height=None, poster=None):
+        path = asset.path + '/view:download/' + asset.filename + "?inline=True"
+        
         return tag.video (
                 preload = preload,
                 autobuffer = preload,
@@ -23,5 +25,5 @@ class VideoFileFormat(FileFormat):
                 height = height,
                 poster = poster
             ) [
-                tag.source ( src = asset.path + '/view:download/' + asset.filename )
+                tag.source ( src = path )
             ]

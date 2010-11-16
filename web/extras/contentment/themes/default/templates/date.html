@@ -1,0 +1,13 @@
+<%def name="render(date, prefix='', cls='')">\
+<%
+    if date is None:
+        return
+    
+    date = date.replace(microsecond=0)
+    
+    if date.tzinfo is None:
+        from pytz import utc
+        date = date.replace(tzinfo=utc)
+%>\
+<time ${('class="%s" ' % (cls, )) if cls else ''}datetime="${date.isoformat()}">${prefix}${date.strftime(root.properties['org-contentment-formats-date'])}</time>\
+</%def>

@@ -11,6 +11,7 @@ log = __import__('logging').getLogger(__name__)
 
 
 
+connection = None
 components = Bunch()
 models = Bunch()
 namespace = Bunch()

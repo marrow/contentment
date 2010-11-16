@@ -1,4 +1,5 @@
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+<%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 
 <%def name="title()">${asset.title}</%def>        
 <%def name="bodyclass()">search</%def>
@@ -12,9 +13,9 @@
 <% if not child.controller.allowed: skipped += 1; continue %>
   <dt><a href="${child.path}/">${child.title}</a></dt>
 %   if child.owner:
-  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.title}</a> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
+  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.title}</a> ${render(asset.created, "on ", 'created')}.</dd>
 %   else:
-  <dd class="byline">by <em>Anonymous</em> <time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">on ${child.created.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
+  <dd class="byline">by <em>Anonymous</em> ${render(asset.created, "on ", 'created')}.</dd>
 %   endif
 %   if child.description:
   <dd class="description">${child.description}</dd>
@@ -25,7 +26,7 @@
   <dd class="tags"><ul class="tags"></ul></dd>
 %   endif
 %   if child.modified:
-  <dd class="age icon updated">Last modified <time class="modified" datetime="${child.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">on ${child.modified.strftime(root.properties['org-contentment-formats-date'])}</time>.</dd>
+  <dd class="age icon updated">Last modified ${render(child.modified, "on ", 'modified')}.</dd>
 %   endif
 % endfor
 </dl>

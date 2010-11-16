@@ -10,9 +10,11 @@ __all__ = ['AudioFileFormat']
 
 
 class AudioFileFormat(FileFormat):
-    mimetypes = {'audio': ['mpeg']}
+    mimetypes = {'audio': ['mpeg', 'ogg', 'vorbis', 'x-wav', 'mp4a', 'mp4a-latm']}
     
     def embed(self, asset, preload=True, autoplay=False, loop=False, controls=True):
+        path = asset.path + '/view:download/' + asset.filename + "?inline=True"
+        
         return tag.audio (
                 preload = preload,
                 autobuffer = preload,
@@ -20,5 +22,5 @@ class AudioFileFormat(FileFormat):
                 loop = loop,
                 controls = controls
             ) [
-                tag.source ( src = asset.path + '/view:download/' + asset.filename )
+                tag.source ( src = path )
             ]

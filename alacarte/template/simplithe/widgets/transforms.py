@@ -2,8 +2,9 @@
 
 import datetime
 
+from pytz import utc
+
 from marrow.util.convert import KeywordProcessor
-from marrow.util.time import UTC
 
 
 __all__ = ['TransformException', 'Transform', 'BaseTransform', 'ListTransform', 'TagsTransform', 'IntegerTransform', 'FloatTransform', 'DateTimeTransform']
@@ -124,4 +125,6 @@ class DateTimeTransform(Transform):
         value = value.strip()
         if not value: return None
         
-        return datetime.datetime.strptime(value, self.format)
+        value = self.base.strptime(value, self.format)
+        
+        return value if value.tzinfo is not None else value.replace(tzinfo=utc)

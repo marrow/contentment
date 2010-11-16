@@ -1,4 +1,5 @@
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+<%namespace file="web.extras.contentment.themes.default.templates.date" name="date"/>
 
 <%def name="title()">Contents of ${asset.__class__.__name__}: ${asset.title}</%def>
 
@@ -34,9 +35,9 @@
             <td class="owner"><em title="No owner set; anonymous, system, or automated asset.">Anonymous</em></td>
 %     endif
 %     if not child.modified or child.modified == child.created:
-            <td class="date"><time class="created" datetime="${child.created.isoformat().rsplit('.')[0]}Z" title="Creation date.">${child.created.strftime(root.properties['org-contentment-formats-date'])}</time></td>
+            <td class="date">${date.render(child.created, cls='created')}</td>
 %     else:
-            <td class="date"><time class="modified" datetime="${child.modified.isoformat().rsplit('.')[0]}Z" title="Modification date.">${child.modified.strftime(root.properties['org-contentment-formats-date'])}</time></td>
+            <td class="date">${date.render(child.created, cls='modified')}</td>
 %     endif
             <td class="actions">
 % for action in asset.controller.actions:

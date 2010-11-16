@@ -23,6 +23,7 @@ __all__ = ['File']
 
 class File(Asset):
     _widgets = fields
+    _indexable = ['extracted']
     
     default = db.StringField(default="view:preview", max_length=128)
     
@@ -33,6 +34,7 @@ class File(Asset):
     backend = db.StringField(max_length=128, default="gridfs")
     
     content = db.FileField()
+    extracted = db.StringField()
     
     @property
     def format(self):
@@ -45,7 +47,7 @@ class File(Asset):
         super(File, self).delete(*args, **kw)
     
     def process(self, formdata):
-        # web.core.request.POST['content']
+        formdata = super(File, self).process(formdata)
         
         if formdata.get('content', None) is None:
             try:
@@ -59,10 +61,22 @@ class File(Asset):
         
         del formdata['content']
         
+        if self.content:
+            self.content.delete()
+        
         self.content = var.file
         self.content.content_type = formdata['mimetype'] = mimetype
         self.content.filename = formdata['filename'] = var.filename
         
         formdata['size'] = self.content.get().length
+        
+        try:
+            top, _, bottom = formdata['mimetype'].partition('/')
+            format = self._component.mimetypes.get(top, dict()).get(bottom, None)
+            
+            formdata['extracted'] = format.index(var.file)
+        
+        except:
+            log.exception("Unable to index content type.")
         
         return formdata

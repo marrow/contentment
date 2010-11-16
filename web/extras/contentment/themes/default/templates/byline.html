@@ -1,3 +1,4 @@
+<%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 % if root.properties['org-contentment-option-showdates'] or root.properties['org-contentment-option-attribution']:
 <div class="byline">
     Created\
@@ -5,9 +6,9 @@
  by <a href="${asset.owner.path}">${asset.owner.title}</a>\
 %   endif
 %   if root.properties['org-contentment-option-showdates']:
- <time datetime="${asset.created.isoformat().split('.')[0].rsplit('.')[0]}Z">on ${asset.created.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>\
+ ${render(asset.created, 'on ')}\
 %     if asset.modified:
-. Last modified <time datetime="${asset.modified.isoformat().split('.')[0].rsplit('.')[0]}Z">on ${asset.modified.strftime('%B %e, %G at %H:%M:%S')}, GMT/UTC</time>\
+. Last modified ${render(asset.modified, 'on ')}\
 %     endif
 %   endif
 .

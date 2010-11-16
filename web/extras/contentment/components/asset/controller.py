@@ -152,7 +152,11 @@ class AssetController(BaseController):
         result = asset.process(result)
         
         for field, value in result.iteritems():
-            if getattr(asset, field) == value: continue
+            try:
+                if getattr(asset, field) == value: continue
+            
+            except:
+                log.exception("Unable to compare two versions of the same attribute!  Marking dirty to be safe.")
             
             dirty.append(field)
             setattr(asset, field, value)

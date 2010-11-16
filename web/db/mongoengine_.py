@@ -22,7 +22,7 @@ def MongoEngineMiddleware(application, prefix, model, session=None, **config):
     
     log.info("Connecting MongoEngine to '%s'.", _safe_uri_replace.sub(r'\1://\2@', url))
     
-    connection = dict()
+    connection = dict(tz_aware=True)
     
     scheme, parts = url.split('://', 1)
     parts, db = parts.split('/', 1)
@@ -38,7 +38,7 @@ def MongoEngineMiddleware(application, prefix, model, session=None, **config):
         connection['username'], _, connection['password'] = auth.partition(':')
     
     log.debug("Connecting to %s database with connection information: %r", db, connection)
-    mongoengine.connect(db, **connection)
+    model.__dict__['connection'] = mongoengine.connect(db, **connection)
     
     # Trigger model loading.
     from web.extras.contentment import core

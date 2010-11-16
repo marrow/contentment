@@ -8,7 +8,7 @@ class FileFormat(object):
     mimetypes = {}
     
     def index(self, asset):
-        return ''
+        return []
     
     def embed(self, asset):
         return ''
