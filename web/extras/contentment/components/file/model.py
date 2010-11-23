@@ -70,14 +70,10 @@ class File(Asset):
         
         formdata['size'] = self.content.get().length
         
-        try:
-            top, _, bottom = formdata['mimetype'].partition('/')
-            format = self._component.mimetypes.get(top, dict()).get(bottom, None)
-            
-            formdata['extracted'] = format.index(var.file)
+        top, _, bottom = formdata['mimetype'].partition('/')
+        format = self._component.mimetypes.get(top, dict()).get(bottom, None)
         
-        except:
-            log.exception("Unable to index content type.")
+        formdata['extracted'] = format.index(var.file)
         
         return formdata
     

@@ -8,6 +8,7 @@
 <p>${asset.description}</p>
 % endif
 
+<!--
 <h2>Basic Information</h2>
 
 <table>
@@ -26,6 +27,7 @@
         </tr>
     </tbody>
 </table>
+-->
 
 % if asset.properties.get('org-contentment-file-metadata', None):
 <h2>Advanced Metadata</h2>
@@ -43,9 +45,9 @@
 % endif
 
 % if asset.format:
-<h2>Embedded Preview</h2>
+<!-- <h2>Embedded Preview</h2> -->
 
-${unicode(asset.format.embed(asset)) | n}
+${unicode(asset.format.embed(asset, width="100%")) | n}
 % endif
 
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

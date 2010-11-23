@@ -23,8 +23,14 @@ $(function(){
                     {
                         id: 'gist',
                         js: '/theme/static/js/jquery.gist.min.js',
-                        fn: ['gist'],
+                        fn: 'gist',
                         sel: '.gist[id]'
+                    },
+                    {
+                        id: 'autocolumn',
+                        js: '/theme/static/js/jquery.autocolumn.min.js',
+                        fn: 'columnize',
+                        sel: '.columns,ul li:nth-child(5)'
                     }
                     // {
                     //     id: 'upload',

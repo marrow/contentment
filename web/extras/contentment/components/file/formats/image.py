@@ -12,11 +12,17 @@ __all__ = ['ImageFileFormat']
 class ImageFileFormat(FileFormat):
     mimetypes = {'image': ['bmp', 'gif', 'jpeg', 'png', 'tiff']}
     
-    def embed(self, asset, width=None, height=None):
+    def embed(self, asset, width=None, height=None, caption=None, align=None):
         path = asset.path + '/view:download/' + asset.filename + "?inline=True"
         
-        return tag.img (
+        img = tag.img (
                 src = path,
                 width = width,
                 height = height
             )
+        
+        return img if not caption else tag.div ( strip = True ) [
+                img,
+                tag.br,
+                caption
+            ]

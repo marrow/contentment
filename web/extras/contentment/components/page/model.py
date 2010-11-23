@@ -76,6 +76,7 @@ class Page(Asset):
                     args = dict([(i.split('=')[0], i.split('=')[1]) for i in args.split()])
                     
                     try:
+                        # embedded = u'''<div class="embed" id="%s-embed">%s</div>''' % (embedded.name, unicode(embedded.embed(**args)))
                         content = content.replace(replacement, unicode(embedded.embed(**args)))
                     
                     except:
