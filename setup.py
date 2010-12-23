@@ -70,7 +70,7 @@ setup(
             },
         zip_safe = False,
         
-        namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components', 'alacarte', 'alacarte.template'],
+        namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components', 'web.extras.contentment.themes', 'alacarte', 'alacarte.template'],
         
         paster_plugins = ['PasteScript', 'WebCore'],
         
@@ -101,6 +101,7 @@ setup(
                         "image = web.extras.contentment.components.file.formats.image:ImageFileFormat",
                         "pdf = web.extras.contentment.components.file.formats.pdf:PDFFileFormat",
                         "video = web.extras.contentment.components.file.formats.video:VideoFileFormat",
+                        "html = web.extras.contentment.components.file.formats.html:HTMLFileFormat",
                     ]
             },
         
