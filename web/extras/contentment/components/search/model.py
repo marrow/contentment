@@ -31,8 +31,8 @@ class Search(Folder):
         query = {}
         
         for term in list(terms[0]):
-            if ':' in term:
-                terms[0].remove(term)
+            # if ':' in term:
+            #     terms[0].remove(term)
             
             if term.startswith('tag:'):
                 if 'tags__all' not in query: query['tags__all'] = []

@@ -1,12 +1,15 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
 <%def name="title()">ACL for ${asset.__class__.__name__}: ${asset.title}</%def>
 
 <% acl = [i for i in asset.acl_] %>
 
-<h1>${title()}</h1>
+<header>
+    <h1>${title()}</h1>
+</header>
 
-<div id="contents">
+<section id="contents">
 <table>
     <thead>
         <tr>
@@ -35,6 +38,6 @@
 % endfor
     </tbody>
 </table>
-</div>
+</section>
 
 <div class="byline tc">Contains <b>${len(acl)}</b> ACL Rule${'s' if len(acl) != 1 else ''}</div>

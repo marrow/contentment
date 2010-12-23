@@ -1,31 +1,36 @@
-<%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+## encoding: utf-8
+<%inherit file="${context.get('template')}"/>
 
 <%def name="title()">${asset.title}</%def>
 
+<section>
 ${asset.rendered | n}
+</section>
 
 <div class="ca clearfix"></div>
 
 % if asset.children:
-<div class="byline tl attachments" style="margin-bottom: 5px;">
-    <h4 class="fl">Attachments</h4>
-    <menu class="inline">
+<footer id="attachments">
+    <label class="fl">Attachments</label>
+    <menu>
 % for child in asset.children:
         ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
 % endfor
     ></menu>
-</div>
+</footer>
 % endif
 
 % if asset.related:
-<div class="byline tl" style="margin-bottom: 5px;">
-    <h4 class="fl">Related</h4>
-    <menu class="inline">
+<footer id="related">
+    <label>Related</label>
+    <menu>
 %   for child in asset.related:
         ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
 %   endfor
     ></menu>
-</div>
+</footer>
 % endif
 
+% if template[0] != '/':
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>
+% endif

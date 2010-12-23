@@ -3,6 +3,7 @@
 """Component, theme, and extension APIs."""
 
 import inspect
+import tempfile
 
 from functools import wraps
 
@@ -174,8 +175,27 @@ class Decorator(object):
             if data is None:
                 data = dict()
             
-            data['root'] = Asset.objects(path='/').first()
-            data['asset'] = self.asset
+            root = data['root'] = Asset.objects(path='/').first()
+            asset = data['asset'] = self.asset
+            
+            if not asset.template:
+                data['template'] = root.properties.get('org-contentment-default-template', root.properties['org-contentment-theme'] + '.templates.master')
+            
+            elif asset.template == ':none':
+                data['template'] = root.properties['org-contentment-theme'] + '.templates.master'
+            
+            if data.get('template', asset.template)[0] == '/':
+                template_ = Asset.objects(path=data.get('template', asset.template)).first()
+                
+                if template_:
+                    fh = tempfile.NamedTemporaryFile(mode='wb', prefix='contentment-template-', suffix='.html', delete=False)
+                    fh.write('<%inherit file="' + root.properties['org-contentment-theme'] + '.templates.master"/>\n' + template_.content)
+                    fh.close()
+                    
+                    data['template'] = fh.name
+                
+                else:
+                    data['template'] = root.properties['org-contentment-theme'] + '.templates.master'
             
             base = '.'.join(f.__module__.split('.')[:-1]) + '.templates.'
             

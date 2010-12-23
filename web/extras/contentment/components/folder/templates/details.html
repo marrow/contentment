@@ -1,12 +1,19 @@
-<%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
+## encoding: utf-8
+<%inherit file="${context.get('template')}"/>
 <%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 
-<%def name="title()">${asset.title}</%def>        
+<%def name="title()">${asset.title}</%def>
 
-<h1>${asset.title}</h1>
+% if template.endswith('.master'):
+<header>
+    <h1>${asset.title}</h1>
+</header>
+% endif
 
+<section>
 % if not asset.contents:
-<h2>This folder is empty.</h2>
+    <h2 class="tc">This folder is empty.</h2>
+</section>
 % else:
 
 <dl class="details">
@@ -39,9 +46,13 @@
 % endfor
 </dl>
 
-<div class="byline tc">
+</section>
+
+% if template.endswith('.master'):
+<footer class="byline tc">
 <% count = len(contents) - skipped %>
     Contains <strong>${count}</strong> Asset${'' if count == 1 else 's'}
-</div>
+</footer>
+% endif
 
 % endif

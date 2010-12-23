@@ -7,19 +7,6 @@ from web.extras.contentment.widgets import AssetListTransform
 __all__ = ['fields']
 
 
-def iter_templates():
-    from web.extras.contentment.components.asset.model import Asset
-    
-    container = Asset.objects(path='/settings/templates/custom').first()
-    assert container
-    
-    yield '', "Default Template"
-    
-    custom = Asset.objects(parent=container).order_by('title')
-    
-    if len(custom):
-        yield "Custom Templates", [(template.path, template.title) for template in custom]
-
 
 def fields(asset):
     return [
@@ -29,7 +16,6 @@ def fields(asset):
                 ]),
         
             ('properties', "Properties", [
-                    SelectField('template', "Page Template", title="Page templates wrap the content in custom code.", values=iter_templates),
                     SelectField('engine', "Rendering Engine", title="Text pre-processor.", values=[
                             ('Basic Engines', [
                                     ('textile', "Textile Text-to-HTML"),

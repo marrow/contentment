@@ -1,3 +1,4 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 <%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 
@@ -69,6 +70,17 @@ ${asset.rendered | n}
     </tbody>
 </table>
 
+% endif
+
+% if asset.children:
+<footer id="attachments">
+    <label class="fl">Attachments</label>
+    <menu>
+% for child in asset.children:
+        ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
+% endfor
+    ></menu>
+</footer>
 % endif
 
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

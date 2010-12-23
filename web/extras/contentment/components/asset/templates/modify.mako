@@ -1,3 +1,4 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
 <%def name="title()">Modifying ${asset.__class__.__name__}: ${asset.title}</%def>
@@ -14,11 +15,15 @@
     form.footer.children.append(Link('textile', "Textile Reference", class_='button', target='_blank', href="http://redcloth.org/hobix.com/textile/"))
 %>
 
-<menu class="tabs">
+<header>
     <h1>${title()}</h1>
+    <menu class="tabs">
 % for group in form.children:
-    <li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>
+        <li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>
 % endfor
-</menu>
+    </menu>
+</header>
 
-${unicode(form(data)) | n}
+<section>
+    ${unicode(form(data)) | n}
+</section>

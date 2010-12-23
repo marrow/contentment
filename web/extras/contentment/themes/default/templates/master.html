@@ -1,5 +1,7 @@
+## encoding: utf-8
 <%!
 
+    import os
     from web.extras.contentment.components.asset.model import Asset
 
 %>
@@ -112,3 +114,4 @@ ${self.js()}
     </body>
 </html>
 <% if 'flash' in web.session: del web.session['flash'] %>
+<% if template[0] == '/': os.unlink(template) %>

@@ -30,6 +30,21 @@ def iter_views(asset):
         yield "Children", [(child.name, child.title) for child in asset.children]
 
 
+def iter_templates():
+    from web.extras.contentment.components.asset.model import Asset
+    
+    container = Asset.objects(path='/settings/templates/custom').first()
+    assert container
+    
+    yield ':none', "No Template"
+    yield '', "Default Template"
+    
+    custom = Asset.objects(parent=container).order_by('title')
+    
+    if len(custom):
+        yield "Custom Templates", [(template.path, template.title) for template in custom]
+
+
 def fields(asset):
     root = asset.path == '/'
     
@@ -50,6 +65,7 @@ def fields(asset):
                     TagField('tags', "Keywords / Tags", class_="tags", title="Used for searches, both live and saved."), # TODO: tag parsing
                     SelectField('owner', "Author / Owner", values=iter_owners, transform=AssetPathTransform()), # TODO: Path-based asset conversion.
                     SelectField('default', "Default View", values=partial(iter_views, asset)), # TODO
+                    SelectField('template', "View Template", title="View templates wrap the content in custom code.", values=iter_templates),
                     DateTimeField('created', "Creation Date", title="The date the asset was created, in UTC."), # TODO: date conversion
                     DateTimeField('modified', "Modification Date", title="The date the asset was last modified, in UTC.")
                 ]),

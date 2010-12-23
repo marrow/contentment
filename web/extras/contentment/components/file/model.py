@@ -7,6 +7,7 @@ All asset types must descend from this class.
 
 
 import mimetypes
+from cStringIO import StringIO
 
 import web.core
 
@@ -73,9 +74,21 @@ class File(Asset):
         top, _, bottom = formdata['mimetype'].partition('/')
         format = self._component.mimetypes.get(top, dict()).get(bottom, None)
         
-        formdata['extracted'] = format.index(var.file)
+        if format:
+            formdata['extracted'] = format.index(var.file)
         
         return formdata
+    
+    def reindex(self, dirty=None):
+        top, _, bottom = self.mimetype.partition('/')
+        format = self._component.mimetypes.get(top, dict()).get(bottom, None)
+        
+        if format:
+            content = StringIO(self.content.read())
+            self.extracted = format.index(content)
+            self.save()
+        
+        super(File, self).reindex(dirty)
     
     def embed(self, **kw):
         return self.format.embed(self, **kw)

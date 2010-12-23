@@ -7,7 +7,7 @@ minimum = 2
 particles = u"""a an the to ah hi oh so as yet as too and or nor but while for was is it will if id has go via can ll"""
 particles = dict((i, None) for i in particles.split()) # in checks are faster against dicts than lists
 
-replaced = re.compile(r"(\W|('s))+")
+replaced = re.compile(r"([^-:\w]|('s))+")
 
 
 def strip(value):

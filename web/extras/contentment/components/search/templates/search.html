@@ -1,3 +1,4 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 <%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 
@@ -5,8 +6,11 @@
 <%def name="bodyclass()">search</%def>
 
 % if q:
-<h1>Search results for: ${q}</h1>
+<header>
+    <h1>Search results for: ${q}</h1>
+</header>
 
+<section>
 <dl class="details">
 <% skipped = 0 %>
 % for child in results:
@@ -41,10 +45,16 @@
 
 <form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
 % endif
+</section>
 
 % else:
 
-<h1>${title()}</h1>
-<form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
+<header>
+    <h1>${title()}</h1>
+</header>
+
+<section>
+    <form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
+</section>
 
 % endif

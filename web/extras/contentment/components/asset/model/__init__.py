@@ -75,6 +75,7 @@ class Asset(db.Document):
     tags = db.ListField(db.StringField(max_length=32), default=list)
     properties = db.DictField(default=dict)
     acl = db.ListField(db.EmbeddedDocumentField(ACLRule), default=list)
+    template = db.StringField(max_length=250, default='')
     
     # Ownership and dates.
     owner = db.GenericReferenceField()

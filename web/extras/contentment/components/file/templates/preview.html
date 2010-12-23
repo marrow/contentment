@@ -1,11 +1,15 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
 <%def name="title()">${asset.title}</%def>
 
-<h1>${title()}</h1>
+<header>
+    <h1>${title()}</h1>
+</header>
 
+<section>
 % if asset.description:
-<p>${asset.description}</p>
+    <p>${asset.description}</p>
 % endif
 
 <!--
@@ -49,5 +53,7 @@
 
 ${unicode(asset.format.embed(asset, width="100%")) | n}
 % endif
+
+</section>
 
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

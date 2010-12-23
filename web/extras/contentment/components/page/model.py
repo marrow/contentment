@@ -29,7 +29,6 @@ class Page(Asset):
     
     content = db.StringField()
     engine = db.StringField(max_length=250, default="textile")
-    template = db.StringField(max_length=250)
     related = db.ListField(db.ReferenceField(Asset), default=list)
     
     attachments = db.BooleanField(default=True)
@@ -41,18 +40,19 @@ class Page(Asset):
         # Determine substitutions and associated asset dates.
         replacements = []
         
-        find = self.content.find
-        index = find('${')
-        while index != -1:
-            newline = find('\n', index)
-            close = find('}', index)
+        if self.engine not in ['raw', 'mako']:
+            find = self.content.find
+            index = find('${')
+            while index != -1:
+                newline = find('\n', index)
+                close = find('}', index)
             
-            if close == -1 or (newline != -1 and newline < close):
-                return """<div class="error">Error parsing includes.</div>"""
+                if close == -1 or (newline != -1 and newline < close):
+                    return """<div class="error">Error parsing includes.</div>"""
             
-            replacements.append(self.content[index:close+1])
+                replacements.append(self.content[index:close+1])
             
-            index = find('${', close)
+                index = find('${', close)
         
         @web.core.cache.cache('page.content', expires=86400)
         def cache(name, date):

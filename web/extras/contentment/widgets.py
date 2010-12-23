@@ -16,11 +16,11 @@ class ContentmentFooter(NestedWidget):
     
     @property
     def template(self):
-        return tag.menu ( id = self.name + '-footer', class_ = "buttons footer" ) [
+        return tag.footer [ tag.menu ( id = self.name + '-footer', class_ = "buttons footer" ) [
                 [ tag.li ( class_ = "current" ) [ tag.input ( type = 'submit', value = self.title ) ] ] +
                 ([ tag.li [ tag.a ( href = self.referrer ) [ "Cancel" ] ] ] if self.referrer else []) +
                 ([ tag.div ( class_ = "fr" ) [ tag.li [ [ child(self.data) for child in self.children ] ] ] ] if self.children else [])
-            ]
+            ] ]
 
 
 class TagField(TextField):

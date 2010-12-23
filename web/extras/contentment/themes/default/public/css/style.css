@@ -72,7 +72,7 @@ table.matrix tr th:first-child, table.matrix tr td:first-child { text-align: lef
 
 
 
-header#top, #navigation, footer, div.byline, menu.tabs, h1.primary, .indent #flash + h1 { font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; }
+header#top, #navigation, footer, div.byline, menu.tabs, h1.primary, .indent #flash + h1, #main header h1 { font-family: 'Gill Sans', 'Helvetica Neue', Helvetica, sans-serif; }
 header#top a, header#top h2, header#top form, header#top div.special menu, header#top div.special menu li, header#top div.special menu li a,
 #navigation menu li, #navigation menu li a,
 footer menu li, footer menu li a,
@@ -169,9 +169,9 @@ form.contact textarea { height: 100px; }
 #breadcrumb li.current { padding: 2px 0; }
 #breadcrumb li.current:before { content: '▸ '; margin-right: 5px; }
 
-menu.tabs, h1.primary, .indent #flash + h1 { list-style: none; position: relative; margin: -10px -10px 5px; padding: 10px 10px 0; text-align: right; background: #8b8b8b; filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#a9a9a9', endColorstr='#7a7a7a');  background: -webkit-gradient(linear, left top, left bottom, from(#a9a9a9), to(#7a7a7a));  background: -moz-linear-gradient(top,  #a9a9a9,  #7a7a7a); }
+menu.tabs, h1.primary, #main header h1, .indent #flash + h1 { list-style: none; position: relative; margin: -10px -10px 5px; padding: 10px 10px 0; text-align: right; background: #8b8b8b; filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#a9a9a9', endColorstr='#7a7a7a');  background: -webkit-gradient(linear, left top, left bottom, from(#a9a9a9), to(#7a7a7a));  background: -moz-linear-gradient(top,  #a9a9a9,  #7a7a7a); }
 
-h1.primary, .indent #flash + h1 { color: white; text-align: left; padding: 8px 10px; }
+h1.primary, #main header h1, .indent #flash + h1 { color: white; text-align: left; padding: 8px 10px; }
 
 menu.tabs h1 { color: white; vertical-align: top; line-height: 100%; margin: 0; padding: 0; position: absolute; left: 10px; top: 10px; }
 menu.tabs li { margin: 0; padding: 0; }

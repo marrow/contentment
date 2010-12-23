@@ -1,11 +1,14 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 <%namespace file="web.extras.contentment.themes.default.templates.date" name="date"/>
 
 <%def name="title()">Contents of ${asset.__class__.__name__}: ${asset.title}</%def>
 
-<h1>${title()}</h1>
+<header>
+    <h1>${title()}</h1>
+</header>
 
-<div id="contents">
+<section id="contents">
 <table>
     <thead>
         <tr>
@@ -51,7 +54,7 @@
 % endfor
     </tbody>
 </table>
-</div>
+</section>
 
 <% count = len(asset.children) - skipped %>
 <div class="byline tc">Contains <b>${count}</b> Asset${'s' if count != 1 else ''}</div>

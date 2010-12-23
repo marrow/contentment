@@ -1,12 +1,19 @@
+## encoding: utf-8
 <%inherit file="${context.get('root').properties['org-contentment-theme']}.templates.master"/>
 
 <%def name="title()">Creating new ${kind}</%def>
 
-<menu class="tabs">
+<header>
     <h1>${title()}</h1>
+    <aside>
+        <menu class="tabs">\
 % for group in form.children:
-    <li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>
+<li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>\
 % endfor
 </menu>
+    </aside>
+</header>
 
-${unicode(form(data)) | n}
+<section>
+    ${unicode(form(data)) | n}
+</section>

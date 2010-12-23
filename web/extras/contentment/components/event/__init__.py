@@ -34,4 +34,9 @@ class EventComponent(IComponent):
         return EventController
     
     def authorize(self, container, child):
-        return False # TODO: Check for File instance and allow.
+        from web.extras.contentment.components.file import FileComponent
+
+        if isinstance(child, FileComponent):
+            return True
+
+        return False

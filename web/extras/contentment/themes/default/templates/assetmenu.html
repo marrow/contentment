@@ -1,60 +1,59 @@
-<menu class="buttons assetmenu">
-    <li class="nested"><a href="#">View</a><menu>
+## encoding: utf-8
+<menu class="buttons assetmenu">\
+<li class="nested"><a href="#">View</a><menu>\
 % for view in asset.controller.views:
 %     if view.authorized(asset):
-            <li><a href="${asset.path if asset.parents else ''}/view:${view.name}" title="${view.description}">
-                ${view.title}
+<li><a href="${asset.path if asset.parents else ''}/view:${view.name}" title="${view.description}">\
+${view.title}\
 %         if asset.default == view.name_:
-                <span>Default</span>
+<span>Default</span>\
 %         endif
-                <label>${view.description}</label>
-            </a></li>
+<label>${view.description}</label>\
+</a></li>\
 %     endif
 % endfor
 % if asset.parent and asset.name == asset.parent.default:
-            <li class="label"><label>Parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>
+<li class="label"><label>Parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>\
 %     for view in asset.parent.controller.views:
 %         if view.authorized(asset):
-            <li><a href="${asset.parent.path if asset.parent.parents else ''}/view:${view.name}" title="${view.description}">${view.title}<label>${view.description}</label></a></li>
+<li><a href="${asset.parent.path if asset.parent.parents else ''}/view:${view.name}" title="${view.description}">${view.title}<label>${view.description}</label></a></li>\
 %         endif
 %     endfor
 % endif
-        </menu></li>
-    
+</menu></li>\
+\
 % for action in asset.controller.actions:
 %     if action.authorized(asset):
 %         if action.name == 'create':
-    <li class="nested"><a href="#" title="${view.description}">${action.title}</a><menu>
-<% types = sorted([i for i in asset.controller._create_types]) %>
+<li class="nested"><a href="#" title="${view.description}">${action.title}</a><menu>\
+<% types = sorted([i for i in asset.controller._create_types]) %>\
 %             if len(types):
-        <li class="label"><label>Create in ${asset.__class__.__name__}: ${asset.title}</label></li>
+<li class="label"><label>Create in ${asset.__class__.__name__}: ${asset.title}</label></li>\
 %             for name, kind in types:
 %                 if kind.summary:
-        <li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>
+<li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>\
 %                 else:
-        <li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>
+<li><a href="${asset.path if asset.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>\
 %                 endif
 %             endfor
 %             endif
-<% types = sorted([i for i in asset.parent.controller._create_types]) if asset.parent else [] %>
+<% types = sorted([i for i in asset.parent.controller._create_types]) if asset.parent else [] %>\
 %             if len(types):
-        <li class="label"><label>Create in parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>
+<li class="label"><label>Create in parent ${asset.parent.__class__.__name__}: ${asset.parent.title}</label></li>\
 %                 for name, kind in types:
 %                     if kind.summary:
-        <li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>
+<li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}<label>${kind.summary}</label></a></li>\
 %                     else:
-        <li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>
+<li><a href="${asset.parent.path if asset.parent.parents else ''}/action:create?kind=${name}">${kind.title}</a></li>\
 %                     endif
 %                 endfor
 %             endif
-    </menu></li>
+</menu></li>\
 %         else:
-    <li><a href="${asset.path}/action:${action.name}" title="${action.description}">${action.title}</a></li>
+<li><a href="${asset.path}/action:${action.name}" title="${action.description}">${action.title}</a></li>\
 %         endif
 %     endif
 % endfor
-    
-    <div class="fr">
-        <li><a href="/settings">Settings</a></li>
-    </div>
+\
+<div class="fr"><li><a href="/settings">Settings</a></li></div>\
 </menu>
