@@ -11,7 +11,7 @@ ${asset.rendered | n}
 
 % if asset.children:
 <footer id="attachments">
-    <label class="fl">Attachments</label>
+    <label>Attachments</label>
     <menu>
 % for child in asset.children:
         ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
