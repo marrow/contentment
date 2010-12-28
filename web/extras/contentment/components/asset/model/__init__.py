@@ -176,7 +176,7 @@ class Asset(db.Document):
             node = nodes.pop()
             
             node.parents = (node.parent.parents if node.parent.parents else []) + [node.parent]
-            node.path = '/' + '/'.join([i.name for i in node.parents] + [node.name])
+            node.path = '/' + '/'.join([i.name for i in node.parents][1:] + [node.name])
             
             if node.children:
                 nodes.extend(node.children)
@@ -213,7 +213,24 @@ class Asset(db.Document):
         
         self.reindex(dirty)
         
-        return super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
+        result = super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
+        
+        if dirty and 'name' in dirty:
+            log.debug("Re-naming asset %r...", self)
+            self.path = '/' + '/'.join([i.name for i in self.parents][1:] + [self.name])
+            
+            super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
+            
+            nodes = list(self.children)
+            
+            while nodes:
+                node = nodes.pop()
+                node.path = '/' + '/'.join([i.name for i in node.parents][1:] + [node.name])
+                
+                if node.children:
+                    nodes.extend(node.children)
+                
+                node.save()
     
     def delete(self, safe=False):
         # Depth-first cascading delete.
