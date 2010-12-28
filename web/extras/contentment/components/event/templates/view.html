@@ -4,8 +4,11 @@
 
 <%def name="title()">${asset.title}</%def>
 
+<header>
 <h1>${title()}</h1>
+</header>
 
+<section>
 <table>
     <tbody>
 % if asset.organizer:
@@ -74,7 +77,7 @@ ${asset.rendered | n}
 
 % if asset.children:
 <footer id="attachments">
-    <label class="fl">Attachments</label>
+    <label>Attachments</label>
     <menu>
 % for child in asset.children:
         ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
@@ -82,5 +85,18 @@ ${asset.rendered | n}
     ></menu>
 </footer>
 % endif
+
+% if asset.related:
+<footer id="related">
+    <label>Related</label>
+    <menu>
+%   for child in asset.related:
+        ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description if child.description else ''}">${child.title}</a></li
+%   endfor
+    ></menu>
+</footer>
+% endif
+
+</section>
 
 <%include file="${context.get('root').properties['org-contentment-theme']}.templates.byline"/>

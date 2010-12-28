@@ -25,7 +25,7 @@ ${asset.rendered | n}
     <label>Related</label>
     <menu>
 %   for child in asset.related:
-        ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
+        ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description if child.description else ''}">${child.title}</a></li
 %   endfor
     ></menu>
 </footer>
