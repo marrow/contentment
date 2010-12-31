@@ -152,10 +152,11 @@ class Tag(Fragment):
             
         yield u'</' + self.name + u'>'
     
-    def render(self):
+    def render(self, encoding=None):
         indentation = 0
         text = False
         stack = []
+        buf = u""
         
         for k, t in self:
             if k == 'enter':
@@ -165,14 +166,14 @@ class Tag(Fragment):
                 if t.strip: continue
                 
                 if text and indent:
-                    yield u'\n'
+                    buf += u'\n'
                 
-                yield u'    ' * indentation
+                buf += u'    ' * indentation
                 
                 for element in t.enter():
-                    yield element
+                    buf += element
                 
-                if indent: yield u'\n'
+                if indent: buf += u'\n'
                 
                 indentation += 1
                 text = False
@@ -187,13 +188,13 @@ class Tag(Fragment):
                 indentation -= 1
                 
                 if not t.simple:
-                    if text and indent: yield u'\n'
-                    if indent: yield u'    ' * indentation
+                    if text and indent: buf += u'\n'
+                    if indent: buf += u'    ' * indentation
                 
                 for element in t.exit():
-                    yield element
+                    buf += element
                 
-                if not t.simple or t.children: yield u'\n'
+                if not t.simple or t.children: buf += u'\n'
                 text = False
                 continue
             
@@ -201,10 +202,16 @@ class Tag(Fragment):
                 indent = getattr(stack[-1], 'indent', True)
                 
                 if not text and indent:
-                    yield u'    ' * indentation
+                    buf += u'    ' * indentation
                     
-                yield t.replace(u'\n', u'\n' + u'    ' * indentation) if indent else t
+                buf += t.replace(u'\n', u'\n' + u'    ' * indentation) if indent else t
                 text = True
+            
+            if k == 'flush':
+                yield buf.encode(encoding) if encoding else buf
+                buf = ""
+        
+        yield buf.encode(encoding) if encoding else buf
     
     def __copy__(self):
         t = Tag(self.name, *self.args, **deepcopy(self.attrs))
@@ -255,3 +262,8 @@ class Text(Fragment):
     
     def __iter__(self):
         yield 'text', escape(unicode(self.data)) if self.escape else unicode(self.data)
+
+
+class Flush(Fragment):
+    def __iter__(self):
+        yield 'flush', None
