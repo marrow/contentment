@@ -91,6 +91,9 @@ class Page(Asset):
     def _content(self):
         """A HTML-stripped version of the rendered content for indexing."""
         
+        if self.engine in ('raw', 'mako'):
+            return ''
+        
         from HTMLParser import HTMLParser
         
         class Stripper(HTMLParser):

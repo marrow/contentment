@@ -4,28 +4,26 @@ from os.path import commonprefix
 from web.extras.contentment.components.event.model import Event
 from itertools import groupby
 %>
-<%inherit file="${context.get('template')}"/>
-<%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
 
-<%def name="title()">${asset.title}</%def>
-
-<header>
-    <h1>${asset.title}</h1>
 % if years:
-    <aside>
-        <label>Year:</label>
-        <menu class="inline">\
+<%def name="navigation()">
+<menu>\
+<label>Year:</label>\
 %   for y in years:
 %     if y != year:
 <li><a href="?year=${y}">${y}</a></li>\
 %     else:
-<li><b>${y}</b></li>\
+<li class="active"><a href="?year=${y}">${y}</a></li>\
 %     endif
 %   endfor
 </menu>
-    </aside>
+</%def>
 % endif
-</header>
+
+<%inherit file="${context.get('template')}"/>
+<%namespace file="web.extras.contentment.themes.default.templates.date" import="render"/>
+
+<%def name="title()">${asset.title}</%def>
 
 <section>
 <% skipped = 0 ; contents = Event.objects(parent=asset, starts__gte=filter_range[0], starts__lt=filter_range[1]).order_by('tags', sort) %>
@@ -40,18 +38,18 @@ from itertools import groupby
 %     for f in child.contents:
 <li><a href="${f.path}/">${f.title[prefix_length:].strip()}</a></li>\
 %     endfor
-</menu></dd>
-    </dl>
+</menu></dd>\
 %   endfor
 % endfor
+</dl>
 <% count = len(contents) - skipped %>
 % if not count:
     <h2 class="tc">This folder contains no events.</h2>
 % else:
 </section>
 
-<footer class="byline tc">
+<!-- <footer class="byline tc">
     Contains <strong>${count}</strong> Event${'' if count == 1 else 's'}
-</footer>
+</footer> -->
 
 % endif

@@ -17,11 +17,11 @@
 
 <header>
     <h1>${title()}</h1>
-    <menu class="tabs">
+    <menu class="tabs">\
 % for group in form.children:
-        <li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>
+<li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>\
 % endfor
-    </menu>
+</menu>
 </header>
 
 <section>
