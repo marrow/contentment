@@ -30,3 +30,19 @@ class Event(Page):
     stops = db.DateTimeField()
     allday = db.BooleanField(default=False)
     contact = db.EmbeddedDocumentField(EventContact)
+    
+    def process(self, formdata):
+        formdata = super(Event, self).process(formdata)
+        
+        contact = EventContact()
+        
+        for field in 'name', 'email', 'phone':
+            combined = 'contact.' + field
+            if combined in formdata:
+                setattr(contact, field, formdata[combined])
+                del formdata[combined]
+        
+        formdata['contact'] = contact
+        
+        return formdata
+    
