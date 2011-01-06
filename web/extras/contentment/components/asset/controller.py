@@ -21,7 +21,7 @@ from marrow.util.convert import tags
 from web.extras.contentment.api import action, view
 from web.extras.contentment.core import components
 from web.extras.contentment.components.core import BaseController
-# from web.extras.contentment.components.asset.core import CoreMethods
+from web.extras.contentment.components.asset.core import CoreMethods
 
 
 log = __import__('logging').getLogger(__name__)
@@ -37,7 +37,7 @@ class AssetController(BaseController):
     def __init__(self, identifier=None):
         super(AssetController, self).__init__(identifier)
         
-        # self.api_core = CoreMethods(self)
+        self.api_core = CoreMethods(self)
     
     @property
     def allowed(self):

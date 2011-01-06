@@ -5,13 +5,11 @@
 
 <header>
     <h1>${title()}</h1>
-    <aside>
-        <menu class="tabs">\
-% for group in form.children:
+    <menu class="tabs">\
+    % for group in form.children:
 <li${' class="active"' if group.name == 'general' else ''}><a href="#${group.name}-set">${group.title}</a></li>\
-% endfor
+    % endfor
 </menu>
-    </aside>
 </header>
 
 <section>

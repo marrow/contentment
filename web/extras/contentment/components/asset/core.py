@@ -6,11 +6,9 @@ Asset controller core JSON API methods.
 
 """
 
-from datetime               import datetime
+from datetime import datetime
 
-import                                          web
-from web.core                                   import Controller, request, session, http
-from web.extras                                 import cmf
+import web.core
 
 
 
@@ -19,52 +17,36 @@ __all__ = ['CoreMethods']
 
 
 
-class TagMethods(Controller):
-    __trailing_slash__ = False # we want .../tags to appear as a method by itself.  No trailing slash on index for us.
-    
+class CoreMethods(web.core.Controller):
     def __init__(self, controller):
         self.controller = controller
     
-    def index(self, hidden=False, format='json'):
-        if format not in ['json', 'bencode']: return "Infalid format requested."
-        
-        return format, dict(status="ok", message="Retreived tag list.", tags=[i for i in self.controller.asset.tags if hidden or ':' not in i])
-
-    def add(self, tag=None, format='json'):
-        if tag is None: return "You must define a tag to add."
-        if format not in ['json', 'bencode']: return "Infalid format requested."
+    def alterChildIndex(self, oldIndex, newIndex, **kw):
+        # TODO: Security.
         
         try:
-            if tag in self.controller.asset.tags: return dict(status="warn", message="Tag already present.")
-            self.controller.asset.tags.append(tag)
-            cmf.components.asset.model.session.commit()
-            return format, dict(status="ok", message="Added tag.", tag=tag)
+            old = int(oldIndex)
+            new = int(newIndex)
+            
+            if old == new: return 'json:', dict(status="success", message="No change.")
 
-        except:
-            log.exception("Error adding tag.")
-            cmf.components.asset.model.session.rollback()
-
-        return format, dict(status="error", message="Unable to add tag.")
-
-    def remove(self, tag=None, format='json'):
-        if tag is None: return "You must define a tag to remove."
-        if format not in ['json', 'bencode']: return "Infalid format requested."
+            asset = self.controller.asset
+            count = len(asset.children)
+            
+            if old >= count or new >= count - 1: raise ValueError('Invalid index.')
+            
+            child = asset.children.pop(old)
+            asset.children.insert(new, child)
+            asset.save()
         
-        try:
-            if tag not in self.controller.asset.tags: return dict(status="error", message="Tag not present.")
-            self.controller.asset.tags.remove(tag)
-            cmf.components.asset.model.session.commit()
-            return format, dict(status="ok", message="Removed tag.", tag=tag)
-
         except:
-            log.exception("Error adding tag.")
-            cmf.components.asset.model.session.rollback()
-
-        return format, dict(status="error", message="Unable to remove tag.")
-
-
+            log.exception("Error ordering child from index %s to index %s.", old, new)
+            return 'json:', dict(status="error", message="Unable to re-order asset.")
+        
+        return 'json:', dict(status="success")
 
 
+"""
 class CoreMethods(Controller):
     def __init__(self, controller):
         self.controller = controller
@@ -124,3 +106,52 @@ class CoreMethods(Controller):
             cmf.components.asset.model.session.rollback()
         
         return dict(status="error", message="Unable to update property.")
+
+
+class TagMethods(Controller):
+    __trailing_slash__ = False # we want .../tags to appear as a method by itself.  No trailing slash on index for us.
+    
+    def __init__(self, controller):
+        self.controller = controller
+    
+    def index(self, hidden=False, format='json'):
+        if format not in ['json', 'bencode']: return "Infalid format requested."
+        
+        return format, dict(status="ok", message="Retreived tag list.", tags=[i for i in self.controller.asset.tags if hidden or ':' not in i])
+
+    def add(self, tag=None, format='json'):
+        if tag is None: return "You must define a tag to add."
+        if format not in ['json', 'bencode']: return "Infalid format requested."
+        
+        try:
+            if tag in self.controller.asset.tags: return dict(status="warn", message="Tag already present.")
+            self.controller.asset.tags.append(tag)
+            cmf.components.asset.model.session.commit()
+            return format, dict(status="ok", message="Added tag.", tag=tag)
+
+        except:
+            log.exception("Error adding tag.")
+            cmf.components.asset.model.session.rollback()
+
+        return format, dict(status="error", message="Unable to add tag.")
+
+    def remove(self, tag=None, format='json'):
+        if tag is None: return "You must define a tag to remove."
+        if format not in ['json', 'bencode']: return "Infalid format requested."
+        
+        try:
+            if tag not in self.controller.asset.tags: return dict(status="error", message="Tag not present.")
+            self.controller.asset.tags.remove(tag)
+            cmf.components.asset.model.session.commit()
+            return format, dict(status="ok", message="Removed tag.", tag=tag)
+
+        except:
+            log.exception("Error adding tag.")
+            cmf.components.asset.model.session.rollback()
+
+        return format, dict(status="error", message="Unable to remove tag.")
+
+
+
+
+"""

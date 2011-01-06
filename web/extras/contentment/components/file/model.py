@@ -86,7 +86,6 @@ class File(Asset):
         if format:
             content = StringIO(self.content.read())
             self.extracted = format.index(content)
-            self.save()
         
         super(File, self).reindex(dirty)
     
