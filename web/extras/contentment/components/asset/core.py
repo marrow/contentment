@@ -33,7 +33,7 @@ class CoreMethods(web.core.Controller):
             asset = self.controller.asset
             count = len(asset.children)
             
-            if old >= count or new >= count - 1: raise ValueError('Invalid index.')
+            if old >= count or new >= count: raise ValueError('Invalid index.')
             
             child = asset.children.pop(old)
             asset.children.insert(new, child)
