@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from cStringIO import StringIO
 from sys import getcheckinterval, setcheckinterval
 from copy import copy, deepcopy
 
@@ -139,12 +140,7 @@ class Tag(Fragment):
         if self.prefix:
             yield self.prefix
         
-        yield u'<' + self.name
-        
-        for attr in quoteattrs(self, self.attrs):
-            yield attr
-        
-        yield u'>'
+        yield u'<' + self.name + u''.join([attr for attr in quoteattrs(self, self.attrs)]) + u'>'
     
     def exit(self):
         if self.simple or self.strip:
@@ -152,11 +148,11 @@ class Tag(Fragment):
             
         yield u'</' + self.name + u'>'
     
-    def render(self, encoding=None):
+    def render(self, encoding='ascii'):
         indentation = 0
         text = False
         stack = []
-        buf = u""
+        buf = StringIO()
         
         for k, t in self:
             if k == 'enter':
@@ -166,16 +162,18 @@ class Tag(Fragment):
                 if t.strip: continue
                 
                 if text and indent:
-                    buf += u'\n'
+                    buf.write('\n')
                 
-                buf += u'    ' * indentation
+                if indent:
+                    buf.write('    ' * indentation)
                 
                 for element in t.enter():
-                    buf += element
+                    buf.write(element.encode(encoding))
                 
-                if indent: buf += u'\n'
+                if indent:
+                    buf.write('\n')
+                    indentation += 1
                 
-                indentation += 1
                 text = False
                 continue
             
@@ -185,16 +183,17 @@ class Tag(Fragment):
                 stack.pop()
                 if t.strip: continue
                 
-                indentation -= 1
+                if indent:
+                    indentation -= 1
                 
                 if not t.simple:
-                    if text and indent: buf += u'\n'
-                    if indent: buf += u'    ' * indentation
+                    if text and indent: buf.write('\n')
+                    if indent: buf.write('    ' * indentation)
                 
                 for element in t.exit():
-                    buf += element
+                    buf.write(element.encode(encoding))
                 
-                if not t.simple or t.children: buf += u'\n'
+                if not t.simple or t.children: buf.write('\n')
                 text = False
                 continue
             
@@ -202,16 +201,18 @@ class Tag(Fragment):
                 indent = getattr(stack[-1], 'indent', True)
                 
                 if not text and indent:
-                    buf += u'    ' * indentation
-                    
-                buf += t.replace(u'\n', u'\n' + u'    ' * indentation) if indent else t
+                    buf.write('    ' * indentation)
+                
+                t = t.encode(encoding)
+                buf.write(t.replace('\n', '\n' + '    ' * indentation) if indent else t)
                 text = True
             
             if k == 'flush':
-                yield buf.encode(encoding) if encoding else buf
-                buf = ""
+                yield buf.getvalue()
+                buf.reset()
+                buf.truncate()
         
-        yield buf.encode(encoding) if encoding else buf
+        yield buf.getvalue()
     
     def __copy__(self):
         t = Tag(self.name, *self.args, **deepcopy(self.attrs))
