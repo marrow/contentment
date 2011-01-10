@@ -1,0 +1,38 @@
+## encoding: utf-8
+<%inherit file="${context.get('template')}"/>
+
+<%def name="title()">${asset.title}</%def>
+
+<section>
+
+% if asset.content:
+
+<h2>Alert Details</h2>
+
+${asset.rendered | n}
+
+% endif
+
+% if asset.children:
+<footer id="attachments">
+    <label>Attachments</label>
+    <menu>
+% for child in asset.children:
+        ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
+% endfor
+    ></menu>
+</footer>
+% endif
+
+% if asset.related:
+<footer id="related">
+    <label>Related</label>
+    <menu>
+%   for child in asset.related:
+        ${'>' if child != asset.related[0] else ''}<li><a href="${child.path}" title="${child.description if child.description else ''}">${child.title}</a></li
+%   endfor
+    ></menu>
+</footer>
+% endif
+
+</section>

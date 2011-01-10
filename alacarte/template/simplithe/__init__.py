@@ -128,7 +128,7 @@ class Tag(Fragment):
         ci = getcheckinterval()
         setcheckinterval(0)
         
-        value = u''.join(self.render())
+        value = ''.join(self.render('utf8')).decode('utf8')
         
         setcheckinterval(ci)
         return value

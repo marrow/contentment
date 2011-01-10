@@ -76,6 +76,7 @@ setup(
         
         entry_points = {
                 'contentment.component': [
+                        "alert = web.extras.contentment.components.alert:AlertComponent",
                         "alias = web.extras.contentment.components.alias:AliasComponent",
                         "asset = web.extras.contentment.components.asset:AssetComponent",
                         "authenticator = web.extras.contentment.components.authenticator:AuthenticatorComponent",
@@ -87,6 +88,7 @@ setup(
                         "page = web.extras.contentment.components.page:PageComponent",
                         "search = web.extras.contentment.components.search:SearchComponent",
                         "settings = web.extras.contentment.components.settings:SettingsComponent",
+                        # "subscribe = web.extras.contentment.components.subscribe:SubscribeComponent",
                         "theme = web.extras.contentment.components.theme:ThemeComponent",
                         
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",

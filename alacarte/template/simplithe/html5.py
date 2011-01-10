@@ -1,9 +1,9 @@
 # encoding: utf-8
 
-from alacarte.template.simplithe import Tag, Flush
+from alacarte.template.simplithe import Tag, Flush, Text
 
 
-__all__ = ['comment', 'html', 'flush']
+__all__ = ['comment', 'html', 'flush', 'Text']
 
 
 _doctype = '<!DOCTYPE HTML>\n'

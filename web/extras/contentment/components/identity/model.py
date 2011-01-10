@@ -11,9 +11,14 @@ import mongoengine as db
 
 from hashlib import sha512
 
+import web.core
+
 from web.extras.contentment.components.asset.model import Asset
 
 from marrow.util.bunch import Bunch
+
+from yubico import yubico
+from yubico import yubico_exceptions
 
 
 log = __import__('logging').getLogger(__name__)
@@ -37,6 +42,11 @@ class PasswordCredential(Credential):
     password = property(lambda self: self.value, _set_password)
 
 
+class YubikeyCredential(Credential):
+    kind = db.StringField(max_length=48, default="yubikey")
+
+
+
 class Identity(Asset):
     meta = dict(indexes=[('credentials.kind', 'credentials.identity')])
     
@@ -44,7 +54,7 @@ class Identity(Asset):
     
     email = db.StringField(max_length=250, required=True)
     
-    credentials = db.ListField(db.EmbeddedDocumentField(PasswordCredential), default=[])
+    credentials = db.ListField(db.EmbeddedDocumentField(Credential), default=[])
     
     membership = db.ListField(db.GenericReferenceField(), default=[])
     permissions = db.ListField(db.StringField(max_length=250), default=[])
@@ -83,14 +93,67 @@ class Identity(Asset):
     
     @classmethod
     def authenticate(cls, identifier, secret):
-        password_hash = hashlib.sha512(secret).hexdigest()
+        use_pw, use_yk = secret[0] != '', secret[1] != ''
+        password_hash, yubikey = hashlib.sha512(secret[0]).hexdigest(), secret[1]
         del secret
         
-        user = cls.objects(
-                credentials__kind = 'password',
-                credentials__identity = identifier,
-                credentials__value = password_hash
-            ).only('id').first()
+        users = []
+        
+        if use_pw:
+            log.debug("Validating password credential.")
+            users.append(cls.objects(
+                    credentials__kind = 'password',
+                    credentials__identity = identifier,
+                    credentials__value = password_hash
+                ).only('id').first())
+        
+        if use_yk:
+            log.debug("Validating Yubikey credential.")
+            client = yubico.Yubico(
+                    web.core.config['web.auth.yubikey.client'],
+                    web.core.config['web.auth.yubikey.key'],
+                    True if web.core.config['web.auth.yubikey.secure'] == 'True' else False
+                )
+            
+            try:
+                status = client.verify(yubikey, return_response=True)
+                log.debug("Yubikey response: %r", status)
+            
+            except:
+                log.exception("Error validating Yubikey.")
+                return None
+            
+            if not status:
+                log.warn("Invalid Yubikey response: %r", status)
+                return None
+            
+            log.debug("Searching for yubikey identity with identifier %r and value %r.", identifier, yubikey[:12])
+            
+            users.append(cls.objects(
+                    credentials__kind = 'yubikey',
+                    credentials__identity = identifier,
+                    credentials__value = yubikey[:12]
+                ).only('id').first())
+        
+        users = [i for i in users if i is not None]
+        
+        log.debug("Retrieved users: %r", [i.id for i in users])
+        
+        if not users:
+            log.warn("No credentials found.")
+            return None
+        
+        if len(users) > 1:
+            log.warn("Multiple credentials found; all must validate to same user.")
+            against = users[0]
+            for i in users:
+                if i.id != against.id:
+                    log.warn("One of the identities does not validate.")
+                    return None
+        
+        user = users[0]
+        
+        log.debug("Authenticated as user ID %r.", user.id)
         
         if not user: return None
         _id = user.id

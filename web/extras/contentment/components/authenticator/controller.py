@@ -5,7 +5,7 @@
 Handle login/logout, joining, and password recovery.
 """
 
-import web
+import web.core
 
 from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
@@ -33,6 +33,8 @@ class LoginMethod(web.core.RESTMethod):
     
     def post(self, ajax=False, **kw):
         data = Bunch(kw)
+        
+        data.password = (data.password, data.yubikey)
         
         if 'redirect' not in data:
             data.redirect = '/'

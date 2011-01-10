@@ -28,6 +28,7 @@ class File(Asset):
     
     default = db.StringField(default="view:preview", max_length=128)
     
+    indexed = db.BooleanField(default=True)
     filename = db.StringField(max_length=250)
     mimetype = db.StringField(max_length=250)
     size = db.IntField()
@@ -74,8 +75,11 @@ class File(Asset):
         top, _, bottom = formdata['mimetype'].partition('/')
         format = self._component.mimetypes.get(top, dict()).get(bottom, None)
         
-        if format:
+        if format and formdata['indexed']:
             formdata['extracted'] = format.index(var.file)
+        
+        else:
+            formdata['extracted'] = ''
         
         return formdata
     
@@ -83,9 +87,12 @@ class File(Asset):
         top, _, bottom = self.mimetype.partition('/')
         format = self._component.mimetypes.get(top, dict()).get(bottom, None)
         
-        if format:
+        if format and self.indexed:
             content = StringIO(self.content.read())
             self.extracted = format.index(content)
+        
+        else:
+            self.extracted = ''
         
         super(File, self).reindex(dirty)
     

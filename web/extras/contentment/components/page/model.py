@@ -21,13 +21,20 @@ __all__ = ['Page']
 
 
 
+class Textile(textile.Textile):
+    btag = ('bq', 'bc', 'notextile', 'pre', 'h[1-6]', 'fn\d+', 'p', 'div')
+    btag_lite = ('bq', 'bc', 'p', 'div')
+
+
+
+
 class Page(Asset):
     _indexable = ['_content']
     _widgets = fields
     
     default = db.StringField(default="view:page", max_length=128)
     
-    content = db.StringField()
+    content = db.StringField(default=u'')
     engine = db.StringField(max_length=250, default="textile")
     related = db.ListField(db.ReferenceField(Asset), default=list)
     
@@ -48,7 +55,7 @@ class Page(Asset):
                 close = find('}', index)
             
                 if close == -1 or (newline != -1 and newline < close):
-                    return """<div class="error">Error parsing includes.</div>"""
+                    return u"""<div class="error">Error parsing includes.</div>"""
             
                 replacements.append(self.content[index:close+1])
             
@@ -60,7 +67,7 @@ class Page(Asset):
             content = self.content
             
             if self.engine == 'textile':
-                content = textile.Textile().textile(content, html_type='html')
+                content = Textile().textile(content, html_type='html')
             
             if replacements:
                 from web.extras.contentment.components.asset.model import Asset

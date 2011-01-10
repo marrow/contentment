@@ -29,7 +29,7 @@ class CoreMethods(web.core.Controller):
             new = int(newIndex)
             
             if old == new: return 'json:', dict(status="success", message="No change.")
-
+            
             asset = self.controller.asset
             count = len(asset.children)
             
@@ -44,6 +44,43 @@ class CoreMethods(web.core.Controller):
             return 'json:', dict(status="error", message="Unable to re-order asset.")
         
         return 'json:', dict(status="success")
+    
+    def getChildren(self, kind=None, tag=None, values=None, **kw):
+        # TODO: Security.
+        
+        if kind is not None:
+            kind = kind.lower().split(',')
+        
+        if values is None: values = 'name', 'title', 'description', 'path'
+        else: values = values.split(',')
+        
+        for i in values:
+            if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags'):
+                return 'json:', dict(status="error", message="Forbidden.")
+        
+        children = []
+        
+        try:
+            for child in self.controller.asset.children:
+                if kind is not None and child.__class__.__name__.lower() not in kind: continue
+                if tag is not None and tag not in child.tags: continue
+                
+                data = dict()
+                
+                for value in values:
+                    if value == 'kind':
+                        data[value] = child.__class__.__name__.lower()
+                        continue
+                    
+                    data[value] = getattr(child, value, '')
+                
+                children.append(data)
+        
+        except:
+            log.exception("Error iterating children.")
+            return 'json:', dict(status="error", message="Error determining asset contents.")
+        
+        return 'json:', dict(status="success", children=children)
 
 
 """
