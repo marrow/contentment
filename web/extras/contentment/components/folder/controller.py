@@ -36,6 +36,12 @@ class FolderController(AssetController):
         
         years = sorted(list(set(years)))
         
+        if year > max(years):
+            year = years[-1]
+        
+        elif year < min(years):
+            yeare = years[0]
+        
         filter_range = (datetime.datetime(year, 1, 1, 0, 0, 0), datetime.datetime(year+1, 1, 1, 0, 0, 0))
         
         return 'nested', dict(years=years, year=year, filter_range=filter_range, sort=sort)
