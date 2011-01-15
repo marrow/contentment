@@ -26,7 +26,7 @@ from itertools import groupby
 <%def name="title()">${asset.title}</%def>
 
 <section>
-<% skipped = 0 ; contents = Event.objects(parent=asset, starts__gte=filter_range[0], starts__lt=filter_range[1]).order_by('tags', sort) %>
+<% skipped = 0 ; contents = Event.objects(parent=asset, starts__gte=filter_range[0], starts__lt=filter_range[1]).order_by('tags', sort).only("name", "title", "children", "path") %>
 % for group, children in groupby(list(contents), lambda a: a.title.partition(':')[0]):
     <h2>${group}</h2>
     
@@ -40,16 +40,12 @@ from itertools import groupby
 %     endfor
 </menu></dd>\
 %   endfor
-% endfor
 </dl>
+% endfor
 <% count = len(contents) - skipped %>
 % if not count:
     <h2 class="tc">This folder contains no events.</h2>
 % else:
 </section>
-
-<!-- <footer class="byline tc">
-    Contains <strong>${count}</strong> Event${'' if count == 1 else 's'}
-</footer> -->
 
 % endif
