@@ -14,7 +14,6 @@ class DocumentIndex(Document):
     meta = {
         'allow_inheritance': False,
         'collection': 'index',
-        'indexes': ['terms.term']
     }
     
     doc_id = db.ObjectIdField('_id')
