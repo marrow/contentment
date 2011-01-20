@@ -36,7 +36,18 @@ class File(Asset):
     backend = db.StringField(max_length=128, default="gridfs")
     
     content = db.FileField()
-    extracted = db.StringField()
+    
+    @property
+    def extracted(self):
+        top, _, bottom = self.mimetype.partition('/')
+        format = self._component.mimetypes.get(top, dict()).get(bottom, None)
+        
+        if format and self.indexed:
+            content = StringIO(self.content.read())
+            self.extracted = format.index(content)
+        
+        else:
+            self.extracted = ''
     
     @property
     def format(self):
@@ -84,16 +95,6 @@ class File(Asset):
         return formdata
     
     def reindex(self, dirty=None):
-        top, _, bottom = self.mimetype.partition('/')
-        format = self._component.mimetypes.get(top, dict()).get(bottom, None)
-        
-        if format and self.indexed:
-            content = StringIO(self.content.read())
-            self.extracted = format.index(content)
-        
-        else:
-            self.extracted = ''
-        
         super(File, self).reindex(dirty)
     
     def embed(self, **kw):
