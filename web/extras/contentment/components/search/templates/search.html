@@ -13,48 +13,13 @@
 <section>
 <dl class="details">
 <% skipped = 0 %>
-% for child in results:
-<% if not child.controller.allowed: skipped += 1; continue %>
+% for rank, child in results:
   <dt><a href="${child.path}/">${child.title}</a></dt>
-%   if child.owner:
-  <dd class="byline">by <a href="${child.owner.path}/">${child.owner.title}</a> ${render(asset.created, "on ", 'created')}.</dd>
-%   else:
-  <dd class="byline">by <em>Anonymous</em> ${render(asset.created, "on ", 'created')}.</dd>
-%   endif
 %   if child.description:
   <dd class="description">${child.description}</dd>
 %   else:
 <dd class="description"><em>No description available.</em></dd>
 %   endif
-%   if child.tags:
-  <dd class="tags"><ul class="tags"></ul></dd>
-%   endif
-%   if child.modified:
-  <dd class="age icon updated">Last modified ${render(child.modified, "on ", 'modified')}.</dd>
-%   endif
 % endfor
 </dl>
-
-<div class="byline tc">
-<% count = len(results) - skipped %>
-    <strong>${count if count else 'No'}</strong> Search Result${'' if count == 1 else 's'}
-</div>
-
-% if not count and asset.query is None:
-<h2>No results found.  Please widen your search criteria.</h2>
-
-<form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
-% endif
-</section>
-
-% else:
-
-<header>
-    <h1>${title()}</h1>
-</header>
-
-<section>
-    <form style="text-align: center; margin: 25px; font-size: 153.9%" method="get"><input type="search" autocomplete="on" name="q" placeholder="Site-wide search." value="${q}" style="width: 300px;" autofocus></form>
-</section>
-
 % endif

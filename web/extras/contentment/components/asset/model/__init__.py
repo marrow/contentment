@@ -11,10 +11,12 @@ import pytz
 
 from datetime import datetime
 from copy import copy, deepcopy
+from collections import defaultdict
 
 import mongoengine as db
 
 from web.extras.contentment.components.asset.widgets import fields
+from web.extras.contentment.components.asset.model.index import SearchTerm, DocumentIndex
 from acl import *
 import lexer
 
@@ -34,8 +36,6 @@ __all__ = [
 
 
 
-
-
 class Asset(db.Document):
     def __repr__(self):
         return '%s(%s, "%s")' % (self.__class__.__name__, self.path, self.title)
@@ -43,10 +43,10 @@ class Asset(db.Document):
     meta = dict(
             collection="assets",
             ordering=['parents', 'name'],
-            indexes=[('parents', 'name'), 'parent', 'name', 'path', 'index', 'owner', 'created', 'modified']
+            indexes=[('parents', 'name'), 'parent', 'name', 'path', 'owner', 'created', 'modified']
         )
     
-    _indexable = ['title', 'description', 'tags']
+    _indexable = dict(title=10.0, description=5.0, tags=8.5)
     _widgets = fields
     
     _component = None
@@ -65,9 +65,6 @@ class Asset(db.Document):
     name = db.StringField(max_length=250, required=True) # unique_with="parent"
     title = db.StringField(max_length=250, required=True)
     description = db.StringField()
-    
-    # Search
-    index = db.ListField(db.StringField(), default=[])
     
     # Magic properties.
     immutable = db.BooleanField(default=False)
@@ -184,28 +181,42 @@ class Asset(db.Document):
             node.save()
     
     def reindex(self, dirty=None):
-        # TODO: Store as dict of {name: occurances} for search result weighting.
-        index = []
+        # Determine indexable attributes and their weights.
+        indexable = {}
         
-        indexable = []
         for base in reversed(type.mro(type(self))):
-            indexable.extend(getattr(base, '_indexable', []))
+            _ = getattr(base, '_indexable', {})
+            
+            if isinstance(_, dict):
+                indexable.update(_)
+            
+            elif isinstance(_, list):
+                indexable.update(dict.fromkeys(_, 1.0))
         
-        indexable = set(indexable)
-        
-        if dirty is not None and not indexable.union(set(dirty)):
+        # Determine if we actually need to re-index or not.
+        if dirty is not None and not set(indexable.keys()).intersection(set(dirty)):
             return
         
-        for i in indexable:
-            value = getattr(self, i)
+        index = DocumentIndex.objects(doc_id=self.id).first()
+        if index: index.delete()
+        
+        # Determine the number of occurrences of each term with a per-attribute weight.
+        occurrences = defaultdict(float)
+        
+        for attr, weight in indexable.iteritems():
+            value = getattr(self, attr)
             
             if isinstance(value, basestring):
-                index.extend(lexer.strip(value))
+                for word in lexer.strip(value):
+                    occurrences[word] += weight
             
             elif isinstance(value, (tuple, list, set)):
-                index.extend(value)
+                for word in lexer.strip(u' '.join(value).encode('utf8')):
+                    occurrences[word] += weight
         
-        self.index = list(set(index))
+        # Save the index and terms.
+        index = DocumentIndex(doc_id=str(self.id), length=len(occurrences), terms=occurrences)
+        index.save(safe=False)
     
     def save(self, safe=True, force_insert=False, validate=True, dirty=None):
         if not dirty:
@@ -233,6 +244,10 @@ class Asset(db.Document):
                 node.save()
     
     def delete(self, safe=False):
+        # Delete index data, if any.
+        index = DocumentIndex.objects(id=self.id).first()
+        if index: index.delete()
+        
         # Depth-first cascading delete.
         for i in self.children:
             i.delete()
