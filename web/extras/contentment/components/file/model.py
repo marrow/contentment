@@ -44,10 +44,9 @@ class File(Asset):
         
         if format and self.indexed:
             content = StringIO(self.content.read())
-            self.extracted = format.index(content)
+            return format.index(content)
         
-        else:
-            self.extracted = ''
+        return ''
     
     @property
     def format(self):
