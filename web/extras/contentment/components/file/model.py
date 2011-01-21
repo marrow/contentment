@@ -39,6 +39,9 @@ class File(Asset):
     
     @property
     def extracted(self):
+        if not self.indexed or size > (40*1024*1024):
+            return ''
+        
         top, _, bottom = self.mimetype.partition('/')
         format = self._component.mimetypes.get(top, dict()).get(bottom, None)
         
@@ -84,12 +87,6 @@ class File(Asset):
         
         top, _, bottom = formdata['mimetype'].partition('/')
         format = self._component.mimetypes.get(top, dict()).get(bottom, None)
-        
-        if format and formdata['indexed']:
-            formdata['extracted'] = format.index(var.file)
-        
-        else:
-            formdata['extracted'] = ''
         
         return formdata
     
