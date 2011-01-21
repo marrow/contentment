@@ -222,6 +222,8 @@ class Asset(db.Document):
         if not dirty:
             return super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
         
+        result = super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
+        
         self.reindex(dirty)
         
         result = super(Asset, self).save(safe=safe, force_insert=force_insert, validate=validate)
