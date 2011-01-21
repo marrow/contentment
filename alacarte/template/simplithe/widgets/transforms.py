@@ -80,11 +80,12 @@ class TagsTransform(ListTransform):
 class BooleanTransform(Transform):
     def __call__(self, value):
         if value: return 'True'
-        return ''
+        return None
     
     def native(self, value):
         if not value: return False
         return True
+
 
 class IntegerTransform(Transform):
     def __call__(self, value):

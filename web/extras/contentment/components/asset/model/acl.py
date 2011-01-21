@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from datetime import datetime
 import mongoengine as db
 
 
@@ -7,8 +8,10 @@ class ACLRule(db.EmbeddedDocument):
     def __str__(self):
         return self.__class__.__name__
 
+
 class InheritACLRules(ACLRule):
     pass
+
 
 class BaseACLRule(ACLRule):
     def __str__(self):
@@ -35,16 +38,20 @@ class BaseACLRule(ACLRule):
         
         return self.allow
 
+
 class AllUsersACLRule(BaseACLRule):
     pass
+
 
 class AnonymousUsersACLRule(BaseACLRule):
     def __call__(self, entity, identity, kind, name):
         return super(AnonymousUsersACLRule, self).__call__(entity, identity, kind, name) if web.auth.anonymous else None
 
+
 class AuthenticatedUsersACLRule(BaseACLRule):
     def __call__(self, entity, identity, kind, name):
         return super(AuthenticatedUsersACLRule, self).__call__(entity, identity, kind, name) if web.auth.authenticated else None
+
 
 class OwnerACLRule(BaseACLRule):
     def __call__(self, entity, identity, kind, name):
@@ -53,12 +60,14 @@ class OwnerACLRule(BaseACLRule):
         
         return super(OwnerACLRule, self).__call__(entity, identity, kind, name) if identity.id == entity.owner.id else None
 
+
 class TargetedACLRule(BaseACLRule):
     def __str__(self):
         return "%s(%s, %s, %s%r)" % (self.__class__.__name__, "allow" if self.allow else "deny", self.permission, "not " if self.inverse else "", self.reference)
     
     inverse = db.BooleanField(default=False)
     reference = db.GenericReferenceField()
+
 
 class UserACLRule(TargetedACLRule):
     def __call__(self, entity, identity, kind, name):
@@ -73,12 +82,39 @@ class UserACLRule(TargetedACLRule):
         
         return super(UserACLRule, self).__call__(entity, identity, kind, name) if conditional else None
 
+
 class GroupACLRule(TargetedACLRule):
     def __call__(self, entity, identity, kind, name):
         conditional = self.reference not in identity.membership if self.inverse else self.reference in identity.membership
         return super(GroupACLRule, self).__call__(entity, identity, kind, name) if conditional else None
 
+
+class PublicationACLRule(BaseACLRule):
+    publish = db.DateTimeField(default=None)
+    retract = db.DateTimeField(default=None)
+    
+    def __call__(self, entity, identity, kind, name):
+        result = super(PublicationACLRule, self).__call__(entity, identity, kind, name)
+        valid = True
+        now = datetime.utcnow()
+        
+        if result is None: return None
+        
+        if self.publish:
+            valid = valid and now > self.publish
+        
+        if self.retract:
+            valid = valid and now < self.retract
+        
+        if valid:
+            return result
+        
+        return not result
+
+
 class AdvancedACLRule(BaseACLRule):
+    attributes = db.DictField(default=dict)
+    
     def __str__(self):
         return "AdvancedACLRule(%s, %s, %r)" % ("allow" if self.allow else "deny", self.permission, self.attributes)
     
@@ -99,5 +135,3 @@ class AdvancedACLRule(BaseACLRule):
                 break
         
         return result
-    
-    attributes = db.DictField(default=dict)

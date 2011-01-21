@@ -130,7 +130,7 @@ class Label(Widget):
     @property
     def template(self):
         return tag.label (
-                for_ = self.for_.name + '-field'
+                for_ = (self.for_.name + '-field') if self.for_ else None
             ) [ self.title if self.title else self.for_.title ]
 
 

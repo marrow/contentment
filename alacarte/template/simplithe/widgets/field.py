@@ -99,7 +99,27 @@ class RadioField(BooleanInput):
 
 
 class CheckboxField(BooleanInput):
+    transform = t.BooleanTransform()
     type_ = 'checkbox'
+    
+    @property
+    def template(self):
+        return tag.div [[
+                tag.input (
+                        type_ = "hidden",
+                        name = self.name,
+                        id = self.name + '-hidden',
+                        value = ''
+                    ),
+                tag.input (
+                    type_ = self.type_,
+                    name = self.name,
+                    id = self.name + '-field',
+                    checked = self.value,
+                    **self.args
+                )] + [
+                    tag.label ( for_ = self.name + '-field' ) [ self.args.get('title') ]
+                ] if 'title' in self.args else []]
 
 
 class TextArea(Input):

@@ -69,4 +69,20 @@ def fields(asset):
                     DateTimeField('created', "Creation Date", title="The date the asset was created, in UTC."), # TODO: date conversion
                     DateTimeField('modified', "Modification Date", title="The date the asset was last modified, in UTC.")
                 ]),
+            ('security', "Security", [
+                    FieldSet('access', "Access Control", DefinitionListLayout, [
+                            Label('acl.about', "Control who has access to this asset and its children."),
+                            CheckboxField('acl.private', "Private Asset", title="Prevent access to this resource by anyone other than the owner."),
+                            CheckboxField('acl.member', "Members Only", title="Allow anyone with an account access."),
+                        ]),
+                    FieldSet('publication', "Publication Dates", DefinitionListLayout, [
+                            Label('acl.about', "Define the dates between which this asset and its children will be made available."),
+                            DateTimeField('acl.publish', "Publication Date", title="Become available after a specific date."),
+                            DateTimeField('acl.retract', "Retraction Date", title="Become unavailable after a specific date.")
+                        ]),
+                    FieldSet('password', "Password Protection", DefinitionListLayout, [
+                            Label('acl.about', "Allow access to this asset and its children after password entry."),
+                            TextField('acl.password', "Password", title="A shared password for accessing this asset and its children."),
+                        ]),
+                ])
         ]
