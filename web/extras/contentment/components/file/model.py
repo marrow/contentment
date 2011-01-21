@@ -39,7 +39,7 @@ class File(Asset):
     
     @property
     def extracted(self):
-        if not self.indexed or size > (40*1024*1024):
+        if not self.indexed or self.size > (40*1024*1024):
             return ''
         
         top, _, bottom = self.mimetype.partition('/')
