@@ -30,7 +30,6 @@ class VideoFileFormat(FileFormat):
                 controls = controls,
                 width = width,
                 height = height,
-                poster = poster
-            ) [
-                tag.source ( src = path )
-            ]
+                poster = poster,
+                src = path
+            )

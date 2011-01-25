@@ -28,7 +28,6 @@ class AudioFileFormat(FileFormat):
                 autoplay = autoplay,
                 loop = loop,
                 controls = controls,
-                width = width
-            ) [
-                tag.source ( src = path )
-            ]
+                width = width,
+                src = path
+            )
