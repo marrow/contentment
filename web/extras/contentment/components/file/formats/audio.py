@@ -29,5 +29,6 @@ class AudioFileFormat(FileFormat):
                 loop = loop,
                 controls = controls,
                 width = width,
-                src = path
+                src = path,
+                type=asset.mimetype
             )

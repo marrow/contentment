@@ -31,5 +31,6 @@ class VideoFileFormat(FileFormat):
                 width = width,
                 height = height,
                 poster = poster,
-                src = path
+                src = path,
+                type=asset.mimetype
             )
