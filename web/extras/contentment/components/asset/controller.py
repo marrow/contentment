@@ -11,6 +11,7 @@ import web.core
 
 from hashlib import sha256
 from datetime import datetime
+from pytz import utc as UTC
 
 from web.core import request, session, http
 from web.utils.string import normalize
@@ -67,44 +68,48 @@ class AssetController(BaseController):
         
         return form
     
-    @action("Create", "Create a new asset.")
-    def action_create(self, kind=None, **kw):
+    def _save(self, action, asset, data):
         from web.extras.contentment.components.asset.model import Asset
         
-        if kind is None:
-            return ''
+        form = self._form(asset, web.core.request.referrer if action == 'create' else None, action.title())
         
-        asset = [j for i, j in components[kind].model.iteritems() if issubclass(j, Asset)][0]
-        asset = asset(owner=web.auth.user.identity)
-        form = self._form(asset, web.core.request.referrer, "Create")
+        if not data:
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
         
-        if not kw:
-            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
-        
-        if 'submit' in kw: del kw['submit']
+        data.pop('submit', None)
         
         try:
-            result, remaining = form.native(kw)
+            result, remaining = form.native(data)
         
         except:
-            if web.core.config.get('debug', False):
-                raise
+            if web.core.config.get('debug', False): raise
             
             log.exception("Error processing form.")
             web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to create asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
-            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+            
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+        
+        # Root node must not be renamed.
+        if asset.path == '/': del result['name']
         
         dirty = []
         
-        if 'name' not in result or not result['name']:
-            replacement = re.compile('\W+')
-            result['name'] = replacement.sub('-', result['title'].lower())
+        if asset.path != '/' and ( 'name' not in result or not result['name'] ):
+            siblings = [i.name for i in Asset.objects(parent=self.asset if action=="create" else self.asset.parent).only('name')]
+            result['name'] = normalize(result['title'].lower(), siblings)
+            del siblings
         
-        if result.get('tags', None) is None: result['tags'] = []
+        if result.get('tags', None) is None:
+            result['tags'] = []
+        
+        # Handle explicit setting of the modification time.
+        if action == 'modify' and ( not result['modified'] or result['modified'] == asset.modified.replace(microsecond=0) ):
+            result['modified'] = datetime.now(UTC)
         
         result = asset.process(result)
         
         for name, value in result.iteritems():
+            if action == 'modify' and getattr(asset, field) == value: continue
             dirty.append(name)
             setattr(asset, name, value)
         
@@ -115,11 +120,25 @@ class AssetController(BaseController):
             if web.core.config.get('debug', False):
                 raise
             
-            log.exception('Error creating record.')
-            web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to create asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
-            return 'create', dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+            log.exception('Error saving record.')
+            web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to save asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
         
-        asset.attach(self.asset)
+        if action == 'create':
+            asset.attach(self.asset)
+    
+    @action("Create", "Create a new asset.")
+    def action_create(self, kind=None, **kw):
+        from web.extras.contentment.components.asset.model import Asset
+        
+        if kind is None:
+            return ''
+        
+        asset = [j for i, j in components[kind].model.iteritems() if issubclass(j, Asset)][0]
+        asset = asset(owner=web.auth.user.identity)
+        
+        result = self._save('create', asset, kw)
+        if result is not None: return result
         
         web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully created %s \"%s\", located at %s." % (asset.__class__.__name__, asset.title, asset.path))
         
@@ -129,52 +148,12 @@ class AssetController(BaseController):
     def action_modify(self, **kw):
         asset = self.asset
         
-        if not kw:
-            return 'modify', dict(data=asset._data)
-        
-        if 'submit' in kw: del kw['submit']
-        
-        try:
-            result, remaining = asset._form(None).native(kw)
-        
-        except:
-            log.exception("Error processing form.")
-            return 'modify', dict(data=asset._data)
-        
-        # Handle special fields.
-        
-        rename = False
-        reindex = False
-        dirty = []
-        
-        # Root node must not be renamed.
-        if asset.path == '/': del result['name']
-        else: rename = asset.name != result['name']
-        
-        result['tags'] = sorted(result['tags']) if result['tags'] else []
-        
-        # Handle explicit setting of the modification time.
-        if not result['modified'] or result['modified'] == asset.modified.replace(microsecond=0):
-            result['modified'] = datetime.utcnow()
-        
-        result = asset.process(result)
-        
-        for field, value in result.iteritems():
-            try:
-                if getattr(asset, field) == value: continue
-            
-            except:
-                log.exception("Unable to compare two versions of the same attribute!  Marking dirty to be safe.")
-            
-            dirty.append(field)
-            setattr(asset, field, value)
-        
-        # return repr((dirty, dict([(i, j) for i, j in result.iteritems() if i in dirty])))
-        
-        asset.save(dirty=dirty)
+        result = self._save('modify', asset, kw)
+        if result is not None: return result
         
         web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully updated %s \"%s\", located at %s." % (asset.__class__.__name__, asset.title, asset.path))
         
+        # TODO: Return to the previous referrer, which may be, say, a contents view.
         raise http.HTTPFound(location=asset.path + '/')
     
     @action("Delete", "Delete this asset and all of its descendants.")
@@ -198,7 +177,7 @@ class AssetController(BaseController):
         
         web.core.session['flash'] = dict(cls="success", title="Success", message="Successfully deleted %s \"%s\", located at %s." % (kind, title, path))
         
-        if web.core.request.referrer.startswith(path):
+        if path in web.core.request.referrer:
             raise web.core.http.HTTPFound(location=parent_path)
         
         else:
