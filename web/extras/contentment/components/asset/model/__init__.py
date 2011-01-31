@@ -281,7 +281,7 @@ class Asset(db.Document):
                 data['acl.private'] = True
                 continue
             
-            if isinstance(i, AuthenticatedUsersACLRule) and i.permission == "view:*" and i.allow=True:
+            if isinstance(i, AuthenticatedUsersACLRule) and i.permission == "view:*" and i.allow == True:
                 data['acl.member'] = True
                 continue
         
