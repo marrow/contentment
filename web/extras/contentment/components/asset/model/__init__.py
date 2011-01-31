@@ -271,10 +271,13 @@ class Asset(db.Document):
     def prepare(self):
         data = self._data
         
-        for i in self.acl:
+        for n, i in enumerate(self.acl):
             if isinstance(i, PublicationACLRule):
                 data['acl.publish'] = i.publish
                 data['acl.retract'] = i.retract
+            
+            if isinstance(i, AllUsersACLRule) and not i.allow and n != len(self.acl):
+                data['acl.private'] = True
         
         return data
     
