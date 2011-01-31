@@ -289,12 +289,8 @@ class Asset(db.Document):
         if self.path in ['/', '/settings']:
             return formdata
         
-        # TODO: Inverse this rule?
-        # rule = OwnerACLRule(permission="*")
-        # if acl.private and rule not in result:
-        #     result.insert(0, rule)
-        # elif not acl.private and rule in result:
-        #     result.remove(rule)
+        if acl.private:
+            result.append(AllUsersACLRule(permission="*", allow=False))
         
         if acl.publish or acl.retract:
             log.info("%r", acl)
