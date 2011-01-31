@@ -73,7 +73,7 @@ def fields(asset):
                     FieldSet('access', "Access Control", DefinitionListLayout, [
                             Label('acl.about', "Control who has access to this asset and its children."),
                             CheckboxField('acl.private', "Private Asset", title="Prevent access to this resource by anyone other than the owner or administrator."),
-                            # CheckboxField('acl.member', "Members Only", title="Allow anyone with an account access."),
+                            CheckboxField('acl.member', "Members Only", title="Allow anyone with an account access."),
                         ]),
                     FieldSet('publication', "Publication Dates", DefinitionListLayout, [
                             Label('acl.about', "Define the dates between which this asset and its children will be made available."),

@@ -275,9 +275,15 @@ class Asset(db.Document):
             if isinstance(i, PublicationACLRule):
                 data['acl.publish'] = i.publish
                 data['acl.retract'] = i.retract
+                continue
             
             if isinstance(i, AllUsersACLRule) and not i.allow and n != len(self.acl):
                 data['acl.private'] = True
+                continue
+            
+            if isinstance(i, AuthenticatedUsersACLRule) and i.permission == "view:*" and i.allow=True:
+                data['acl.member'] = True
+                continue
         
         return data
     
@@ -294,6 +300,9 @@ class Asset(db.Document):
         
         if acl.private:
             result.append(AllUsersACLRule(permission="*", allow=False))
+        
+        if acl.member:
+            result.append(AuthenticatedUsersACLRule(permission="view:*", allow=True))
         
         if acl.publish or acl.retract:
             log.info("%r", acl)
