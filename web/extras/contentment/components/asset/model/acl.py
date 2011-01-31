@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from pytz import utc as UTC
 from datetime import datetime
 import mongoengine as db
 
@@ -15,7 +16,7 @@ class InheritACLRules(ACLRule):
 
 class BaseACLRule(ACLRule):
     def __str__(self):
-        return self.__class__.__name__ + "(" + ("allow" if self.allow else "deny") + ", " + self.permission + ")"
+        return self.__class__.__name__ + "(" + ("allow" if self.allow else "deny") + ", " + (self.permission if self.permission else "None") + ")"
     
     allow = db.BooleanField()
     permission = db.StringField(max_length=250)
@@ -96,7 +97,7 @@ class PublicationACLRule(BaseACLRule):
     def __call__(self, entity, identity, kind, name):
         result = super(PublicationACLRule, self).__call__(entity, identity, kind, name)
         valid = True
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         
         if result is None: return None
         

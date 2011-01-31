@@ -17,6 +17,7 @@ import mongoengine as db
 
 from web.extras.contentment.components.asset.widgets import fields
 from web.extras.contentment.components.asset.model.index import SearchTerm, DocumentIndex
+from marrow.util.bunch import Bunch
 from acl import *
 import lexer
 
@@ -267,7 +268,49 @@ class Asset(db.Document):
         """Return all descendants of this asset."""
         pass
     
+    def prepare(self):
+        data = self._data
+        
+        for i in self.acl:
+            if isinstance(i, PublicationACLRule):
+                data['acl.publish'] = i.publish
+                data['acl.retract'] = i.retract
+        
+        return data
+    
     def process(self, formdata):
+        result = []
+        acl = Bunch()
+        
+        for name in list(formdata):
+            if name.startswith('acl.'):
+                acl[name.partition('.')[2]] = formdata.pop(name)
+        
+        if self.path in ['/', '/settings']:
+            return formdata
+        
+        # TODO: Inverse this rule?
+        # rule = OwnerACLRule(permission="*")
+        # if acl.private and rule not in result:
+        #     result.insert(0, rule)
+        # elif not acl.private and rule in result:
+        #     result.remove(rule)
+        
+        if acl.publish or acl.retract:
+            log.info("%r", acl)
+            result.append(PublicationACLRule(permission="view:*", allow=True, publish=acl.publish, retract=acl.retract))
+        
+        if result:
+            result.append(AllUsersACLRule(permission="*", allow=False))
+        
+        self.acl = result
+        
+        # if acl.member:
+        #     pass
+        # 
+        # else:
+        #     pass
+        # 
         return formdata
 
 

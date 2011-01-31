@@ -74,7 +74,7 @@ class AssetController(BaseController):
         form = self._form(asset, web.core.request.referrer if action == 'create' else None, action.title())
         
         if not data:
-            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset.prepare())
         
         data.pop('submit', None)
         
@@ -87,7 +87,7 @@ class AssetController(BaseController):
             log.exception("Error processing form.")
             web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to create asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
             
-            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset.prepare())
         
         # Root node must not be renamed.
         if asset.path == '/': del result['name']
@@ -109,7 +109,7 @@ class AssetController(BaseController):
         result = asset.process(result)
         
         for name, value in result.iteritems():
-            if action == 'modify' and getattr(asset, field) == value: continue
+            if action == 'modify' and getattr(asset, name) == value: continue
             dirty.append(name)
             setattr(asset, name, value)
         
@@ -122,7 +122,7 @@ class AssetController(BaseController):
             
             log.exception('Error saving record.')
             web.core.session['flash'] = dict(cls="error", title="Server Error", message="Unable to save asset; see system log for details." % (asset.__class__.__name__, asset.title, asset.path))
-            return action, dict(kind=asset.__class__.__name__, form=form, data=asset._data)
+            return action, dict(kind=asset.__class__.__name__, form=form, data=asset.prepare())
         
         if action == 'create':
             asset.attach(self.asset)
