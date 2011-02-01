@@ -8,6 +8,9 @@ import web.core
 
 from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
+from web.extras.contentment.components.file.scaler import scale
+
+from cStringIO import StringIO
 
 
 log = __import__('logging').getLogger(__name__)
@@ -37,6 +40,29 @@ class FileController(AssetController):
         response.range = (0, asset.size)
         
         response.app_iter = asset.content.get()
+        
+        return response
+    
+    # TODO: Caching.
+    @view('Scale', "Display a scaled version of this file.")
+    def view_scale(self, filename=None, inline=True, **kw):
+        asset = self.asset
+        response = webob.Response(request=web.core.request, conditional_response=True)
+        filename = asset.filename if filename is None else filename
+        
+        response.content_type = asset.mimetype
+        response.content_length = asset.size
+        response.last_modified = asset.modified if asset.modified else asset.created
+        response.accept_ranges = 'bytes'
+        response.etag = '%s-%s-%s' % (asset.modified if asset.modified else asset.created, asset.size, hash(filename))
+        response.cache_control = 'public'
+        response.content_transfer_encoding = 'binary'
+        response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
+        response.range = (0, asset.size)
+        
+        target = StringIO()
+        scale(asset.content.get(), target, raw=False, **kw)
+        response.body = target.getvalue()
         
         return response
     
