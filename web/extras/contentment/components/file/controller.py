@@ -50,7 +50,7 @@ class FileController(AssetController):
         response = webob.Response(request=web.core.request, conditional_response=True)
         filename = asset.filename if filename is None else filename
         
-        response.content_type = asset.mimetype
+        response.content_type = "image/jpeg"
         response.content_length = asset.size
         response.last_modified = asset.modified if asset.modified else asset.created
         response.accept_ranges = 'bytes'
