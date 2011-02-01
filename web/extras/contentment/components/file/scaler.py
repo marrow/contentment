@@ -120,6 +120,8 @@ def scale(source, destination, xy=None, x=None, y=None, square=False, jq=None, r
     else:
         jquality = jq and jq or 95
     
-    if raw: return thumb
+    if raw: return thumb, jquality
     
     thumb.save(destination, "JPEG", optimize=True, quality=jquality, **kw)
+    
+    return thumb, jquality
