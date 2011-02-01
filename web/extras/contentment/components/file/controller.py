@@ -65,7 +65,3 @@ class FileController(AssetController):
         response.body = target.getvalue()
         
         return response
-    
-    # TODO: Raw stream.
-    # TODO: Preview.  (Utilizes the embedded view.)
-    # TODO: Embedded view.  (w/ handlers for application/pdf, text/*, image/*, audio/*, and video/*.)
