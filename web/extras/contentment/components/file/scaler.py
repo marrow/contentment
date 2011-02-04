@@ -104,9 +104,9 @@ def scale(source, destination, xy=None, x=None, y=None, square=False, jq=None, r
     if xy: factor = int(xy) / float(max([w, h]))
     
     if factor >= 1:
-        if raw: return image
-        image.save(destination, "JPEG", optimize=True, quality=jq and jq or 95, **kw)
-        return
+        if raw: return image, jq if jq else 95
+        image.save(destination, "JPEG", optimize=True, quality=jq if jq else 95, **kw)
+        return image, jq if jq else 95
     
     thumb = image.resize((int(w * factor), int(h * factor)), Image.ANTIALIAS)
     
@@ -118,7 +118,7 @@ def scale(source, destination, xy=None, x=None, y=None, square=False, jq=None, r
         jquality = int(60 + 35 * ( 1024.0 / max(w, h) ))
     
     else:
-        jquality = jq and jq or 95
+        jquality = jq if jq else 95
     
     if raw: return thumb, jquality
     

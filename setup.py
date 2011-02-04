@@ -84,6 +84,7 @@ setup(
                         "event = web.extras.contentment.components.event:EventComponent",
                         "file = web.extras.contentment.components.file:FileComponent",
                         "folder = web.extras.contentment.components.folder:FolderComponent",
+                        "gallery = web.extras.contentment.components.gallery:GalleryComponent",
                         "identity = web.extras.contentment.components.identity:IdentityComponent",
                         "page = web.extras.contentment.components.page:PageComponent",
                         "search = web.extras.contentment.components.search:SearchComponent",

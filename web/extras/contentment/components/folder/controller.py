@@ -20,6 +20,10 @@ class FolderController(AssetController):
     def view_details(self, sort=None):
         return 'details', None
     
+    @view("Gallery", "An expandable thumbnail view.")
+    def view_gallery(self, sort=None):
+        return 'gallery', None
+    
     @view("Event Attachments", "A list of events and their attachments.")
     def view_attachments(self, year=None, sort="starts"):
         if year is None:
