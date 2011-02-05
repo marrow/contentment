@@ -32,8 +32,8 @@ def cache_hash(guid, modified, xy=None, x=None, y=None, square=False, jq=None, s
 
 def get_cache(guid, modified, xy=None, x=None, y=None, square=False, jq=None, style="standard", **kw):
     ihash = cache_hash(guid, modified, xy, x, y, square, jq, **kw)
-    if os.path.exists(os.path.join(config['image.cache.path'], guid, ihash)):
-        return os.path.join(config['image.cache.url'], guid, ihash)
+    if os.path.exists(os.path.join(config['image.cache.path'], guid, ihash + '.jpeg')):
+        return os.path.join(config['image.cache.url'], guid, ihash + '.jpeg')
     else: return None
 
 
@@ -43,12 +43,12 @@ def save_cache(guid, modified, xy=None, x=None, y=None, square=False, jq=None, s
     if not os.path.exists(os.path.join(config['image.cache.path'], guid)):
         os.makedirs(os.path.join(config['image.cache.path'], guid))
     
-    return os.path.join(config['image.cache.path'], guid, ihash)
+    return os.path.join(config['image.cache.path'], guid, ihash + '.jpeg')
 
 
 def cache_path(guid, modified, xy=None, x=None, y=None, square=False, jq=None, style="standard", **kw):
-    ihash = cache_hash(guid, modified, xy, x, y, square, jq, **kw)
-    return os.path.join(config['image.cache.url'], guid, ihash)
+    ihash = cache_hash(guid, modified, xy, x, y, sqaure, jq, **kw)
+    return os.path.join(config['image.cache.url'], guid, ihash + '.jpeg')
 
 
 def scale(source, destination, xy=None, x=None, y=None, square=False, jq=None, raw=False, **kw):

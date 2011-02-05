@@ -8,7 +8,7 @@ import web.core
 
 from web.extras.contentment.api import action, view
 from web.extras.contentment.components.asset.controller import AssetController
-from web.extras.contentment.components.file.scaler import scale
+from web.extras.contentment.components.file.scaler import scale, get_cache, save_cache
 from web.extras.contentment.components.file.reflection import add_reflection
 
 from cStringIO import StringIO
@@ -46,8 +46,26 @@ class FileController(AssetController):
     
     # TODO: Caching.
     @view('Scale', "Display a scaled version of this file.")
-    def view_scale(self, filename=None, inline=True, reflection=None, color="#000000", amount=0.75, opacity=0.4, **kw):
+    def view_scale(self, filename=None, cache=True, inline=True, reflection=None, color="#000000", amount=0.75, opacity=0.4, **kw):
         asset = self.asset
+        
+        if cache:
+            id_ = str(asset.id)
+            
+            url = get_cache(str(asset.id), asset.modified, style="standard" if not reflection else "reflection", **kw)
+            
+            if url is not None:
+                raise web.core.http.HTTPSeeOther(location=url)
+            
+            with open(save_cache(str(asset.id), asset.modified, style="standard" if not reflection else "reflection", **kw), 'wb') as fh:
+                result, jquality = scale(asset.content.get(), fh, raw=reflection is not None, **kw)
+                
+                if reflection is not None:
+                    result = add_reflection(result, bgcolor=color, amount=float(amount), opacity=float(opacity))
+                    result.save(fh, "JPEG", optimize=True, quality=jquality)
+            
+            raise web.core.http.HTTPSeeOther(location=get_cache(id_, asset.modified, style="standard" if not reflection else "reflection", **kw))
+        
         response = webob.Response(request=web.core.request, conditional_response=True)
         filename = asset.filename if filename is None else filename
         
@@ -61,6 +79,7 @@ class FileController(AssetController):
         response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
         
         target = StringIO()
+        
         result, jquality = scale(asset.content.get(), target, raw=reflection is not None, **kw)
         
         if reflection is not None:
