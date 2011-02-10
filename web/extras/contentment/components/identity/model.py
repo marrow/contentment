@@ -17,8 +17,12 @@ from web.extras.contentment.components.asset.model import Asset
 
 from marrow.util.bunch import Bunch
 
-from yubico import yubico
-from yubico import yubico_exceptions
+try:
+    from yubico import yubico
+    from yubico import yubico_exceptions
+
+except:
+    yubico = None
 
 
 log = __import__('logging').getLogger(__name__)
@@ -107,7 +111,7 @@ class Identity(Asset):
                     credentials__value = password_hash
                 ).only('id').first())
         
-        if use_yk:
+        if use_yk and yubico is not None:
             log.debug("Validating Yubikey credential.")
             client = yubico.Yubico(
                     web.core.config['web.auth.yubikey.client'],
