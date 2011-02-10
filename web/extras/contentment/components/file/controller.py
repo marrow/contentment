@@ -46,8 +46,15 @@ class FileController(AssetController):
     
     # TODO: Caching.
     @view('Scale', "Display a scaled version of this file.")
-    def view_scale(self, filename=None, cache=True, inline=True, reflection=None, color="#000000", amount=0.75, opacity=0.4, **kw):
+    def view_scale(self, filename=None, cache=True, inline=True, reflection=False, color="000000", amount=0.75, opacity=0.4, **kw):
         asset = self.asset
+        
+        color = '#' + color
+        cache = bool(cache)
+        inline = bool(inline)
+        reflection = bool(reflection)
+        amount = float(amount)
+        opacity = float(opacity)
         
         if cache:
             id_ = str(asset.id)
@@ -58,9 +65,9 @@ class FileController(AssetController):
                 raise web.core.http.HTTPSeeOther(location=url)
             
             with open(save_cache(str(asset.id), asset.modified, style="standard" if not reflection else "reflection", **kw), 'wb') as fh:
-                result, jquality = scale(asset.content.get(), fh, raw=reflection is not None, **kw)
+                result, jquality = scale(asset.content.get(), fh, raw=reflection, **kw)
                 
-                if reflection is not None:
+                if reflection:
                     result = add_reflection(result, bgcolor=color, amount=float(amount), opacity=float(opacity))
                     result.save(fh, "JPEG", optimize=True, quality=jquality)
             
@@ -80,9 +87,9 @@ class FileController(AssetController):
         
         target = StringIO()
         
-        result, jquality = scale(asset.content.get(), target, raw=reflection is not None, **kw)
+        result, jquality = scale(asset.content.get(), target, raw=reflection, **kw)
         
-        if reflection is not None:
+        if reflection:
             result = add_reflection(result, bgcolor=color, amount=float(amount), opacity=float(opacity))
             result.save(target, "JPEG", optimize=True, quality=jquality)
         

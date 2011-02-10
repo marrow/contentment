@@ -265,8 +265,8 @@ class Asset(db.Document):
     
     @property
     def descendants(self):
-        """Return all descendants of this asset."""
-        pass
+        """Return all descendants of this asset in depth-first alphabetical order."""
+        return self.objects(path__startswith=self.path).order_by('path')
     
     def prepare(self):
         data = self._data

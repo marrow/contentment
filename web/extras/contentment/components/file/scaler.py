@@ -26,8 +26,9 @@ __all__ = ['cache_hash', 'get_cache', 'save_cache', 'scale']
 ImageFile.MAXBLOCK = 1024*1024*40
 
 
-def cache_hash(guid, modified, xy=None, x=None, y=None, square=False, jq=None, style="standard", **kw):
-    return md5("%s@%r: %r(%r)" % ( guid, modified, [xy, x, y, square, jq], style )).hexdigest()
+def cache_hash(*args, **kw):
+    log.warn(repr((args, kw)))
+    return md5("%r %r" % ( args, kw )).hexdigest()
 
 
 def get_cache(guid, modified, xy=None, x=None, y=None, square=False, jq=None, style="standard", **kw):

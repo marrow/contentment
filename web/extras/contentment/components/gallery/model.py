@@ -22,6 +22,7 @@ class ScaleSettings(db.EmbeddedDocument):
     reflect = db.BooleanField(default=False)
     amount = db.FloatField(default=0.75)
     opacity = db.FloatField(default=0.4)
+    color = db.StringField(default="bbbbbb")
 
 
 class Gallery(Folder):
@@ -31,4 +32,4 @@ class Gallery(Folder):
     polaroid = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(xy=175, square=True))
     lightbox = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(x=960, y=600))
     slideshow = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(x=960, y=600))
-    flow = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(y=270, reflect=True))
+    flow = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(y=300, reflect=True, amount=0.5))

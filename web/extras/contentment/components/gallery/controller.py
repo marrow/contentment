@@ -25,8 +25,8 @@ class GalleryController(FolderController):
         if data.square: parts.append('square=True')
         
         if data.reflect:
-            parts.append('reflect=True')
-            for i in ('amount', 'opacity'):
+            parts.append('reflection=True')
+            for i in ('amount', 'opacity', 'color'):
                 if getattr(data, i) is not None:
                     parts.append('%s=%s' % (i, getattr(data, i)))
         
@@ -35,3 +35,7 @@ class GalleryController(FolderController):
     @view("Thumbnails", "An expandable thumbnail view.")
     def view_gallery(self, sort=None):
         return 'thumbnail', dict(scale=self._scale)
+    
+    @view("Cover Flow", "Apple-inspired cover flow.")
+    def view_flow(self, sort=None):
+        return 'flow', dict(scale=self._scale)
