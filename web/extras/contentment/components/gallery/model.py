@@ -26,7 +26,7 @@ class ScaleSettings(db.EmbeddedDocument):
 
 
 class Gallery(Folder):
-    default = db.StringField(default="view:thumbnails", max_length=128)
+    default = db.StringField(default="view:gallery", max_length=128)
     
     thumbnail = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(xy=96, square=True))
     polaroid = db.EmbeddedDocumentField(ScaleSettings, default=lambda: ScaleSettings(xy=175, square=True))
