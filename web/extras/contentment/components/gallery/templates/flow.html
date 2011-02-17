@@ -22,6 +22,22 @@
 %   if 'flow:hidden' not in child.tags and child.controller.allowed:
 %       if hasattr(child.controller, 'view_scale'):
 <img title="${child.description or ''}" src="${scale(child, 'flow')}" href="${scale(child, 'lightbox') if getattr(child, 'mimetype', '').split('/')[0] == 'image' else child.path}" alt="${child.title}" rel="${child.__class__.__name__.lower()}-${getattr(child, 'mimetype', 'generic').split('/')[0]}" class="shallow">
+%       else:
+<%
+    current = child
+    while True:
+        if current.children:
+            current = current.children[0]
+        else:
+            current = None
+            break
+        
+        if hasattr(current, 'view_scale'):
+            break
+%>
+%           if current:
+<img title="${child.description or ''}" src="${scale(current, 'flow')}" href="${child.path}" alt="${child.title}" rel="${child.__class__.__name__.lower()}" class="deep">
+%           endif
 %       endif
 %   endif
 % endfor
