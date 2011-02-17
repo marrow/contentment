@@ -62,7 +62,7 @@ def mock(settings):
 class SiteBlueprint(Blueprint):
     """Configration of a pure Contentment site."""
     
-    base = 'web.extras.contentment.blueprints/site'
+    base = 'web.extras.contentment.blueprints/config'
     inherits = None
     engine = 'mako'
     
@@ -76,7 +76,7 @@ class SiteBlueprint(Blueprint):
         ]
     
     manifest = [
-            File('development.ini', '../config/template.ini', data=mock),
+            File('development.ini', 'template.ini', data=mock),
             Folder('static'),
             Folder('data', children=[
                     Folder('cache'),
