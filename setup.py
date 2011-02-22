@@ -75,6 +75,12 @@ setup(
         paster_plugins = ['PasteScript', 'WebCore'],
         
         entry_points = {
+                'marrow.blueprint': [
+                        "contentment.config = web.extras.contentment.blueprints:ConfigurationBlueprint",
+                        "contentment.site = web.extras.contentment.blueprints:SiteBlueprint",
+                        # "contentment.component = web.extras.contentment.blueprints:ComponentBlueprint",
+                        # "contentment.theme = web.extras.contentment.blueprints:ThemeBlueprint"
+                    ],
                 'contentment.component': [
                         "alert = web.extras.contentment.components.alert:AlertComponent",
                         "alias = web.extras.contentment.components.alias:AliasComponent",
@@ -90,6 +96,7 @@ setup(
                         "search = web.extras.contentment.components.search:SearchComponent",
                         "settings = web.extras.contentment.components.settings:SettingsComponent",
                         # "subscribe = web.extras.contentment.components.subscribe:SubscribeComponent",
+                        # "survey = web.extras.contentment.components.survey:SurveyComponent",
                         "theme = web.extras.contentment.components.theme:ThemeComponent",
                         
                         "default_theme = web.extras.contentment.themes.default:DefaultTheme",
