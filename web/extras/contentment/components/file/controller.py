@@ -30,7 +30,7 @@ class FileController(AssetController):
         response = webob.Response(request=web.core.request, conditional_response=True)
         filename = asset.filename if filename is None else filename
         
-        response.content_type = unicode(asset.mimetype, 'ascii').encode('ascii')
+        response.content_type = asset.mimetype.encode('ascii')
         response.content_length = asset.size
         response.last_modified = asset.modified if asset.modified else asset.created
         response.accept_ranges = 'bytes'
