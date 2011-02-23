@@ -119,7 +119,7 @@ class BaseController(Controller):
         
         # Attribute-based lookup.
         
-        node = remainder.pop(0)
+        node = remainder.pop(0).replace('%3A', ':')
         
         log.debug("Looking in %r for %r *%r...", self, node, remainder)
         
