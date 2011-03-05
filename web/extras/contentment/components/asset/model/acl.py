@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+import web.core
+
 from pytz import utc as UTC
 from datetime import datetime
 import mongoengine as db

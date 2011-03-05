@@ -1,11 +1,17 @@
 # encoding: utf-8
 
+import pkg_resources
+
 from web.extras.contentment import release
 from web.extras.contentment.api import IComponent
 
+from marrow.util.bunch import Bunch
 
-__all__ = ['PageComponent', 'controller', 'model', 'templates']
+
+__all__ = ['PageComponent', 'controller', 'model', 'templates', 'engines']
 log = __import__('logging').getLogger(__name__)
+
+engines = Bunch()
 
 
 class PageComponent(IComponent):
@@ -41,3 +47,23 @@ class PageComponent(IComponent):
         
         return False
 
+
+for res in pkg_resources.iter_entry_points('contentment.renderer'):
+    try:
+        instance = res.load()
+    
+    except:
+        log.exception("Error scanning page renderers.")
+        raise
+    
+    try:
+        if hasattr(instance, '__call__'):
+            instance = instance()
+        
+        engines[res.name] = instance
+    
+    except:
+        log.exception("Error initializing page renderer %r.", instance)
+        continue
+
+log.info("Loaded page renderers: %s", ', '.join([i.__class__.__name__ for i in engines.itervalues()]))

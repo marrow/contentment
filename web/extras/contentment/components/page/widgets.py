@@ -23,7 +23,10 @@ def fields(asset):
                                 ]),
                             ('Advanced Engines', [
                                     ('raw', "Raw (No Processing)"),
-                                    ('mako', "Mako Page Template (Insecure)")
+                                    ('mako', "Mako Page Template (Insecure)"),
+                                    ('css', "CSS Source"),
+                                    ('ccss', "Clever CSS Source"),
+                                    ('js', "JavaScript Source"),
                                 ])
                         ])
                 ])

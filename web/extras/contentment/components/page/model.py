@@ -21,13 +21,6 @@ __all__ = ['Page']
 
 
 
-class Textile(textile.Textile):
-    btag = ('bq', 'bc', 'notextile', 'pre', 'h[1-6]', 'fn\d+', 'p', 'div')
-    btag_lite = ('bq', 'bc', 'p', 'div')
-
-
-
-
 class Page(Asset):
     _indexable = ['_content']
     _widgets = fields
@@ -44,30 +37,30 @@ class Page(Asset):
     def rendered(self):
         content = self.content
         
-        # Determine substitutions and associated asset dates.
-        replacements = []
-        
-        if self.engine not in ['raw', 'mako']:
-            find = self.content.find
-            index = find('${')
-            while index != -1:
-                newline = find('\n', index)
-                close = find('}', index)
-            
-                if close == -1 or (newline != -1 and newline < close):
-                    return u"""<div class="error">Error parsing includes.</div>"""
-            
-                replacements.append(self.content[index:close+1])
-            
-                index = find('${', close)
-        
+        # TODO: Make the caching time a global (root) property.
         @web.core.cache.cache('page.content', expires=86400)
         def cache(name, date):
-            # TODO: Make this plugin-able.
-            content = self.content
+            from web.extras.contentment.components.page import engines
             
-            if self.engine == 'textile':
-                content = Textile().textile(content, html_type='html')
+            engine = engines[self.engine]
+            content = engine(self.content)
+            
+            # Determine substitutions and associated asset dates.
+            replacements = []
+            
+            if engine.replacements:
+                find = self.content.find
+                index = find('${')
+                while index != -1:
+                    newline = find('\n', index)
+                    close = find('}', index)
+                    
+                    if close == -1 or (newline != -1 and newline < close):
+                        return u"""<div class="error">Error parsing includes.</div>"""
+                    
+                    replacements.append(self.content[index:close+1])
+                    
+                    index = find('${', close)
             
             if replacements:
                 from web.extras.contentment.components.asset.model import Asset
