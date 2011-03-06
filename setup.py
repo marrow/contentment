@@ -103,6 +103,7 @@ setup(
                     ],
                 'contentment.renderer': [
                         "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
+                        "mako = web.extras.contentment.components.page.renderers.raw:MakoRenderer",
                         "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
                         "textile = web.extras.contentment.components.page.renderers.textile_:TextileRenderer"
                     ],
