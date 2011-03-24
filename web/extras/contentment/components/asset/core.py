@@ -59,7 +59,7 @@ class CoreMethods(web.core.Controller):
             if latest is None or i.created > latest:
                 latest = i.created
             
-            if i.modified > _latest:
+            if i.modified > latest:
                 latest = i.modified
         
         response.last_modified = latest
@@ -87,7 +87,7 @@ class CoreMethods(web.core.Controller):
             else: values = values.split(',')
             
             for i in values:
-                if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags'):
+                if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags', 'descendants'):
                     return 'json:', dict(status="error", message="Forbidden.")
             
             children = []
@@ -113,6 +113,9 @@ class CoreMethods(web.core.Controller):
                         if value == 'kind':
                             data[value] = child.__class__.__name__.lower()
                             continue
+                        
+                        if value == 'descendants':
+                            data[value] = bool(len(Asset.objects(parent=child).only('id')))
                         
                         data[value] = getattr(child, value, '')
                     
