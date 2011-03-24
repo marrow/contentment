@@ -10,6 +10,8 @@ from datetime import datetime
 
 import web.core
 
+from web.extras.contentment.components.asset.model import Asset
+
 
 
 log = __import__('logging').getLogger(__name__)
@@ -46,51 +48,70 @@ class CoreMethods(web.core.Controller):
         return 'json:', dict(status="success")
     
     def getChildren(self, kind=None, tag=None, values=None, **kw):
-        # TODO: Security.
+        parent = self.controller.asset
+        _latest = Asset.objects(parent=parent).only('created', 'modified')
         
-        if kind is not None:
-            kind = kind.lower().split(',')
+        latest = None
+        for i in _latest:
+            if latest is None or i.created > latest:
+                latest = i.created
+            
+            if i.modified > _latest:
+                latest = i.modified
         
-        if values is None: values = 'name', 'title', 'description', 'path'
-        else: values = values.split(',')
-        
-        for i in values:
-            if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags'):
-                return 'json:', dict(status="error", message="Forbidden.")
-        
-        children = []
-        
-        try:
-            for child in self.controller.asset.children:
-                if kind is not None and child.__class__.__name__.lower() not in kind:
-                    continue
-                
-                if tag is not None:
-                    if tag[0] != '!' and tag not in child.tags:
+        # The scanning (esp. security) is difficult to compute.
+        # So we cache the result based on the above arguments and modification times.
+        # TODO: Cached for one day; this should be configurable.
+        # Initial timings (with debug logging enabled!) on the following complex query:
+        #   kind=gallery & values=title,path & tag=!nav:hidden
+        #   W/o cache: ~50/s, w/ cache: ~72/s.
+        @web.core.cache.cache('page.content', expires=86400)
+        def inner(parent, latest, kind, tag, values, kw):
+            if kind is not None:
+                kind = kind.lower().split(',')
+            
+            if values is None: values = 'name', 'title', 'description', 'path'
+            else: values = values.split(',')
+            
+            for i in values:
+                if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags'):
+                    return 'json:', dict(status="error", message="Forbidden.")
+            
+            children = []
+            
+            try:
+                for child in parent.children:
+                    if kind is not None and child.__class__.__name__.lower() not in kind:
                         continue
                     
-                    elif tag[0] == '!' and tag in child.tags:
-                        continue
-                
-                if not child.controller.allowed:
-                    continue
-                
-                data = dict()
-                
-                for value in values:
-                    if value == 'kind':
-                        data[value] = child.__class__.__name__.lower()
+                    if tag is not None:
+                        if tag[0] != '!' and tag not in child.tags:
+                            continue
+                        
+                        elif tag[0] == '!' and tag in child.tags:
+                            continue
+                    
+                    if not child.controller.allowed:
                         continue
                     
-                    data[value] = getattr(child, value, '')
-                
-                children.append(data)
+                    data = dict()
+                    
+                    for value in values:
+                        if value == 'kind':
+                            data[value] = child.__class__.__name__.lower()
+                            continue
+                        
+                        data[value] = getattr(child, value, '')
+                    
+                    children.append(data)
+            
+            except:
+                log.exception("Error iterating children.")
+                return 'json:', dict(status="error", message="Error determining asset contents.")
+            
+            return 'json:', dict(status="success", children=children)
         
-        except:
-            log.exception("Error iterating children.")
-            return 'json:', dict(status="error", message="Error determining asset contents.")
-        
-        return 'json:', dict(status="success", children=children)
+        return inner(parent, latest, kind, tag, values, kw)
 
 
 """
