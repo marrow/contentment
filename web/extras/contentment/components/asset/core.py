@@ -79,7 +79,7 @@ class CoreMethods(web.core.Controller):
         #   kind=gallery & values=title,path & tag=!nav:hidden
         #   W/o cache: ~50/s, w/ cache: ~72/s.
         @web.core.cache.cache('page.content', expires=86400)
-        def inner(parent, latest, kind, tag, values, kw):
+        def inner(parent_id, latest, kind, tag, values, kw):
             if kind is not None:
                 kind = kind.lower().split(',')
             
@@ -124,7 +124,7 @@ class CoreMethods(web.core.Controller):
             
             return 'json:', dict(status="success", children=children)
         
-        return inner(parent, latest, kind, tag, values, kw)
+        return inner(str(parent.id), latest, kind, tag, values, kw)
 
 
 """
