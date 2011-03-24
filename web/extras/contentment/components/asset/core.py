@@ -87,24 +87,30 @@ class CoreMethods(web.core.Controller):
             else: values = values.split(',')
             
             for i in values:
-                if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags', 'descendants'):
+                if i not in ('name', 'title', 'description', 'path', 'kind', 'rendered', 'tags', 'children', 'descendants'):
                     return 'json:', dict(status="error", message="Forbidden.")
             
             children = []
             
+            def criteria(child):
+                if kind is not None and child.__class__.__name__.lower() not in kind:
+                    return False
+                
+                if tag is not None:
+                    if tag[0] != '!' and tag not in child.tags:
+                        return False
+                    
+                    elif tag[0] == '!' and tag in child.tags:
+                        return False
+                
+                if not child.controller.allowed:
+                    return False
+                
+                return True
+            
             try:
                 for child in parent.children:
-                    if kind is not None and child.__class__.__name__.lower() not in kind:
-                        continue
-                    
-                    if tag is not None:
-                        if tag[0] != '!' and tag not in child.tags:
-                            continue
-                        
-                        elif tag[0] == '!' and tag in child.tags:
-                            continue
-                    
-                    if not child.controller.allowed:
+                    if not criteria(child):
                         continue
                     
                     data = dict()
@@ -114,8 +120,14 @@ class CoreMethods(web.core.Controller):
                             data[value] = child.__class__.__name__.lower()
                             continue
                         
-                        if value == 'descendants':
+                        if value == 'children':
+                            # We won't return the actual child objects… just if we have children or not.
                             data[value] = bool(len(Asset.objects(parent=child).only('id')))
+                            continue
+                        
+                        if value == 'descendants':
+                            # Match child objects that also meet this search criteria.
+                            data[value] = bool([i for i in Asset.objects(parent=child).only('acl', 'parent', 'parents', 'tags') if criteria(i)])
                             continue
                         
                         data[value] = getattr(child, value, '')
