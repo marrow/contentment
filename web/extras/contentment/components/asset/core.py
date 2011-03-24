@@ -116,6 +116,7 @@ class CoreMethods(web.core.Controller):
                         
                         if value == 'descendants':
                             data[value] = bool(len(Asset.objects(parent=child).only('id')))
+                            continue
                         
                         data[value] = getattr(child, value, '')
                     
