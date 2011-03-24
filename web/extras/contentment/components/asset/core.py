@@ -59,7 +59,7 @@ class CoreMethods(web.core.Controller):
             if latest is None or i.created > latest:
                 latest = i.created
             
-            if i.modified > latest:
+            if i.modified and i.modified > latest:
                 latest = i.modified
         
         response.last_modified = latest
