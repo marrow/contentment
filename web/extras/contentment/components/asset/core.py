@@ -65,7 +65,7 @@ class CoreMethods(web.core.Controller):
                 if kind is not None and child.__class__.__name__.lower() not in kind: continue
                 if tag is not None:
                     if tag[0] != '!' and tag not in child.tags: continue
-                    else if tag[0] == '!' and tag in child.tags: continue
+                    elif tag[0] == '!' and tag in child.tags: continue
                 
                 data = dict()
                 

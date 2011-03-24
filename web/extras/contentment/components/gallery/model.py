@@ -22,7 +22,7 @@ class ScaleSettings(db.EmbeddedDocument):
     reflect = db.BooleanField(default=False)
     amount = db.FloatField(default=0.75)
     opacity = db.FloatField(default=0.4)
-    color = db.StringField(default="bbbbbb")
+    color = db.StringField(default="ffffff")
 
 
 class Gallery(Folder):
