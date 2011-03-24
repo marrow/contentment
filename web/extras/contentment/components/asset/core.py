@@ -6,6 +6,7 @@ Asset controller core JSON API methods.
 
 """
 
+import time
 from datetime import datetime
 
 import web.core
@@ -48,16 +49,28 @@ class CoreMethods(web.core.Controller):
         return 'json:', dict(status="success")
     
     def getChildren(self, kind=None, tag=None, values=None, **kw):
+        request = web.core.request
+        response = web.core.response
         parent = self.controller.asset
         _latest = Asset.objects(parent=parent).only('created', 'modified')
-        
         latest = None
+        
         for i in _latest:
             if latest is None or i.created > latest:
                 latest = i.created
             
             if i.modified > _latest:
                 latest = i.modified
+        
+        response.last_modified = latest
+        response.cache_control = 'public'
+        response.etag = "%d" % ( int(time.mktime(latest.timetuple())), )
+        
+        if request.if_modified_since and request.if_modified_since >= response.last_modified:
+            raise web.core.http.HTTPNotModified()
+        
+        if response.etag in request.if_none_match:
+            raise web.core.http.HTTPNotModified()
         
         # The scanning (esp. security) is difficult to compute.
         # So we cache the result based on the above arguments and modification times.
