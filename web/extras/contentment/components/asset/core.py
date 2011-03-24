@@ -62,10 +62,18 @@ class CoreMethods(web.core.Controller):
         
         try:
             for child in self.controller.asset.children:
-                if kind is not None and child.__class__.__name__.lower() not in kind: continue
+                if kind is not None and child.__class__.__name__.lower() not in kind:
+                    continue
+                
                 if tag is not None:
-                    if tag[0] != '!' and tag not in child.tags: continue
-                    elif tag[0] == '!' and tag in child.tags: continue
+                    if tag[0] != '!' and tag not in child.tags:
+                        continue
+                    
+                    elif tag[0] == '!' and tag in child.tags:
+                        continue
+                
+                if not child.controller.allowed:
+                    continue
                 
                 data = dict()
                 
