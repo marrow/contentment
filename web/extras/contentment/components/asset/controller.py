@@ -49,6 +49,23 @@ class AssetController(BaseController):
         
         return method.authorized(asset)
     
+    def sitemap_xml(self):
+        from web.extras.contentment.components.folder.model import Folder
+        
+        def find_nodes(root, default=None):
+            yield root
+            
+            for i in root.children:
+                if i.name == default or not i.controller.allowed or 'no:spider' in i.tags or i.immutable:
+                    continue
+                
+                for j in find_nodes(i, i.default):
+                    yield j
+        
+        root = self.asset
+        
+        return 'web.extras.contentment.components.asset.templates.sitemap', dict(nodes=find_nodes(root, root.default), Folder=Folder)
+    
     @view("ACL", "Display the access control list rules that apply to this asset.")
     def view_acl(self):
         return 'acl', None

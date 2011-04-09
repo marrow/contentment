@@ -98,6 +98,9 @@ class BaseController(Controller):
         
         remainder = list(remainder)
         
+        if asset.path == '/' and remainder == ['sitemap.xml']:
+            return self, ['sitemap_xml']
+        
         if web.core.request.script_name == '':
             # Path-based lookup, used only when starting from the site root.
             
