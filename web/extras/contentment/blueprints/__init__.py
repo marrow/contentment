@@ -8,17 +8,40 @@ import mongoengine
 from marrow.util.bunch import Bunch
 from marrow.util.convert import boolean
 from marrow.blueprint.api import Blueprint, Folder, File, Setting
+from marrow.blueprint.package import PackageBlueprint
 
 
 __all__ = ['ConfigurationBlueprint', 'SiteBlueprint', 'ComponentBlueprint', 'ThemeBlueprint']
 
 
 
+def package(deep, settings):
+    def recurse(name):
+        head, _, tail = name.partition('.')
+        return [ Folder(head, children=[recurse(tail)] if tail else [deep]) ]
+    
+    return recurse(settings.package)
+
+
+class ThemeBlueprint(PackageBlueprint):
+    """Custom Contentment theme."""
+    
+    base = 'web.extras.contentment.blueprints/theme'
+    engine = 'mako'
+    
+    settings = [
+            
+        ]
+    
+    manifest = [
+            
+        ]
+
+
 class ConfigurationBlueprint(Blueprint):
     """Configration of a pure Contentment site."""
     
     base = 'web.extras.contentment.blueprints/config'
-    inherits = None
     engine = 'mako'
     
     settings = [
@@ -45,7 +68,6 @@ class ConfigurationBlueprint(Blueprint):
         ]
 
 
-
 def mock(settings):
     return dict(settings=Bunch({
             'data.path': './data',
@@ -59,11 +81,11 @@ def mock(settings):
             'static.path': './static'
         }))
 
+
 class SiteBlueprint(Blueprint):
     """Configration of a pure Contentment site."""
     
     base = 'web.extras.contentment.blueprints/config'
-    inherits = None
     engine = 'mako'
     
     settings = [
@@ -104,11 +126,11 @@ class SiteBlueprint(Blueprint):
         auth, host = parts.split('@', 1) if '@' in parts else (None, parts)
         
         connection = dict()
-        connection['host'], connection['port'] = host.split(':') if ':' in host else (host, '27017')
-        connection['port'] = int(connection['port'])
+        connection[b'host'], connection[b'port'] = host.split(':') if ':' in host else (host, '27017')
+        connection[b'port'] = int(connection[b'port'])
         
         if auth:
-            connection['username'], _, connection['password'] = auth.partition(':')
+            connection[b'username'], _, connection[b'password'] = auth.partition(':')
         
         mongoengine.connect(db, **connection)
         
@@ -139,7 +161,7 @@ class SiteBlueprint(Blueprint):
         root.save()
         
         
-        settings_ = Settings(name="settings", title="Site Settings", immutable=True)
+        settings_ = Settings(name="settings", title="Site Settings", immutable=True, default="view:contents")
         settings_.acl.append(UserACLRule(allow=False, permission="*", inverse=True, reference=admin))
         settings_.save() ; settings_.attach(root)
         
