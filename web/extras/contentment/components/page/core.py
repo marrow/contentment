@@ -20,6 +20,9 @@ class PageMethods(web.core.Controller):
         self.controller = controller
     
     def getRendered(self, filename=None, mime="text/plain"):
+        if isinstance(mime, unicode):
+            mime = mime.encode('utf-8')
+        
         if mime not in ('text/plain', 'text/html', 'text/css', 'application/x-javascript'):
             raise web.core.exc.HTTPNotAuthorized()
         
