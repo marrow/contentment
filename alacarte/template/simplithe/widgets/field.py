@@ -40,32 +40,32 @@ class PasswordField(Input):
 
 class DateTimeField(Input):
     transform = t.DateTimeTransform()
-    type_ = 'datetime'
+    type_ = 'text'
 
 
 class DateField(Input):
     # transform = t.URLTransform()
-    type_ = 'date'
+    type_ = 'text'
 
 
 class MonthField(Input):
     # transform = t.URLTransform()
-    type_ = 'month'
+    type_ = 'text'
 
 
 class WeekField(Input):
     # transform = t.URLTransform()
-    type_ = 'week'
+    type_ = 'text'
 
 
 class TimeField(Input):
     # transform = t.URLTransform()
-    type_ = 'time'
+    type_ = 'text'
 
 
 class DateTimeLocalField(Input):
     # transform = t.URLTransform()
-    type_ = 'datetimelocal'
+    type_ = 'text'
 
 
 class NumberField(Input):
