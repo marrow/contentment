@@ -9,11 +9,11 @@ ${asset.rendered | n}
 
 <div class="ca clearfix"></div>
 
-% if asset.children:
+% if asset.children and 'no:attach' not in asset.tags and any(['no:attach' not in i.tags for i in self.children]):
 <footer id="attachments">
     <label>Attachments</label>
     <menu>
-% for child in asset.children:
+% for child in [i for i in asset.children if 'no:attach' not in i.tags]:
         ${'>' if child != asset.children[0] else ''}<li><a href="${child.path}" title="${child.description}">${child.title}</a></li
 % endfor
     ></menu>
