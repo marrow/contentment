@@ -2,7 +2,7 @@
 
 from alacarte.template.simplithe import html5 as tag
 
-from base import Layout, Widget, Label
+from base import Layout, Widget, Label, FieldSet
 
 
 __all__ = ['DefinitionListLayout', 'TableLayout', 'SubmitFooter']
@@ -15,7 +15,7 @@ class DefinitionListLayout(Layout):
         parts = []
         
         for child in self.children:
-            if not isinstance(child, Label):
+            if not isinstance(child, (Label, FieldSet)):
                 parts.append(tag.dt [ self.label(child.name, for_=child)() ])
             
             parts.append(tag.dd [ child(self.data) ])
