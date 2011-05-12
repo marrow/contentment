@@ -17,4 +17,4 @@ class RawRenderer(Renderer):
 
 class MakoRenderer(RawRenderer):
     def __call__(self, content):
-        return "<b>This type of page is not meant to be viewed directly, rather, it will be utilized by the system elsewhere.</b>"
+        return u"<b>This type of page is not meant to be viewed directly, rather, it will be utilized by the system elsewhere.</b>"
