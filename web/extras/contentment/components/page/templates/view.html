@@ -9,7 +9,7 @@ ${asset.rendered | n}
 
 <div class="ca clearfix"></div>
 
-% if asset.children and 'no:attach' not in asset.tags and any(['no:attach' not in i.tags for i in self.children]):
+% if asset.children and 'no:attach' not in asset.tags and any(['no:attach' not in i.tags for i in asset.children]):
 <footer id="attachments">
     <label>Attachments</label>
     <menu>
