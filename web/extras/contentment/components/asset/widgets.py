@@ -55,19 +55,25 @@ def fields(asset):
                 ]),
             
             ('properties', "Properties", [
-                    TextField(
-                            'name', "Name",
-                            title = "The web site root has no name, and as such, the name can not be modified." if root else "When creating a new asset, the name will be generated from the title if missing.",
-                            disabled = True if root else None,
-                            placeholder = "Web Site Root" if root else None,
-                            required = None if root else True
-                        ),
-                    TagField('tags', "Keywords / Tags", class_="tags", title="Used for searches, both live and saved."), # TODO: tag parsing
-                    SelectField('owner', "Author / Owner", values=iter_owners, transform=AssetPathTransform()), # TODO: Path-based asset conversion.
-                    SelectField('default', "Default View", values=partial(iter_views, asset)), # TODO
-                    SelectField('template', "View Template", title="View templates wrap the content in custom code.", values=iter_templates),
-                    DateTimeField('created', "Creation Date", title="The date the asset was created, in UTC."), # TODO: date conversion
-                    DateTimeField('modified', "Modification Date", title="The date the asset was last modified, in UTC.")
+                    FieldSet('core', "Core Properties", DefinitionListLayout, [
+                        TextField(
+                                'name', "Name",
+                                title = "The web site root has no name, and as such, the name can not be modified." if root else "When creating a new asset, the name will be generated from the title if missing.",
+                                disabled = True if root else None,
+                                placeholder = "Web Site Root" if root else None
+                            ),
+                        TagField('tags', "Keywords / Tags", class_="tags", title="Used for searches, both live and saved."), # TODO: tag parsing
+                        SelectField('owner', "Author / Owner", values=iter_owners, transform=AssetPathTransform()), # TODO: Path-based asset conversion.
+                    ]),
+                    FieldSet('display', "Display Properties", DefinitionListLayout, [
+                        SelectField('default', "Default View", values=partial(iter_views, asset)), # TODO
+                        SelectField('template', "View Template", title="View templates wrap the content in custom code.", values=iter_templates),
+                        SelectField('attachments', "Attachment Visibility", title="Choose to display or hide assets attached to this one.", values=[('show', "Display attachments."), ('no', "Hide attachments.")]),
+                    ]),
+                    FieldSet('dates', "Date Information", DefinitionListLayout, [
+                        DateTimeField('created', "Creation Date", title="The date the asset was created, in UTC."), # TODO: date conversion
+                        DateTimeField('modified', "Modification Date", title="The date the asset was last modified, in UTC.")
+                    ]),
                 ]),
             ('security', "Security", [
                     FieldSet('access', "Access Control", DefinitionListLayout, [
