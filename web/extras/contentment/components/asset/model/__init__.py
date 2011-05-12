@@ -128,7 +128,7 @@ class Asset(db.Document):
                 for name, title, fields in widgets(self):
                     if name not in groups:
                         order.append(name)
-                        groups[name] = FieldSet(name, title, DefinitionListLayout, children=copy(fields))
+                        groups[name] = FieldSet(name, title, DefinitionListLayout, children=copy(fields), class_="tab")
                         continue
                     
                     groups[name].children.extend(copy(fields))
