@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-import web.core
+import web.auth
 
 from pytz import utc as UTC
 from datetime import datetime
