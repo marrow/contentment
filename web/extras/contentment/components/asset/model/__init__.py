@@ -285,6 +285,8 @@ class Asset(db.Document):
                 data['acl.member'] = True
                 continue
         
+        data['attachments'] = 'no' if 'no:attach' in self.tags else 'allow'
+        
         return data
     
     def process(self, formdata):
@@ -294,6 +296,14 @@ class Asset(db.Document):
         for name in list(formdata):
             if name.startswith('acl.'):
                 acl[name.partition('.')[2]] = formdata.pop(name)
+        
+        if formdata['attachments'] == 'no' and 'no:attach' not in formdata['tags']:
+            formdata['tags'].append('no:attach')
+        
+        elif 'no:attach' in formdata['tags']:
+            formdata['tags'].remove('no:attach')
+        
+        del formdata['attachments']
         
         if self.path in ['/', '/settings']:
             return formdata
@@ -312,6 +322,7 @@ class Asset(db.Document):
             result.append(AllUsersACLRule(permission="*", allow=False))
         
         self.acl = result
+        
         
         # if acl.member:
         #     pass
