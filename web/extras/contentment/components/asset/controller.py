@@ -111,10 +111,17 @@ class AssetController(BaseController):
         
         dirty = []
         
+        siblings = [i.name for i in Asset.objects(parent=self.asset if action=="create" else self.asset.parent).only('name')]
         if asset.path != '/' and ( 'name' not in result or not result['name'] ):
-            siblings = [i.name for i in Asset.objects(parent=self.asset if action=="create" else self.asset.parent).only('name')]
             result['name'] = normalize(result['title'].lower(), siblings)
-            del siblings
+        
+        elif asset.path != '/' and action != "create":
+            result['name'] = normalize(result['name'].lower(), [i for i in siblings if i != self.name])
+        
+        elif asset.path != '/' and action == "create":
+            result['name'] = normalize(result['name'].lower(), siblings)
+        
+        del siblings
         
         if result.get('tags', None) is None:
             result['tags'] = []
