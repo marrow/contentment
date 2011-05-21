@@ -33,6 +33,13 @@
         <link rel="stylesheet" href="/theme/static/css/style.css?v=1">
         <link rel="stylesheet" href="/theme/static/css/handheld.css?v=1" media="handheld">
         
+% if asset.description:
+        <meta name="description" content="${asset.description}" />
+% endif
+% if root.tags or asset.tags:
+        <meta name="keywords" content="${', '.join(set([i for i in root.tags+asset.tags if ':' not in i]))}" />
+% endif
+        
         <script src="/theme/static/js/modernizr-1.5.min.js"></script>
         
         ${self.header()}
