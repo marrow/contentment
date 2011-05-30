@@ -47,10 +47,13 @@ The above will start MongoDB in the background.
 
 h3. Creating the Initial Site
 
-First you will need to install / register Contentment and its components:
+Blueprints have been added to Contentment allowing you to bootstrap new sites and production configurations using an interactive question-and-answer system.  To use this, ensure the `marrow.blueprint`, `marrow.script`, and `marrow.util` dependencies are installed then run (at the top level of your virtual environment):
 
-<pre><code>cd Contentment
-./setup.py develop</code></pre>
+<pre><code>$ blueprint create site .</code></pre>
+
+You will then be prompted for things like the name of the site, administrative user name, e-mail address, and password, and the database connection string.  Upon completion the blueprint will have created a number of stub folders (mostly in var) for Beaker data, bootstrapped the database with a default site and administrative user, and created a `development.ini` file for you.
+
+h4. Creating the Initial Site (Old)
 
 Then run the following to create a basic site in a MongoDB database called @cms@:
 
@@ -60,7 +63,7 @@ No output indicates success.  If you want to use a different collection name, co
 
 h3. Starting the Site
 
-To use a site powered entirely by Contentment and Contentment modules (components, themes, extensions, etc.) all you need is an INI file.  Make sure you are in the Contentment folder and run:
+To use a site powered entirely by Contentment and Contentment modules (components, themes, extensions, etc.) all you need is an INI file.  If bootstrapping using Blueprint, a development.ini will have been created for you in the top level of your virtual environment.  If not, one is available within the Contentment folder.
 
 <pre><code>paster serve --reload development.ini</code></pre>
 
