@@ -34,10 +34,14 @@ The above will start MongoDB in the background.
 
 h3. Creating the Initial Site
 
-Run the following to create a basic site in a MongoDB database called @cms@:
+First you will need to install / register Contentment and its components:
 
 <pre><code>cd Contentment
-python template.py</code></pre>
+./setup.py develop</code></pre>
+
+Then run the following to create a basic site in a MongoDB database called @cms@:
+
+<pre><code>python template.py</code></pre>
 
 No output indicates success.  If you want to use a different collection name, copy @template.py@ and modify to taste.
 
