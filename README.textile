@@ -19,6 +19,19 @@ Feel free to give the virtual environment a name other than @contentment@.
 
 h3. Getting Contentment
 
+Contentment has a number of dependencies that are not published packages (yet):
+
+<pre><code>git clone http://github.com/marrow/marrow.util.git
+(cd marrow.util; python setup.py develop)
+ 
+git clone http://github.com/marrow/marrow.script.git
+(cd marrow.script; python setup.py develop)
+ 
+git clone http://github.com/marrow/marrow.blueprint.git
+(cd marrow.blueprint; python setup.py develop)</code></pre>
+
+Then clone and install Contentment.
+
 <pre><code>git clone http://github.com/GothAlice/Contentment.git
 (cd Contentment; python setup.py develop)</code></pre>
 
