@@ -49,7 +49,7 @@ h3. Creating the Initial Site
 
 Blueprints have been added to Contentment allowing you to bootstrap new sites and production configurations using an interactive question-and-answer system.  To use this, ensure the `marrow.blueprint`, `marrow.script`, and `marrow.util` dependencies are installed then run (at the top level of your virtual environment):
 
-<pre><code>$ blueprint create site .</code></pre>
+<pre><code>blueprint create site .</code></pre>
 
 You will then be prompted for things like the name of the site, administrative user name, e-mail address, and password, and the database connection string.  Upon completion the blueprint will have created a number of stub folders (mostly in var) for Beaker data, bootstrapped the database with a default site and administrative user, and created a `development.ini` file for you.
 
