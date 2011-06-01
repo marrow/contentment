@@ -116,7 +116,7 @@ class AssetController(BaseController):
             result['name'] = normalize(result['title'].lower(), siblings)
         
         elif asset.path != '/' and action != "create":
-            result['name'] = normalize(result['name'].lower(), [i for i in siblings if i != self.name])
+            result['name'] = normalize(result['name'].lower(), [i for i in siblings if i != asset.name])
         
         elif asset.path != '/' and action == "create":
             result['name'] = normalize(result['name'].lower(), siblings)
