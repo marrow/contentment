@@ -7,7 +7,9 @@
 ${asset.rendered | n}
 </section>
 
+% if template[0] != '/':
 <div class="ca clearfix"></div>
+% endif
 
 % if asset.children and 'no:attach' not in asset.tags and any(['no:attach' not in i.tags for i in asset.children]):
 <footer id="attachments">
