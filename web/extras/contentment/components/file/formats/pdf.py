@@ -19,12 +19,10 @@ class PDFFileFormat(FileFormat):
         download = path = asset.path + '/view:download/' + asset.filename
         
         return tag.embed ( src = path, width = width, height = height, type = "application/pdf" ) [
-                tag.object ( data = path + "#view=FitH", type = "application/pdf", width = width, height = height ) [
-                        tag.p [
-                                "If you are unable to view this PDF inline, feel free to ",
-                                tag.a ( href = download ) [ "download it" ],
-                                "."
-                            ]
+                tag.p [
+                        "If you are unable to view this PDF inline, feel free to ",
+                        tag.a ( href = download ) [ "download it" ],
+                        "."
                     ]
             ]
     
