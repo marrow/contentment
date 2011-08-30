@@ -30,6 +30,8 @@ class FileController(AssetController):
         response = webob.Response(request=web.core.request, conditional_response=True)
         filename = asset.filename if filename is None else filename
         
+        response.app_iter = asset.content.get()
+        
         response.content_type = asset.mimetype.encode('ascii')
         response.content_length = asset.size
         response.last_modified = asset.modified if asset.modified else asset.created
@@ -39,8 +41,6 @@ class FileController(AssetController):
         response.content_transfer_encoding = 'binary'
         response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
         response.range = (0, asset.size)
-        
-        response.app_iter = asset.content.get()
         
         return response
     
@@ -76,15 +76,6 @@ class FileController(AssetController):
         response = webob.Response(request=web.core.request, conditional_response=True)
         filename = asset.filename if filename is None else filename
         
-        response.content_type = "image/jpeg"
-        response.content_length = asset.size
-        response.last_modified = asset.modified if asset.modified else asset.created
-        response.accept_ranges = 'bytes'
-        response.etag = '%s-%s-%s' % (asset.modified if asset.modified else asset.created, asset.size, hash(filename))
-        response.cache_control = 'public'
-        response.content_transfer_encoding = 'binary'
-        response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
-        
         target = StringIO()
         
         result, jquality = scale(asset.content.get(), target, raw=reflection, **kw)
@@ -94,5 +85,14 @@ class FileController(AssetController):
             result.save(target, "JPEG", optimize=True, quality=jquality)
         
         response.body = target.getvalue()
+        
+        response.content_type = "image/jpeg"
+        response.content_length = asset.size
+        response.last_modified = asset.modified if asset.modified else asset.created
+        response.accept_ranges = 'bytes'
+        response.etag = '%s-%s-%s' % (asset.modified if asset.modified else asset.created, asset.size, hash(filename))
+        response.cache_control = 'public'
+        response.content_transfer_encoding = 'binary'
+        response.content_disposition = "inline" if inline else ('attachment; filename=' + filename)
         
         return response
