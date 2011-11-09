@@ -33,6 +33,12 @@ class Page(Asset):
     
     attachments = db.BooleanField(default=True)
     
+    def save(self, safe=True, force_insert=False, validate=True, dirty=None):
+        if dirty is not None:
+            dirty.append('_content')
+
+        return super(Page, self).save(safe, force_insert, validate, dirty)
+
     @property
     def rendered(self):
         content = self.content
