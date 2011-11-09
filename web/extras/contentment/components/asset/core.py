@@ -64,9 +64,9 @@ class CoreMethods(web.core.Controller):
         
         response.last_modified = latest
         response.cache_control = 'public'
-        response.etag = "%d" % ( int(time.mktime(latest.timetuple())), )
+        response.etag = "%d" % ( int(time.mktime(latest.timetuple())) if latest else 0, )
         
-        if request.if_modified_since and request.if_modified_since >= response.last_modified:
+        if latest and request.if_modified_since and request.if_modified_since >= response.last_modified:
             raise web.core.http.HTTPNotModified()
         
         if response.etag in request.if_none_match:
