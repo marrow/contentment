@@ -13,6 +13,8 @@ from web.extras.contentment.components.asset.model.lexer import strip
 
 from concurrent import futures
 
+from widgets import fields
+
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['Search']
@@ -22,6 +24,8 @@ __all__ = ['Search']
 
 
 class Search(Folder):
+    _widgets = fields
+    
     default = db.StringField(default="view:search", max_length=128)
     
     query = db.StringField(max_length=250)
