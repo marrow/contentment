@@ -23,5 +23,5 @@ class PageController(AssetController):
         self.api_page = PageMethods(self)
     
     @view("Page", "View rendered version of this page.")
-    def view_page(self):
+    def view_page(self, **kw):
         return 'view', None
