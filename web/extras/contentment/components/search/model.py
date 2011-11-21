@@ -56,7 +56,9 @@ class Search(Folder):
                     aquery.setdefault('tags', list()).append(r)
                 
                 elif l == 'kind':
-                    aquery.setdefault('__raw__', dict())['_cls'] = r
+                    aquery.setdefault('__raw__', dict())['_cls'] = {
+                            '$regex' : r"/{}/i".format(r)
+                        }
         
         print aquery, terms
         
