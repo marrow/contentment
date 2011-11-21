@@ -53,9 +53,10 @@ class Search(Folder):
                     aquery.setdefault('__raw__', dict())['_cls'] = r
         
         if not terms[0] and not terms[1]:
-            for record in Asset.objects(**aquery).only('title', 'description', 'path', 'acl'):
-                yield 1.0, record
-            return
+            def gen():
+                for record in Asset.objects(**aquery).only('title', 'description', 'path', 'acl').order('created'):
+                    yield 1.0, record
+            return gen()
         
         for term in terms[0]:
             query['terms__%s__exists' % (term, )] = True
