@@ -33,6 +33,8 @@ class Search(Folder):
     contents = property(lambda self: self.results())
     
     def results(self, query=None):
+        print repr(query)
+        
         if query is None: query = self.query
         if query is None: return []
         
@@ -41,16 +43,22 @@ class Search(Folder):
         query = dict()
         aquery = dict()
         
+        print repr(terms)
+        
         for term in list(terms[0]):
             if ':' in term:
                 terms[0].remove(term)
                 l, _, r = term.partition(':')
                 
-                if l is 'tag':
-                    aquery.setdefault('tag', list()).append(r)
+                print term, l, r
                 
-                elif l is 'kind':
+                if l == 'tag':
+                    aquery.setdefault('tags', list()).append(r)
+                
+                elif l == 'kind':
                     aquery.setdefault('__raw__', dict())['_cls'] = r
+        
+        print aquery, terms
         
         if not terms[0] and not terms[1]:
             def gen():
