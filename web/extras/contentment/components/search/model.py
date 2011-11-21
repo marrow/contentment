@@ -54,7 +54,7 @@ class Search(Folder):
         
         if not terms[0] and not terms[1]:
             def gen():
-                for record in Asset.objects(**aquery).only('title', 'description', 'path', 'acl').order('created'):
+                for record in Asset.objects(**aquery).only('title', 'description', 'path', 'acl').order_by('created'):
                     yield 1.0, record
             return gen()
         
