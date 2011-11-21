@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+import re
+
 import mongoengine as db
 from math import log as log_
 
@@ -33,8 +35,6 @@ class Search(Folder):
     contents = property(lambda self: self.results())
     
     def results(self, query=None):
-        print repr(query)
-        
         if query is None: query = self.query
         if query is None: return []
         
@@ -43,24 +43,19 @@ class Search(Folder):
         query = dict()
         aquery = dict()
         
-        print repr(terms)
-        
         for term in list(terms[0]):
             if ':' in term:
                 terms[0].remove(term)
                 l, _, r = term.partition(':')
-                
-                print term, l, r
                 
                 if l == 'tag':
                     aquery.setdefault('tags', list()).append(r)
                 
                 elif l == 'kind':
                     aquery.setdefault('__raw__', dict())['_cls'] = {
-                            '$regex' : r"/{}/i".format(r)
+                            '$regex' : r,
+                            '$options': 'i'
                         }
-        
-        print aquery, terms
         
         if not terms[0] and not terms[1]:
             def gen():
