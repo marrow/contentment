@@ -21,8 +21,6 @@ __all__ = ['Search']
 
 
 
-
-
 class Search(Folder):
     _widgets = fields
     
@@ -40,7 +38,24 @@ class Search(Folder):
         
         terms = keywords(' '.join(strip(query.lower())))
         terms = (set(terms[0] + terms[1]), set(terms[2]))
-        query = {}
+        query = dict()
+        aquery = dict()
+        
+        for term in list(terms[0]):
+            if ':' in term:
+                terms[0].remove(term)
+                l, _, r = term.partition(':')
+                
+                if l is 'tag':
+                    aquery.setdefault('tag', list()).append(r)
+                
+                elif l is 'kind':
+                    aquery.setdefault('__raw__', dict())['_cls'] = r
+        
+        if not terms[0] and not terms[1]:
+            for record in Asset.objects(**aquery).only('title', 'description', 'path', 'acl'):
+                yield 1.0, record
+            return
         
         for term in terms[0]:
             query['terms__%s__exists' % (term, )] = True
@@ -86,6 +101,6 @@ class Search(Folder):
         
         def iterresults():
             for score, id_ in results:
-                yield score, Asset.objects(id=id_).only('title', 'description', 'path', 'acl').first()
+                yield score, Asset.objects(id=id_, **aquery).only('title', 'description', 'path', 'acl').first()
         
         return sorted(iterresults(), lambda a, b: cmp(a[0], b[0]), reverse=True)
