@@ -7,7 +7,9 @@ Gallery controller JSON API methods.
 """
 
 import web.core
+from web.utils.string import normalize
 
+from web.extras.contentment.components.asset.model import Asset
 from web.extras.contentment.components.file.model import File
 
 
@@ -25,11 +27,14 @@ class GalleryMethods(web.core.Controller):
       f = File()
       
       f.title, _, _ = upload.filename.rpartition('.')
-      f.name = upload.filename
       f.content = upload.file
       f.content.content_type = f.mimetype = upload.type
       f.content.filename = f.filename = upload.filename
       f.size = upload.length
+      
+      
+      siblings = [i.name for i in Asset.objects(parent=self.controller.asset).only('name')]
+      f.name = normalize(upload.filename.lower(), siblings)
       
       f.save()
       f.attach(self.controller.asset)
