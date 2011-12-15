@@ -34,7 +34,7 @@ class GalleryMethods(web.core.Controller):
       
       
       siblings = [i.name for i in Asset.objects(parent=self.controller.asset).only('name')]
-      f.name = normalize(upload.filename.lower(), siblings)
+      f.name = normalize(f.title.lower(), siblings)
       
       f.save()
       f.attach(self.controller.asset)
