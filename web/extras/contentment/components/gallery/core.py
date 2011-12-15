@@ -27,8 +27,8 @@ class GalleryMethods(web.core.Controller):
       f.title, _, _ = upload.filename.rpartition('.')
       f.name = upload.filename
       f.content = upload.file
-      f.content.content_type, f.mimetype = upload.type
-      f.content.filename, f.filename = upload.filename
+      f.content.content_type = f.mimetype = upload.type
+      f.content.filename = f.filename = upload.filename
       f.size = upload.length
       
       f.save()
