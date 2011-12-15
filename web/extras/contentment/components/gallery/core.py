@@ -31,4 +31,7 @@ class GalleryMethods(web.core.Controller):
       f.content.filename, f.filename = upload.filename
       f.size = upload.length
       
+      f.save()
+      f.attach(self.controller.asset)
+      
       return 'json:', dict()
