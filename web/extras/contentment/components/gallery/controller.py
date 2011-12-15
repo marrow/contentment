@@ -5,6 +5,8 @@
 from web.extras.contentment.api import action, view
 from web.extras.contentment.components.folder.controller import FolderController
 
+from core import GalleryMethods
+
 
 log = __import__('logging').getLogger(__name__)
 __all__ = ['FolderController']
@@ -12,6 +14,10 @@ __all__ = ['FolderController']
 
 
 class GalleryController(FolderController):
+    def __init__(self, *args, **kw):
+        super(GalleryController, self).__init__(*args, **kw)
+        self.api_gallery = GalleryMethods(self)
+    
     def _scale(self, asset, scale):
         data = getattr(self.asset, scale)
         
