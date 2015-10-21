@@ -1,1 +1,0 @@
-# Microsoft Office Word, Microsoft Office Excel, etc.

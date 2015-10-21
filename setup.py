@@ -1,119 +1,131 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys, os
+from __future__ import print_function
+
+import os
+import sys
+import codecs
+
 
 try:
-    from distribute_setup import use_setuptools
-    use_setuptools()
-
+	from setuptools.core import setup, find_packages
 except ImportError:
-    pass
+	from setuptools import setup, find_packages
 
-from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 
-if sys.version_info <= (2, 5):
-    raise SystemExit("Python 2.5 or later is required.")
+if sys.version_info < (2, 7):
+	raise SystemExit("Python 2.7 or later is required.")
+elif sys.version_info > (3, 0) and sys.version_info < (3, 3):
+	raise SystemExit("Python 3.3 or later is required.")
 
-if sys.version_info >= (3,0):
-    def execfile(filename, globals_=None, locals_=None):
-        if globals_ is None:
-            globals_ = globals()
-        
-        if locals_ is None:
-            locals_ = globals_
-        
-        exec(compile(open(filename).read(), filename, 'exec'), globals_, locals_)
+exec(open(os.path.join("web", "contentment", "release.py")).read())
 
-else:
-    from __builtin__ import execfile
 
-execfile(os.path.join("web", "extras", "contentment", "release.py"), globals(), locals())
+class PyTest(TestCommand):
+	def finalize_options(self):
+		TestCommand.finalize_options(self)
+		
+		self.test_args = []
+		self.test_suite = True
+	
+	def run_tests(self):
+		import pytest
+		sys.exit(pytest.main(self.test_args))
 
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+tests_require = [
+		'pytest',  # test collector and extensible runner
+		'pytest-cov',  # coverage reporting
+		'pytest-flakes',  # syntax validation
+		'pytest-cagoule',  # intelligent test execution
+		'pytest-spec<=0.2.22',  # output formatting
+	]
 
 
 setup(
-        name = name,
-        version = version,
-        
-        description = summary,
-        long_description = description,
-        author = author,
-        author_email = email,
-        url = url,
-        download_url = download_url,
-        license = license,
-        keywords = '',
-        
-        install_requires = ['WebCore', 'beaker', 'mako', 'pymongo', 'mongoengine', 'marrow.util', 'textile', 'slate', 'pytz', 'pdfminer', 'bpython', 'PyStemmer', 'PIL', 'futures', 'marrow.script'],
-        
-        test_suite = 'nose.collector',
-        tests_require = ['nose', 'coverage', 'nose-achievements'],
-        
-        classifiers = [
-                "Development Status :: 2 - Beta",
-                "Environment :: Console",
-                "Intended Audience :: Developers",
-                "License :: OSI Approved :: MIT License",
-                "Operating System :: OS Independent",
-                "Programming Language :: Python",
-                "Programming Language :: Python :: 3",
-                "Topic :: Software Development :: Libraries :: Python Modules"
-            ],
-        
-        packages = find_packages(exclude=['tests', 'tests.*', 'docs']),
-        include_package_data = True,
-        package_data = {
-                '': ['Makefile', 'README.textile', 'LICENSE', 'distribute_setup.py'],
-                'docs': ['source/*']
-            },
-        zip_safe = False,
-        
-        namespace_packages = ['web', 'web.extras', 'web.extras.contentment', 'web.extras.contentment.components', 'web.extras.contentment.themes', 'alacarte', 'alacarte.template'],
-        
-        paster_plugins = ['PasteScript', 'WebCore'],
-        
-        entry_points = {
-                'marrow.blueprint': [
-                        "contentment.config = web.extras.contentment.blueprints:ConfigurationBlueprint",
-                        "contentment.site = web.extras.contentment.blueprints:SiteBlueprint",
-                        # "contentment.component = web.extras.contentment.blueprints:ComponentBlueprint",
-                        # "contentment.theme = web.extras.contentment.blueprints:ThemeBlueprint"
-                    ],
-                'contentment.component': [
-                        "alert = web.extras.contentment.components.alert:AlertComponent",
-                        "alias = web.extras.contentment.components.alias:AliasComponent",
-                        "asset = web.extras.contentment.components.asset:AssetComponent",
-                        "authenticator = web.extras.contentment.components.authenticator:AuthenticatorComponent",
-                        "comment = web.extras.contentment.components.comment:CommentComponent",
-                        "event = web.extras.contentment.components.event:EventComponent",
-                        "file = web.extras.contentment.components.file:FileComponent",
-                        "folder = web.extras.contentment.components.folder:FolderComponent",
-                        "gallery = web.extras.contentment.components.gallery:GalleryComponent",
-                        "identity = web.extras.contentment.components.identity:IdentityComponent",
-                        "page = web.extras.contentment.components.page:PageComponent",
-                        "search = web.extras.contentment.components.search:SearchComponent",
-                        "settings = web.extras.contentment.components.settings:SettingsComponent",
-                        # "subscribe = web.extras.contentment.components.subscribe:SubscribeComponent",
-                        # "survey = web.extras.contentment.components.survey:SurveyComponent",
-                        "theme = web.extras.contentment.components.theme:ThemeComponent",
-                        
-                        "default_theme = web.extras.contentment.themes.default:DefaultTheme",
-                    ],
-                'contentment.renderer': [
-                        "raw = web.extras.contentment.components.page.renderers.raw:RawRenderer",
-                        "mako = web.extras.contentment.components.page.renderers.raw:MakoRenderer",
-                        "html = web.extras.contentment.components.page.renderers.html:HTMLRenderer",
-                        "textile = web.extras.contentment.components.page.renderers.textile_:TextileRenderer"
-                    ],
-                'contentment.file.format': [
-                        "audio = web.extras.contentment.components.file.formats.audio:AudioFileFormat",
-                        "image = web.extras.contentment.components.file.formats.image:ImageFileFormat",
-                        "pdf = web.extras.contentment.components.file.formats.pdf:PDFFileFormat",
-                        "video = web.extras.contentment.components.file.formats.video:VideoFileFormat",
-                        "html = web.extras.contentment.components.file.formats.html:HTMLFileFormat",
-                    ]
-            },
-        
-    )
+	name = "Contentment",
+	version = version,
+	
+	description = description,
+	long_description = codecs.open(os.path.join(here, 'README.rst'), 'r', 'utf8').read(),
+	url = url,
+	download_url = 'https://warehouse.python.org/project/Contentment/',
+	
+	author = author.name,
+	author_email = author.email,
+	
+	license = 'MIT',
+	keywords = '',
+	classifiers = [
+			"Development Status :: 5 - Production/Stable",
+			"Environment :: Console",
+			"Environment :: Web Environment",
+			"Intended Audience :: Developers",
+			"License :: OSI Approved :: MIT License",
+			"Operating System :: OS Independent",
+			"Programming Language :: Python",
+			"Programming Language :: Python :: 3.4",
+			"Programming Language :: Python :: Implementation :: CPython",
+			"Programming Language :: Python :: Implementation :: PyPy",
+			"Topic :: Internet :: WWW/HTTP :: WSGI",
+			"Topic :: Software Development :: Libraries :: Python Modules",
+		],
+	
+	packages = find_packages(exclude=['test', 'script', 'example']),
+	include_package_data = True,
+	namespace_packages = [
+			'web',
+			'web.ext',
+			'web.component',
+		],
+	
+	entry_points = {
+			'web.extension': [
+					'contentment = web.ext.contentment:ContentmentExtension',
+					#' = web.ext.:Extension',
+				],
+			
+			'web.component': [
+					'core.asset = web.component.asset:AssetComponent',
+					#' = web.component:Component',
+				],
+			
+			'web.dispatch': [
+					'contentment = web.contentment.dispatch:ContentmentDispatch',
+				]
+		},
+	
+	install_requires = [
+			'WebCore==2.0a1',  # web framework
+			'mongoengine',  # database layer
+			'pytz',  # timzone support
+			'blinker',  # signals
+			'markupsafe',  # injection protection
+			'tenjin',  # high-performance template engine
+			'babel',  # internationalization and localization
+			#'scrypt',  # difficult to verify hashes
+			'webassets',  # static asset management
+			'tablib',  # data interchange
+		],
+	
+	extras_require = dict(
+			development = tests_require,
+		),
+	
+	tests_require = tests_require,
+	
+	dependency_links = [
+			'git+https://github.com/marrow/WebCore.git@rewrite#egg=WebCore-2.0a1',
+			'git+https://github.com/mongoengine/mongoengine.git@master#egg=mongoengine-0.9'
+		],
+	
+	zip_safe = True,
+	cmdclass = dict(
+			test = PyTest,
+		)
+)
