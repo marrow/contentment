@@ -1,6 +1,14 @@
 # encoding: utf-8
 
-log = __import__('logging').getLogger(__name__)
+"""A basic root controller.
+
+Yes.  It really is just this.
+
+There is no particular need to subclass this module, it's main use is in CMS-only application configurations.
+
+For mix-in use, simply define the `__dispatch__` of one of your own controllers as `contentment` and you'll have
+the same functionality.
+"""
 
 
 class ContentmentRoot:
