@@ -2,10 +2,13 @@
 # encoding: utf-8
 
 import sys
+from os.path import dirname, join
 
 import cinje
 
 from web.core.application import Application
+
+from web.app.static import static
 
 from web.ext.template import TemplateExtension
 from web.ext.cast import CastExtension
@@ -19,8 +22,12 @@ import web.component.asset.model
 import web.component.page.model
 
 
+class Root(ContentmentRoot):
+	static = static(join(dirname(__file__), 'static'))
+
+
 app = Application(
-		ContentmentRoot,
+		Root,
 		logging = {
 				'version': 1,
 				'handlers': {
