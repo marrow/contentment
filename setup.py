@@ -101,7 +101,7 @@ setup(
 		},
 	
 	install_requires = [
-			'WebCore==2.0a1',  # web framework
+			'WebCore<3.0',  # web framework
 			'mongoengine',  # database layer
 			'pytz',  # timzone support
 			'blinker',  # signals
