@@ -15,7 +15,12 @@ class ContentmentExtension:
 			try:
 				return app(environ, start_response)
 			except:
-				import pudb; pudb.post_mortem()
+				if __debug__:
+					try:
+						import pudb; pudb.post_mortem()
+					except:
+						pass
+				raise
 		
 		return protected_inner
 	
