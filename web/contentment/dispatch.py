@@ -21,6 +21,11 @@ class ContentmentDispatch:
 		request = context.request
 		pop = request.path_info_pop
 		
+		# TODO: Ugly exit early hack.  Need to pivot this whole thing to not return tentative guesses.
+		if request.path_info.startswith('/public') or request.path_info.startswith('/nuke') or request.path_info.startswith('/die'):
+			yield from self._object_dispatch_chain(context, root)
+			return
+		
 		domain = 'careers.illicohodes.com'  # Hard-coded during testing.  Use: request.server_name
 		search = '/' + domain + context.request.path_info.rstrip('/')  # + request.script_name ?
 		
