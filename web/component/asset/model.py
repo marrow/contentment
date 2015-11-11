@@ -29,11 +29,12 @@ class Asset(Document):
 			queryset_class = TaxonomyQuerySet,
 			index_cls = False,
 			
-			indexes = [
-					'path',
-					('parent', 'order', 'id'),
-					'parents',
-				],
+			# TODO: Bug in MongoEngine?
+			#indexes = [
+			#		'path',
+			#		('parent', 'order', 'id'),
+			#		'parents',
+			#	],
 		)
 	
 	__fulltext__ = dict(title=10.0, description=5.0, tags=8.5)
@@ -190,7 +191,7 @@ class Asset(Document):
 		
 		Asset.objects(parent=self, order__gte=index).update(inc__order=1)
 		
-		log.debug("before", extra=dict(data=child._data))
+		log.debug("before", extra=dict(data=repr(child._data)))
 		
 		child.order = index
 		
@@ -199,7 +200,7 @@ class Asset(Document):
 		child.parents = list(self.parents)
 		child.parents.append(self)
 		
-		log.debug("after", extra=dict(data=child._data))
+		log.debug("after", extra=dict(data=repr(child._data)))
 		
 		child = child.save()
 		
