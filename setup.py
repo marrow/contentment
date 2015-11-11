@@ -101,14 +101,12 @@ setup(
 		},
 	
 	install_requires = [
-			'WebCore<3.0',  # web framework
+			'WebCore',  # web framework
 			'mongoengine',  # database layer
 			'pytz',  # timzone support
 			'blinker',  # signals
 			'markupsafe',  # injection protection
-			'tenjin',  # high-performance template engine
 			'babel',  # internationalization and localization
-			#'scrypt',  # difficult to verify hashes
 			'webassets',  # static asset management
 			'tablib',  # data interchange
 		],
@@ -120,8 +118,7 @@ setup(
 	tests_require = tests_require,
 	
 	dependency_links = [
-			'git+https://github.com/marrow/WebCore.git@rewrite#egg=WebCore-2.0a1',
-			'git+https://github.com/mongoengine/mongoengine.git@master#egg=mongoengine-0.9'
+			'git+https://github.com/marrow/WebCore.git@rewrite#egg=WebCore-rewrite',
 		],
 	
 	zip_safe = True,
