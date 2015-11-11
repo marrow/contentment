@@ -47,4 +47,4 @@ class ContentmentDispatch:
 		#import pudb; pu.db
 		document, controller = nearest.controller
 		
-		yield [''] + nearest.path.split('/')[2:], controller(context, document), False
+		yield nearest.path.split('/')[2:], controller(context, document), False
