@@ -101,7 +101,7 @@ setup(
 		},
 	
 	install_requires = [
-			'WebCore-origin-rewrite',  # web framework
+			# 'WebCore',  # web framework  # pending 2.0 release; use requirements.txt for now
 			'mongoengine',  # database layer
 			'pytz',  # timzone support
 			'blinker',  # signals
@@ -116,10 +116,6 @@ setup(
 		),
 	
 	tests_require = tests_require,
-	
-	dependency_links = [
-			'git+https://github.com/marrow/WebCore.git@rewrite#egg=WebCore-rewrite',
-		],
 	
 	zip_safe = True,
 	cmdclass = dict(
