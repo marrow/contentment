@@ -10,7 +10,7 @@ from marrow.package.cache import PluginCache
 
 from web.contentment.acl import ACLRule
 from web.contentment.util import utcnow, D_
-from web.contentment.util.model import update_modified_timestamp, Properties
+from web.contentment.util.model import update_modified_timestamp, Properties as P
 from web.contentment.taxonomy import remove_children, Taxonomy, TaxonomyQuerySet
 #from web.contentment.okapi import update_full_text_index, remove_full_text_index, Indexed
 
@@ -52,30 +52,30 @@ class Asset(Document):
 			fields = ['name', 'acl'],
 		), db_field='t_a')
 	
-	name = StringField(db_field='n')
-	path = StringField(db_field='t_P', unique=True)
-	order = IntField(db_field='t_o', default=0)
+	name = StringField(db_field='n', custom_data=P(export=True, simple=True))
+	path = StringField(db_field='t_P', unique=True, custom_data=P(export=True, simple=True))
+	order = IntField(db_field='t_o', default=0, custom_data=P(export=True, simple=True))
 	
 	# Basic Properties
-	title = MapField(StringField(), db_field='a_t', default=dict)
-	description = MapField(StringField(), db_field='a_d', default=dict)
-	tags = ListField(StringField(), db_field='a_T', default=list)
+	title = MapField(StringField(), db_field='a_t', default=dict, custom_data=P(export=True, simple=False))  # TODO: TranslatedField
+	description = MapField(StringField(), db_field='a_d', default=dict, custom_data=P(export=True, simple=False))  # TODO: TranslatedField
+	tags = ListField(StringField(), db_field='a_T', default=list, custom_data=P(export=True, simple=True))
 	
 	# Magic Properties
-	properties = EmbeddedDocumentField(Properties, db_field='a_p', default=Properties)
-	acl = ListField(EmbeddedDocumentField(ACLRule), db_field='a_a', default=list)
-	handler = StringField(db_field='a_h')  # TODO: PythonReferenceField
+	properties = EmbeddedDocumentField(P, db_field='a_p', default=P, custom_data=P(export=True, simple=False))
+	acl = ListField(EmbeddedDocumentField(ACLRule), db_field='a_a', default=list, custom_data=P(export=True, simple=False))
+	handler = StringField(db_field='a_h', custom_data=P(export=True, simple=True))  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
 	# Metadata
-	created = DateTimeField(db_field='a_dc', default=utcnow)
-	modified = DateTimeField(db_field='a_dm', default=utcnow)
+	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=True))
+	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=True))
 	
 	# Controller Lookup
 	
 	_controller_cache = PluginCache('web.component')
 	
 	@property
-	def controller(self):
+	def controller(self):  # TODO: Move this into PythonReferencefield.
 		if not self.handler:
 			return self, self._controller_cache['web.component.asset:AssetController']
 		
