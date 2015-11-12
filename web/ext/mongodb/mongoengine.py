@@ -47,7 +47,10 @@ class MongoEngineExtension:
 	
 	def start(self, context):
 		db, connection = self.db, self.connection
-		log.debug("Connecting to %s database with connection information: %r", db, connection)
+		csafe = connection.copy()
+		csafe.pop('password', None)
+		
+		log.debug("Connecting to %s database with connection information: %r", db, csafe)
 		
 		context.mongoengine = connect(db, **connection)
 		
