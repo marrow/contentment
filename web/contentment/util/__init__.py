@@ -11,6 +11,8 @@ from datetime import datetime
 
 from pytz import utc
 
+import cinje
+
 try:
 	bytes = bytes
 except:
