@@ -2,7 +2,7 @@
 
 from functools import partial
 
-from mongoengine import EmbeddedDocumentField
+from mongoengine import EmbeddedDocumentField, ListField
 
 
 XML_EXCLUDE = ('parent', 'parents', 'children')
@@ -35,15 +35,18 @@ def get_complex_fields(record):
 		if meta.get('simple', True):
 			continue
 
-		exporter = None
-		if isinstance(field, EmbeddedDocumentField) and hasattr(field.document_type, '__xml__'):
-			exporter = partial(field.document_type.__xml__, data)
-		if exporter is None:
-			exporter = partial(field.__xml__, data) if hasattr(field, '__xml__') else None
-		if exporter is None:
-			exporter = getattr(record, '__xml_handlers__', {}).get(field_name)
-			if exporter is not None:
-				exporter = partial(exporter, record, field_name, data)
+		yield from process_field(data, field, field_name, record)
 
+
+def process_field(data, field, field_name, record):
+	exporter = None
+	if isinstance(field, EmbeddedDocumentField) and hasattr(field.document_type, '__xml__'):
+		exporter = partial(field.document_type.__xml__, data)
+	if exporter is None:
+		exporter = partial(field.__xml__, data) if hasattr(field, '__xml__') else None
+	if exporter is None:
+		exporter = getattr(record, '__xml_handlers__', {}).get(field_name)
 		if exporter is not None:
-			yield from exporter()
+			exporter = partial(exporter, record, field_name, data)
+	if exporter is not None:
+		yield from exporter()

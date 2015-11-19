@@ -1,10 +1,8 @@
 # encoding: cinje
 
 :def properties element
-	:_buff = []
 	:for name, data in element._data.items()
 <property name="${name}" &{data} />
-		:_buff.extend(_buffer)
+		:flush
 	:end
-	:_buffer = _buff
 :end
