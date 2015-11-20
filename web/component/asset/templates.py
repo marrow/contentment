@@ -19,19 +19,21 @@
 :end
 
 
-:def list_field record, name, field
-<${name}>
-	:flush
-	:field_obj = record._fields[name].field
-	:for fld in field
-${INDENT}${process(process_field(fld, field_obj, name, record))}\
+:def text_block_content record, name, field
+	:for lang, string in field.items()
+<${name} lang="${lang}"><![CDATA[${_bless(string)}]]></${name}>
 		:flush
 	:end
-</${name}>
 :end
 
 
-:def asset record, recursive, level=0
+:def asset record, recursive=False, level=0, root=False
+\
+	:if root
+<?xml version="1.0" encoding="utf-8"?>
+<Extract xmlns="https://xml.webcore.io/component/asset/1.0">
+		:level += 1
+	:end
 	:name = record.__class__.__name__
 	:simple = {fn: fv for fn, fv in get_simple_fields(record)}
 ${INDENT * level}<${name}&{simple}>
@@ -49,4 +51,33 @@ ${INDENT * (level + 1)}${process(field)}\
 		:end
 	:end
 ${INDENT * level}</${name}>
+	:if root
+</Extract>
+	:end
 :end
+
+
+:def block record
+	:yield from asset(record)
+:end
+
+
+:def list_field record, name, field
+:if not field
+	:return
+:end
+<${name}>
+	:flush
+	:field_obj = record._fields[name].field
+	:for fld in field
+${INDENT}${process(process_field(fld, field_obj, name, record))}\
+		:flush
+	:end
+</${name}>
+:end
+
+
+:def reference_field record, name, field
+<dbref collection=${field.collection} id=${field.id} />
+:end
+

@@ -52,11 +52,12 @@ class Asset(Document):
 			'Asset',
 			db_field = 't_p',
 			fields = ['name'],
+			custom_data=P(export=False),
 		)
 	parents = ListField(CachedReferenceField(
 			'Asset',
 			fields = ['name', 'acl'],
-		), db_field='t_a')
+		), db_field='t_a', custom_data=P(export=False))
 	
 	name = StringField(db_field='n', custom_data=P(export=True, simple=True))
 	path = StringField(db_field='t_P', unique=True, custom_data=P(export=True, simple=True))
@@ -112,7 +113,7 @@ class Asset(Document):
 	def __xml__(self, recursive=False):
 		"""Return an XML representation for this Asset."""
 
-		yield from templates.asset(self, recursive)
+		yield from templates.asset(self, recursive, root=True)
 
 	as_xml = property(lambda self: self.__xml__(recursive=False))
 	
