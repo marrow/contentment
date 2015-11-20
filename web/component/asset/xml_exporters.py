@@ -2,7 +2,7 @@
 
 import inspect
 
-from . import templates
+from .templates import list_field, reference_field
 
 
 XML_EXPORTERS_REGISTRY = {}
@@ -16,8 +16,8 @@ def __init():
 	global XML_EXPORTERS_REGISTRY, __initialized
 
 	XML_EXPORTERS_REGISTRY = {
-		ListField: templates.list_field,
-		ReferenceField: templates.reference_field,
+		ListField: list_field,
+		ReferenceField: reference_field,
 	}
 	__initialized = True
 
