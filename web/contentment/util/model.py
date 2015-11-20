@@ -4,6 +4,7 @@ from mongoengine import DynamicEmbeddedDocument
 from mongoengine.signals import pre_save_post_validation
 
 from . import utcnow
+from .templates import properties
 
 
 def signal(event):
@@ -30,3 +31,6 @@ class Properties(DynamicEmbeddedDocument):
 	def get(self, name, default=None):
 		if name not in self: return default
 		return getattr(self, name)
+
+	__xml__ = properties
+

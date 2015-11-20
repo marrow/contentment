@@ -2,17 +2,18 @@
 
 from bson import ObjectId
 
-from mongoengine import Document
-from mongoengine import ListField, StringField, IntField, MapField, DateTimeField, CachedReferenceField, ListField, IntField
-from mongoengine import EmbeddedDocumentField
-
 from marrow.package.cache import PluginCache
+from mongoengine import Document
+from mongoengine import EmbeddedDocumentField
+from mongoengine import StringField, IntField, MapField, DateTimeField, CachedReferenceField, ListField
 
 from web.contentment.acl import ACLRule
+from web.contentment.taxonomy import remove_children, TaxonomyQuerySet
 from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties as P
-from web.contentment.taxonomy import remove_children, Taxonomy, TaxonomyQuerySet
 #from web.contentment.okapi import update_full_text_index, remove_full_text_index, Indexed
+from web.component.asset import templates
+import cinje
 
 log = __import__('logging').getLogger(__name__)
 
@@ -39,6 +40,11 @@ class Asset(Document):
 	
 	__fulltext__ = dict(title=10.0, description=5.0, tags=8.5)
 	__icon__ = 'folder-o'
+
+	__xml_handlers__ = dict(
+		title = templates.translated_field,
+		description = templates.translated_field,
+	)
 	
 	# Taxonomy
 	
@@ -46,11 +52,12 @@ class Asset(Document):
 			'Asset',
 			db_field = 't_p',
 			fields = ['name'],
+			custom_data=P(export=False),
 		)
 	parents = ListField(CachedReferenceField(
 			'Asset',
 			fields = ['name', 'acl'],
-		), db_field='t_a')
+		), db_field='t_a', custom_data=P(export=False))
 	
 	name = StringField(db_field='n', custom_data=P(export=True, simple=True))
 	path = StringField(db_field='t_P', unique=True, custom_data=P(export=True, simple=True))
@@ -69,7 +76,7 @@ class Asset(Document):
 	# Metadata
 	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=True))
 	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=True))
-	
+
 	# Controller Lookup
 	
 	_controller_cache = PluginCache('web.component')
@@ -103,11 +110,12 @@ class Asset(Document):
 	
 	# Data Portability
 	
-	def __xml__(self):
+	def __xml__(self, recursive=False):
 		"""Return an XML representation for this Asset."""
-		return ""
-	
-	as_xml = property(lambda self: self.__xml__())
+
+		yield from templates.asset(self, recursive, root=True)
+
+	as_xml = property(lambda self: self.__xml__(recursive=False))
 	
 	def __json__(self):
 		"""Return a JSON-safe (and YAML-safe) representation for this Asset."""

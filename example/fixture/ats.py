@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import logging.config
+import cinje
 
 logging.config.dictConfig({
 		'version': 1,
