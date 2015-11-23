@@ -78,6 +78,6 @@ ${INDENT}${process(process_field(fld, field_obj, name, record))}\
 
 
 :def reference_field record, name, field
-<dbref collection=${field.collection} id=${field.id} />
+<dbref collection="${field.collection}" id="${field.id}" />
 :end
 
