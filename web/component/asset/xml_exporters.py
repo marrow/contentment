@@ -1,8 +1,7 @@
 # encoding: utf-8
 
 import inspect
-
-from . import templates
+import cinje
 
 
 XML_EXPORTERS_REGISTRY = {}
@@ -12,12 +11,13 @@ __initialized = False
 
 def __init():
 	from mongoengine import ListField, ReferenceField
+	from web.component.asset.templates import list_field, reference_field # circular reference
 
 	global XML_EXPORTERS_REGISTRY, __initialized
 
 	XML_EXPORTERS_REGISTRY = {
-		ListField: templates.list_field,
-		ReferenceField: templates.reference_field,
+		ListField: list_field,
+		ReferenceField: reference_field,
 	}
 	__initialized = True
 
