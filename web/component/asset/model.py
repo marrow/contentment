@@ -12,8 +12,7 @@ from web.contentment.taxonomy import remove_children, TaxonomyQuerySet
 from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties as P
 #from web.contentment.okapi import update_full_text_index, remove_full_text_index, Indexed
-from web.component.asset import templates
-import cinje
+from web.component.asset.xml import templates, importers
 
 log = __import__('logging').getLogger(__name__)
 
@@ -41,9 +40,14 @@ class Asset(Document):
 	__fulltext__ = dict(title=10.0, description=5.0, tags=8.5)
 	__icon__ = 'folder-o'
 
-	__xml_handlers__ = dict(
+	__xml_exporters__ = dict(
 		title = templates.translated_field,
 		description = templates.translated_field,
+	)
+
+	__xml_importers__ = dict(
+		title = importers.translated_field,
+		description = importers.translated_field,
 	)
 	
 	# Taxonomy
@@ -74,8 +78,8 @@ class Asset(Document):
 	handler = StringField(db_field='a_h', custom_data=P(export=True, simple=True))  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
 	# Metadata
-	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=True))
-	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=True))
+	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=False))
+	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=False))
 
 	# Controller Lookup
 	
@@ -378,3 +382,40 @@ class Asset(Document):
 		for other in others:
 			for child in other.children:
 				self.insert(-1, child)
+
+	@classmethod
+	def from_xml(cls, xml_content):
+		from xml.etree import ElementTree as etree
+
+		try:
+			tree = etree.parse(xml_content)
+		except FileNotFoundError:
+			tree = etree.fromstring(xml_content)
+
+		def strip_tag(element):
+			return element.tag.rstrip('}', 1)[1]
+
+		def is_asset(element):
+			from web.component.asset.xml import ASSETS_REGISTRY
+
+			return strip_tag(element) in ASSETS_REGISTRY
+
+		def _process_field(root, element):
+			children = list(element)
+			if not children:
+				field =None
+
+		def _process_asset(element):
+			from web.component.asset.xml import get_asset_class
+
+			cls = get_asset_class(element)
+			if cls is None:
+				return
+
+			data = dict(element.attrib)
+
+			for child in element:
+				if is_asset(child):
+					continue
+
+				_process_field(element, child)

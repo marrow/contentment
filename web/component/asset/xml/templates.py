@@ -1,6 +1,6 @@
 # encoding: cinje
 
-:from web.component.asset.util import get_simple_fields, get_complex_fields, process_field
+:from web.component.asset.xml import get_simple_fields, get_complex_fields, process_field
 
 
 :INDENT = ' ' * 4
@@ -81,3 +81,9 @@ ${INDENT}${process(process_field(fld, field_obj, name, record))}\
 <dbref collection="${field.collection}" id="${field.id}" />
 :end
 
+
+:def datetime_field record, name, field
+:from datetime import datetime
+:from . import DATETIME_FORMAT
+<${name} at="${field.strftime(DATETIME_FORMAT)}" />
+:end
