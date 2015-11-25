@@ -73,7 +73,7 @@ class Asset(Document):
 	tags = ListField(StringField(), db_field='a_T', default=list, custom_data=P(export=True, simple=True))
 	
 	# Magic Properties
-	properties = EmbeddedDocumentField(P, db_field='a_p', default=P, custom_data=P(export=True, simple=False))
+	properties = EmbeddedDocumentField(P, db_field='a_p', default=P, custom_data=P(export=True, simple=False), verbose_name='property')
 	acl = ListField(EmbeddedDocumentField(ACLRule), db_field='a_a', default=list, custom_data=P(export=True, simple=False))
 	handler = StringField(db_field='a_h', custom_data=P(export=True, simple=True))  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
@@ -382,40 +382,3 @@ class Asset(Document):
 		for other in others:
 			for child in other.children:
 				self.insert(-1, child)
-
-	@classmethod
-	def from_xml(cls, xml_content):
-		from xml.etree import ElementTree as etree
-
-		try:
-			tree = etree.parse(xml_content)
-		except FileNotFoundError:
-			tree = etree.fromstring(xml_content)
-
-		def strip_tag(element):
-			return element.tag.rstrip('}', 1)[1]
-
-		def is_asset(element):
-			from web.component.asset.xml import ASSETS_REGISTRY
-
-			return strip_tag(element) in ASSETS_REGISTRY
-
-		def _process_field(root, element):
-			children = list(element)
-			if not children:
-				field =None
-
-		def _process_asset(element):
-			from web.component.asset.xml import get_asset_class
-
-			cls = get_asset_class(element)
-			if cls is None:
-				return
-
-			data = dict(element.attrib)
-
-			for child in element:
-				if is_asset(child):
-					continue
-
-				_process_field(element, child)

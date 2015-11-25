@@ -6,6 +6,9 @@ from functools import partial
 
 from mongoengine import EmbeddedDocumentField, ListField
 
+from . importers import from_xml
+
+
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 XML_EXPORTERS_REGISTRY = {}
 XML_IMPORTERS_REGISTRY = {}
