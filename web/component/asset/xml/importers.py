@@ -1,7 +1,7 @@
 # encoding: utf-8
 import csv
 from mongoengine.base import BaseDocument
-from mongoengine import ListField, EmbeddedDocumentField
+from mongoengine import ListField, EmbeddedDocumentField, EmbeddedDocument
 
 
 def tag(element):
@@ -62,13 +62,14 @@ def from_xml(element):
 		data[field_name] = result
 
 	result_obj = cls(**data)
-	if hasattr(result_obj, 'save'):
+	if not isinstance(result_obj, EmbeddedDocument):
 		result_obj.save()
 
 	for child in children:
 		child_obj = from_xml(child)
+		print(child_obj)
 		child_obj.parent = result_obj
-		if hasattr(result_obj, 'save'):
+		if not isinstance(child_obj, EmbeddedDocument):
 			child_obj.save()
 
 	return result_obj
@@ -81,16 +82,12 @@ def process_field(data, field, element):
 		content = from_xml(element)
 		return content
 
-	field_name = tag(element)
-	importer = get_xml_importer(field_name)
+	importer = get_xml_importer(field)
 	if importer is not None:
 		return importer(data, field, element)
 
 
 def list_field(data, field, element):
-	from web.component.page.block.base import Block
-	if isinstance(field.field, EmbeddedDocumentField) and issubclass(field.field.document_type, Block):
-		return []
 	return [process_field(data, field.field, child) for child in element]
 
 

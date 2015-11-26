@@ -6,11 +6,6 @@
 :INDENT = ' ' * 4
 
 
-:def process data
-	:return _bless(''.join(data))
-:end
-
-
 :def translated_field record, name, field
 	:for lang, string in field.items()
 <${name} lang="${lang}">${string}</${name}>
@@ -42,7 +37,7 @@ ${INDENT * level}<${name}&{simple}>
 		:if not field
 			:continue
 		:end
-${INDENT * (level + 1)}${process(field)}\
+${INDENT * (level + 1)}${_bless(field)}\
 	:end
 	:flush
 	:if recursive
@@ -70,7 +65,7 @@ ${INDENT * level}</${name}>
 	:flush
 	:field_obj = record._fields[name].field
 	:for fld in field
-${INDENT}${process(process_field(fld, field_obj, name, record))}\
+${INDENT}${_bless(process_field(fld, field_obj, name, record))}\
 		:flush
 	:end
 </${name}>
@@ -78,7 +73,7 @@ ${INDENT}${process(process_field(fld, field_obj, name, record))}\
 
 
 :def reference_field record, name, field
-<dbref collection="${field.collection}" id="${field.id}" />
+<${name} collection="${field.collection}" id="${field.id}" />
 :end
 
 
