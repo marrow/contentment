@@ -6,6 +6,11 @@
 :INDENT = ' ' * 4
 
 
+:def process data
+	:return _bless(''.join(data))
+:end
+
+
 :def translated_field record, name, field
 	:for lang, string in field.items()
 <${name} lang="${lang}">${string}</${name}>
@@ -16,7 +21,22 @@
 
 :def text_block_content record, name, field
 	:for lang, string in field.items()
-<${name} lang="${lang}"><![CDATA[${_bless(string)}]]></${name}>
+		:strings = string.splitlines()
+<${name} lang="${lang}"><![CDATA[\
+		:if len(strings) == 1
+${_bless(strings.pop(0))}]]>\
+		:end
+		:for entry in iterate(strings)
+			:if not entry.first
+${INDENT}\
+			:end
+${_bless(entry.value)}
+			:if entry.last
+				:_buffer.insert(-1, ']]>')
+			:end
+			:flush
+		:end
+</${name}>
 		:flush
 	:end
 :end
@@ -33,7 +53,7 @@
 	:simple = {fn: fv for fn, fv in get_simple_fields(record)}
 ${INDENT * level}<${name}&{simple}>
 	:flush
-	:for field in get_complex_fields(record)
+	:for field in get_complex_fields(record, level=level)
 		:if not field
 			:continue
 		:end
@@ -52,12 +72,21 @@ ${INDENT * level}</${name}>
 :end
 
 
-:def block record
-	:yield from asset(record)
+:def block record, level
+	:for entry in iterate(asset(record, level=1))
+		:for ientry in iterate(entry.value.splitlines())
+\
+			:if not (entry.first and ientry.first)
+${INDENT * (level + 1)}\
+			:end
+${_bless(ientry.value)}
+			:flush
+		:end
+	:end
 :end
 
 
-:def list_field record, name, field
+:def list_field record, name, field, level
 :if not field
 	:return
 :end
@@ -65,7 +94,7 @@ ${INDENT * level}</${name}>
 	:flush
 	:field_obj = record._fields[name].field
 	:for fld in field
-${INDENT}${_bless(process_field(fld, field_obj, name, record))}\
+${process(process_field(fld, field_obj, name, record, level=level))}\
 		:flush
 	:end
 </${name}>

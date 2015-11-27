@@ -33,20 +33,21 @@ def get_simple_fields(record):
 			yield field_name, data
 
 
-def get_complex_fields(record):
+def get_complex_fields(record, level):
 	for field_name, field in record._fields.items():
 		meta = field.custom_data or {}
 		if not meta.get('export', True):
 			continue
 
-		data = record._data[field_name]
 		if meta.get('simple', True):
 			continue
 
-		yield from process_field(data, field, field_name, record)
+		data = record._data[field_name]
+
+		yield from process_field(data, field, field_name, record, level=level)
 
 
-def process_field(data, field, field_name, record):
+def process_field(data, field, field_name, record, **kwargs):
 	exporter = None
 	# Get __xml__ of embedded document
 	if isinstance(field, EmbeddedDocumentField) and hasattr(field.document_type, '__xml__'):
@@ -72,7 +73,11 @@ def process_field(data, field, field_name, record):
 			exporter = partial(exporter, data)
 
 	if exporter is not None:
-		yield from exporter()
+		meta = {}
+		args = inspect.getargs(exporter.func.__code__).args
+		if 'level' in args:
+			meta['level'] = kwargs.get('level', 0)
+		yield from exporter(**meta)
 
 
 def __init():

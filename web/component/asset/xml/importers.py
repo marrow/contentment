@@ -1,7 +1,11 @@
 # encoding: utf-8
+import re
 import csv
 from mongoengine.base import BaseDocument
 from mongoengine import ListField, EmbeddedDocumentField, EmbeddedDocument
+
+
+SPACES_RE = re.compile(r'[^\S\r\n]{2,}')
 
 
 def tag(element):
@@ -98,6 +102,11 @@ def reference_field(data, field, element):
 
 def translated_field(data, field, element):
 	data.setdefault(tag(element), {})[next(iter(element.attrib.values()))] = element.text
+
+
+def text_block_content(data, field, element):
+	element.text = re.sub(SPACES_RE, ' ', element.text)
+	translated_field(data, field, element)
 
 
 def datetime_field(data, field, element):
