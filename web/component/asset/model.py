@@ -12,8 +12,7 @@ from web.contentment.taxonomy import remove_children, TaxonomyQuerySet
 from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties as P
 #from web.contentment.okapi import update_full_text_index, remove_full_text_index, Indexed
-from web.component.asset import templates
-import cinje
+from web.component.asset.xml import templates, importers
 
 log = __import__('logging').getLogger(__name__)
 
@@ -41,9 +40,14 @@ class Asset(Document):
 	__fulltext__ = dict(title=10.0, description=5.0, tags=8.5)
 	__icon__ = 'folder-o'
 
-	__xml_handlers__ = dict(
+	__xml_exporters__ = dict(
 		title = templates.translated_field,
 		description = templates.translated_field,
+	)
+
+	__xml_importers__ = dict(
+		title = importers.translated_field,
+		description = importers.translated_field,
 	)
 	
 	# Taxonomy
@@ -69,13 +73,13 @@ class Asset(Document):
 	tags = ListField(StringField(), db_field='a_T', default=list, custom_data=P(export=True, simple=True))
 	
 	# Magic Properties
-	properties = EmbeddedDocumentField(P, db_field='a_p', default=P, custom_data=P(export=True, simple=False))
+	properties = EmbeddedDocumentField(P, db_field='a_p', default=P, custom_data=P(export=True, simple=False), verbose_name='property')
 	acl = ListField(EmbeddedDocumentField(ACLRule), db_field='a_a', default=list, custom_data=P(export=True, simple=False))
 	handler = StringField(db_field='a_h', custom_data=P(export=True, simple=True))  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
 	# Metadata
-	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=True))
-	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=True))
+	created = DateTimeField(db_field='a_dc', default=utcnow, custom_data=P(export=True, simple=False))
+	modified = DateTimeField(db_field='a_dm', default=utcnow, custom_data=P(export=True, simple=False))
 
 	# Controller Lookup
 	
