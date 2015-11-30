@@ -1,6 +1,7 @@
 # encoding: utf-8
 import re
 import csv
+from xml.etree import ElementTree
 from mongoengine.base import BaseDocument
 from mongoengine import ListField, EmbeddedDocumentField, EmbeddedDocument
 
@@ -12,7 +13,25 @@ def tag(element):
 	return element.tag.rsplit('}', 1)[1]
 
 
-def from_xml(element):
+def from_xml(data):
+	element = None
+	if hasattr(data, 'read') and callable(data.read):
+		element = ElementTree.fromstring(data.read())[0]
+
+	if isinstance(data, str):
+		try:
+			with open(data, 'rt') as file:
+				element = ElementTree.parse(file).getroot()[0]
+		except FileNotFoundError:
+			element = ElementTree.fromstring(data)
+
+	if element is None:
+		raise ValueError("data must be file-like object, file path string or XML string.")
+
+	return _from_xml(element)
+
+
+def _from_xml(element):
 	from . import get_asset_class
 
 	cls = get_asset_class(tag(element))
@@ -73,7 +92,7 @@ def from_xml(element):
 		save_model(result_obj)
 
 	for child in children:
-		child_obj = from_xml(child)
+		child_obj = _from_xml(child)
 		print(child_obj)
 		child_obj.parent = result_obj
 		if not isinstance(child_obj, EmbeddedDocument):
@@ -86,7 +105,7 @@ def process_field(data, field, element):
 	from web.component.asset.xml import get_xml_importer
 
 	if isinstance(field, EmbeddedDocumentField):
-		content = from_xml(element)
+		content = _from_xml(element)
 		return content
 
 	importer = get_xml_importer(field)
