@@ -50,8 +50,11 @@ ${_bless(entry.value)}
 		:level += 1
 	:end
 	:name = record.__class__.__name__
-	:simple = {fn: fv for fn, fv in get_simple_fields(record)}
-${INDENT * level}<${name}&{simple}>
+${INDENT * level}<${name}\
+	:for simple in get_simple_fields(record)
+&{[simple]}\
+	:end
+>
 	:flush
 	:for field in get_complex_fields(record, level=level)
 		:if not field

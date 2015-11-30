@@ -65,16 +65,19 @@ def from_xml(element):
 
 		data[field_name] = result
 
+	def save_model(obj):
+		obj.__class__.objects(id=obj.id).update_one(upsert=True, **obj._data)
+
 	result_obj = cls(**data)
 	if not isinstance(result_obj, EmbeddedDocument):
-		result_obj.save()
+		save_model(result_obj)
 
 	for child in children:
 		child_obj = from_xml(child)
 		print(child_obj)
 		child_obj.parent = result_obj
 		if not isinstance(child_obj, EmbeddedDocument):
-			child_obj.save()
+			save_model(child_obj)
 
 	return result_obj
 

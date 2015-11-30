@@ -17,7 +17,8 @@ __initialized = False
 
 
 def get_simple_fields(record):
-	for field_name, field in record._fields.items():
+	for field_name in record._fields_ordered:
+		field = record._fields[field_name]
 		meta = field.custom_data or {}
 		if not meta.get('export', True):
 			continue
@@ -34,7 +35,8 @@ def get_simple_fields(record):
 
 
 def get_complex_fields(record, level):
-	for field_name, field in record._fields.items():
+	for field_name in record._fields_ordered:
+		field = record._fields[field_name]
 		meta = field.custom_data or {}
 		if not meta.get('export', True):
 			continue
