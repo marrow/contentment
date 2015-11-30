@@ -102,7 +102,7 @@ setup(
 	
 	install_requires = [
 			# 'WebCore',  # web framework  # pending 2.0 release; use requirements.txt for now
-			'mongoengine',  # database layer
+			'mongoengine>=0.10.5',  # database layer
 			'pytz',  # timzone support
 			'blinker',  # signals
 			'markupsafe',  # injection protection
