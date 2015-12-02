@@ -64,7 +64,7 @@ ${INDENT * (level + 1)}${_bless(field)}\
 	:end
 	:flush
 	:if recursive
-		:for child in record.children
+		:for child in getattr(record, 'children', [])
 			:yield from asset(child, True, level+1)
 		:end
 	:end
@@ -97,7 +97,7 @@ ${_bless(ientry.value)}
 	:flush
 	:field_obj = record._fields[name].field
 	:for fld in field
-${process(process_field(fld, field_obj, name, record, level=level))}\
+${process(process_field(fld, field_obj, name, record, level=level, _in_list=True))}\
 		:flush
 	:end
 </${name}>
@@ -113,4 +113,16 @@ ${process(process_field(fld, field_obj, name, record, level=level))}\
 :from datetime import datetime
 :from . import DATETIME_FORMAT
 <${name} at="${field.strftime(DATETIME_FORMAT)}" />
+:end
+
+
+:def embedded_document record, name, field
+	:if not getattr(record, name, None)
+		:return
+	:end
+<${name}>
+	:for line in field
+${_bless(line)} \
+	:end
+</${name}>
 :end

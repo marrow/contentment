@@ -2,15 +2,18 @@
 import re
 import csv
 from xml.etree import ElementTree
-from mongoengine.base import BaseDocument
-from mongoengine import ListField, EmbeddedDocumentField, EmbeddedDocument
+from mongoengine import ListField, EmbeddedDocument
 
 
 SPACES_RE = re.compile(r'[^\S\r\n]{2,}')
 
 
 def tag(element):
-	return element.tag.rsplit('}', 1)[1]
+	data = element.tag.rsplit('}', 1)
+	try:
+		return data[1]
+	except IndexError:
+		return data[0]
 
 
 def from_xml(data):
@@ -33,6 +36,7 @@ def from_xml(data):
 
 def _from_xml(element):
 	from . import get_asset_class
+	from web.component.asset.xml import get_xml_importer
 
 	cls = get_asset_class(tag(element))
 	if cls is None:
@@ -41,10 +45,23 @@ def _from_xml(element):
 	if hasattr(cls, '__xml_importer__'):
 		return cls.__xml_importer__(element)
 
-	data = dict(element.attrib)
-	for field_name, value in data.items():
-		if isinstance(cls._fields[field_name], ListField):
+	data = {}
+
+	for field_name, value in element.attrib.items():
+		field = cls._fields[field_name]
+		importer = get_xml_importer(field)
+		if importer is not None:
+			result = importer(data, field, value)
+			if result is None and field_name in data:
+				continue
+			data[field_name] = result
+			continue
+
+		if isinstance(field, ListField):
 			data[field_name] = next(csv.reader([value]))
+			continue
+
+		data[field_name] = value
 
 	children = []
 
@@ -67,20 +84,11 @@ def _from_xml(element):
 			data[field_name] = list_field(data, field, child)
 			continue
 
-		if isinstance(field, EmbeddedDocumentField):
-			importer = getattr(field.document_type, '__xml_importer__', lambda: None)
-			result = importer(child)
-		else:
-			importer = getattr(cls, '__xml_importers__', {}).get(field_name) or process_field
-			result = importer(data, field, child)
+		importer = getattr(cls, '__xml_importers__', {}).get(field_name) or process_field
+		result = importer(data, field, child)
 
 		if result is None and field_name in data:
 			continue
-
-		if field_name in data:
-			if isinstance(result, BaseDocument):
-				data[field_name]._data.update(result._data)
-				continue
 
 		data[field_name] = result
 
@@ -93,7 +101,6 @@ def _from_xml(element):
 
 	for child in children:
 		child_obj = _from_xml(child)
-		print(child_obj)
 		child_obj.parent = result_obj
 		if not isinstance(child_obj, EmbeddedDocument):
 			save_model(child_obj)
@@ -103,10 +110,6 @@ def _from_xml(element):
 
 def process_field(data, field, element):
 	from web.component.asset.xml import get_xml_importer
-
-	if isinstance(field, EmbeddedDocumentField):
-		content = _from_xml(element)
-		return content
 
 	importer = get_xml_importer(field)
 	if importer is not None:
@@ -135,3 +138,15 @@ def datetime_field(data, field, element):
 	from datetime import datetime
 	from . import DATETIME_FORMAT
 	return datetime.strptime(element.get('at').strip(), DATETIME_FORMAT)
+
+
+def embedded_document_field(data, field, element):
+	if tag(element) in field.document_type._subclasses:
+		obj = _from_xml(element)
+	else:
+		data = {}
+		for sub in element:
+			sub = _from_xml(sub)
+			data.update(sub._data)
+		obj = field.document_type(**data) if data else None
+	return obj
