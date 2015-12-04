@@ -5,7 +5,7 @@ from bson import ObjectId
 from marrow.package.cache import PluginCache
 from mongoengine import Document
 from mongoengine import EmbeddedDocumentField
-from mongoengine import StringField, IntField, MapField, DateTimeField, CachedReferenceField, ListField
+from mongoengine import StringField, IntField, MapField, DateTimeField, ReferenceField, CachedReferenceField, ListField
 
 from web.contentment.acl import ACLRule
 from web.contentment.taxonomy import remove_children, TaxonomyQuerySet
@@ -58,10 +58,7 @@ class Asset(Document):
 			fields = ['name'],
 			custom_data=P(export=False),
 		)
-	parents = ListField(CachedReferenceField(
-			'Asset',
-			fields = ['name', 'acl'],
-		), db_field='t_a', custom_data=P(export=False))
+	parents = ListField(ReferenceField('Asset'), db_field='t_a', custom_data=P(export=False))
 	
 	name = StringField(db_field='n', custom_data=P(export=True, simple=True))
 	path = StringField(db_field='t_P', unique=True, custom_data=P(export=True, simple=True))
@@ -216,9 +213,8 @@ class Asset(Document):
 		
 		child = child.save()
 		
-		ancestors = list(Asset.objects(id=child.id).scalar('parents').no_dereference())
 		print("Child contents:", child.contents)
-		child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
+		child.contents.update(__raw__={'$push': {'t_a': {'$each': [i.to_dbref() for i in child.parents], '$position': 0}}})
 		# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
 		
 		self._normpath(child.id)
