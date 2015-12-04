@@ -18,12 +18,11 @@ __initialized = False
 
 def get_simple_fields(record):
 	for field_name, field in record._fields.items():
-		meta = field.custom_data or {}
-		if not meta.get('export', True):
+		if not getattr(field, 'export', True):
 			continue
 
 		data = record._data[field_name]
-		if meta.get('simple', True):
+		if getattr(field, 'simple', True):
 			if isinstance(field, ListField):
 				output = io.StringIO()
 				writer = csv.writer(output)
@@ -35,11 +34,10 @@ def get_simple_fields(record):
 
 def get_complex_fields(record, level):
 	for field_name, field in record._fields.items():
-		meta = field.custom_data or {}
-		if not meta.get('export', True):
+		if not getattr(field, 'export', True):
 			continue
 
-		if meta.get('simple', True):
+		if getattr(field, 'simple', True):
 			continue
 
 		data = record._data[field_name]
