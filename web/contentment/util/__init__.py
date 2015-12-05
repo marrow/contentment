@@ -65,7 +65,7 @@ class JSONFormatter(logging.Formatter):
 		'stack_info',
 	}
 
-	def __init__(self, limit_keys_to=None, force_keys=None, **kwargs):
+	def __init__(self, pretty=True, limit_keys_to=None, force_keys=None, **kwargs):
 		super(JSONFormatter, self).__init__(**kwargs)
 		self.limit_keys_to = limit_keys_to
 		if force_keys:
@@ -100,6 +100,10 @@ class JSONFormatter(logging.Formatter):
 		
 		if json_string:
 			json_string = json_string.replace('\n', '\n\t')
-			return '\n\t'.join([formatted, highlight(json_string, JsonLexer(tabsize=4), Terminal256Formatter(style='monokai')).strip()])
+			
+			if self.pretty:
+				return '\n\t'.join([formatted, highlight(json_string, JsonLexer(tabsize=4), Terminal256Formatter(style='monokai')).strip()])
+			
+			return '\n'.join([formatted, json_string]).strip()
 		
 		return formatted
