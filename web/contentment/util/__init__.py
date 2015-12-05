@@ -72,6 +72,7 @@ class JSONFormatter(logging.Formatter):
 			self.exclude_attrs = self.default_exclude_attrs - set(force_keys)
 		else:
 			self.exclude_attrs = self.default_exclude_attrs
+		self.pretty = pretty
 
 	def get_json(self, record, **kw):
 		extra = {}
