@@ -5,7 +5,7 @@ from itertools import chain
 from bson import ObjectId
 from mongoengine import QuerySet, Q
 from mongoengine import Document, ListField, StringField, IntField
-from mongoengine import CachedReferenceField
+from mongoengine import CachedReferenceField, ReferenceField
 from mongoengine.fields import RECURSIVE_REFERENCE_CONSTANT
 from mongoengine.signals import pre_delete
 
@@ -20,6 +20,11 @@ def remove_children(sender, document, **kw):
 
 
 class TaxonomyQuerySet(QuerySet):
+	def __init__(self, document, collection):
+		super(TaxonomyQuerySet, self).__init__(document, collection)
+		if self._document is Taxonomy:
+			self._initial_query = {'_cls': {'$in': Taxonomy._subclasses}}
+
 	# Quick Lookup
 
 	def named(self, name):
@@ -63,36 +68,34 @@ class TaxonomyQuerySet(QuerySet):
 		return self
 
 	def insert(self, index, child):
-		"""Add an asset, specified by the parameter, as a child of the currently selected assets."""
+		"""Add an asset, specified by the parameter, as a child of this asset."""
 
-		objs = self.clone().scalar('id')
-		obj = objs[0]
-
-		log.info("Inserting asset.", extra=dict(asset=obj, index=index, child=getattr(child, 'id', child)))
+		log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
 
 		# Detach the new child (and thus it's own child nodes).
-		child = (self._document.objects.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
+		child = (self.qs.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 
 		if index < 0:
-			_max = self._document.objects(parent=obj).order_by('-order').scalar('order').first()
+			_max = self.qs(parent=self).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 
-		self._document.objects(parent=obj, order__gte=index).update(inc__order=1)
+		self.qs(parent=self, order__gte=index).update(inc__order=1)
 
 		log.debug("before", extra=dict(data=repr(child._data)))
 
 		child.order = index
 
-		child.path = obj.path + '/' + child.name
-		child.parent = obj
-		child.parents = list(obj.parents)
-		child.parents.append(obj)
+		child.path = self.path + '/' + child.name
+		child.parent = self
+		child.parents = list(self.parents)
+		child.parents.append(self)
 
 		log.debug("after", extra=dict(data=repr(child._data)))
 
 		child = child.save()
 
-		ancestors = list(self._document.objects(id=child.id).scalar('parents').no_dereference())
+		ancestors = list(self.qs(id=child.id).scalar('parents').no_dereference())
+		ancestors = [[a.id for a in ancs] for ancs in ancestors]
 		print("Child contents:", child.contents)
 		child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
 		# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
@@ -100,123 +103,6 @@ class TaxonomyQuerySet(QuerySet):
 		self._normpath(child.id)
 
 		return self
-
-	def detach(self, path=True):
-		"""Detach this asset from its current taxonomy."""
-
-		objs = self.clone().scalar('id')
-		obj = objs[0]
-
-		if obj.path in (None, '', obj.name):
-			return self
-
-		self.nextAll.update(inc__order=-1)
-
-		self.contents.update(parents__pull_all=obj.parents)
-
-		self.order = None
-		self.path = self.name
-		self.parent = None
-		del self.parents[:]
-
-		if path:
-			self._normpath(self.id)
-			return self.save()
-
-		return self
-
-	def append(self, child):
-		"""Insert an asset, specified by the parameter, as a child of this asset."""
-		return self
-
-		#return self.insert(-1, child)
-
-	def prepend(self, child):
-		return self
-
-		#return self.insert(0, child)
-
-	def after(self, sibling):
-		"""Insert an asset, specified by the parameter, after this asset."""
-		return self
-
-		#self.parent.insert(self.order + 1, sibling)
-		#return self.reload()
-
-	def before(self, sibling):
-		"""Insert an asset, specified by the parameter, before this asset."""
-		return self
-
-		#self.parent.insert(self.order, sibling)
-		#return self.reload()
-
-	def replace(self, target):
-		"""Replace an asset, specified by the parameter, with this asset."""
-		return self
-
-		#target = self.__rcls__.objects.get(id=target) if isinstance(target, ObjectId) else target
-
-		#self.name = target.name
-		#self.parent = target.parent
-		#self.parents = target.parents
-		#self.path = target.path
-		#self.order = target.order
-
-		#target.delete()
-
-		#return self.save()
-
-	def replaceWith(self, source):
-		"""Replace this asset with an asset specified by the parameter."""
-		return self
-
-		#source = self.__rcls__.objects.get(id=source) if isinstance(source, ObjectId) else source
-
-		#source.name = self.name
-		#source.parent = self.parent
-		#source.parents = self.parents
-		#source.path = self.path
-		#source.order = self.order
-
-		#self.delete()
-
-		#return source.save()
-
-	def clone(self):
-		return self
-		#clone = self.__rcls__.objects.get(id=self.id)
-		#del clone.id
-		#return clone
-
-	# Pivoted Manipulation
-
-	def appendTo(self, parent):
-		"""Insert this asset as a child of the asset specified by the parameter."""
-		return self
-		#parent = self.__rcls__.objects(pk=parent).get() if isinstance(parent, ObjectId) else parent
-		#parent.append(self)
-		#return self.reload()
-
-	def prependTo(self, parent):
-		"""Insert this asset as the left-most child of the asset specified by the parameter."""
-		return self
-		#parent = self.__rcls__.objects(pk=parent).get() if isinstance(parent, ObjectId) else parent
-		#parent.prepend(self)
-		#return self.reload()
-
-	def insertBefore(self, sibling):
-		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-		return self
-		#sibling = self.__rcls__.objects(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-		#sibling.before(self)
-		#return self.reload()
-
-	def insertAfter(self, sibling):
-		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
-		return self
-		#sibling = self.__rcls__.objects(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-		#sibling.after(self)
-		#return self.reload()
 
 	# Traversal
 
@@ -259,6 +145,9 @@ class TaxonomyQuerySet(QuerySet):
 		for parent, order in self.clone().only('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order=order + 1))
 
+		if not query:
+			return None
+
 		return self._document.objects(reduce(__or__, query)).order_by('path')
 
 	@property
@@ -274,6 +163,9 @@ class TaxonomyQuerySet(QuerySet):
 		for id, parent, order in self.clone().only('id', 'parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order__gt=order, id__ne=id))
 
+		if not query:
+			return None
+
 		return self._document.objects(reduce(__or__, query)).order_by('parent', 'order')
 
 	@property
@@ -286,6 +178,9 @@ class TaxonomyQuerySet(QuerySet):
 
 		for parent, order in self.clone().only('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order=order - 1))
+
+		if not query:
+			return None
 
 		return self._document.objects(reduce(__or__, query)).order_by('parent')
 
@@ -300,6 +195,9 @@ class TaxonomyQuerySet(QuerySet):
 
 		for parent, order in self.clone().only('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order__lt=order))
+
+		if not query:
+			return None
 
 		return self._document.objects(reduce(__or__, query)).order_by('parent', 'order')
 
@@ -323,19 +221,22 @@ class TaxonomyQuerySet(QuerySet):
 class Taxonomy(Document):
 	meta = dict(
 		ordering = ['order'],
-		allow_inheritance = True,
+		# allow_inheritance = True,
+		abstract = True,
 		queryset_class = TaxonomyQuerySet,
 	)
 
-	parent = CachedReferenceField(
-			'Taxonomy',
+	# parent = CachedReferenceField(
+	parent = ReferenceField(
+			'self',
 			db_field = 't_p',
-			fields = ['name'],
+			# fields = ['name'],
 			export=False
 		)
-	parents = ListField(CachedReferenceField(
-			'Taxonomy',
-			fields = ['name', 'acl'],
+	# parents = ListField(CachedReferenceField(
+	parents = ListField(ReferenceField(
+			'self',
+			# fields = ['name', 'acl'],
 		), db_field='t_a', export=False)
 
 	name = StringField(db_field='n', export=True, simple=True)
@@ -344,6 +245,10 @@ class Taxonomy(Document):
 
 	def __repr__(self):
 		return "{0.__class__.__name__} ({0.name}, {0.path})".format(self)
+	
+	@property
+	def tqs(self):
+		return TaxonomyQuerySet(Taxonomy, self._get_collection())
 
 	def tree(self, indent=''):
 		print(indent, repr(self), sep='')
@@ -353,10 +258,10 @@ class Taxonomy(Document):
 
 	def _normpath(self, parent):
 		for child in self._get_collection().find({'t_a._id': parent}, {'n': 1, 't_a.n': 1}).sort('t_P'):
-			self._qs(id=child['_id']).update_one(set__path='/' + '/'.join(chain((i['n'] for i in child['t_a']), [child['n']])))
+			self.tqs(id=child['_id']).update_one(set__path='/' + '/'.join(chain((i['n'] for i in child['t_a']), [child['n']])))
 
 	def empty(self):
-		self._qs(id=self.id).empty()
+		self.tqs(id=self.id).empty()
 
 	def detach(self, path=True):
 		"""Detach this asset from its current taxonomy."""
@@ -387,13 +292,13 @@ class Taxonomy(Document):
 		log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
 
 		# Detach the new child (and thus it's own child nodes).
-		child = (self._qs.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
+		child = (self.tqs.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 
 		if index < 0:
-			_max = self._qs(parent=self).order_by('-order').scalar('order').first()
+			_max = self.tqs(parent=self).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 
-		self._qs(parent=self, order__gte=index).update(inc__order=1)
+		self.tqs(parent=self, order__gte=index).update(inc__order=1)
 
 		log.debug("before", extra=dict(data=repr(child._data)))
 
@@ -408,7 +313,7 @@ class Taxonomy(Document):
 
 		child = child.save()
 
-		ancestors = list(self._qs(id=child.id).scalar('parents').no_dereference())
+		ancestors = list(self.tqs(id=child.id).scalar('parents').no_dereference())
 		ancestors = [[a.id for a in ancs] for ancs in ancestors]
 		print("Child contents:", child.contents)
 		child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
@@ -438,7 +343,7 @@ class Taxonomy(Document):
 	def replace(self, target):
 		"""Replace an asset, specified by the parameter, with this asset."""
 
-		target = self._qs.get(id=target) if isinstance(target, ObjectId) else target
+		target = self.tqs.get(id=target) if isinstance(target, ObjectId) else target
 
 		self.name = target.name
 		self.parent = target.parent
@@ -453,7 +358,7 @@ class Taxonomy(Document):
 	def replaceWith(self, source):
 		"""Replace this asset with an asset specified by the parameter."""
 
-		source = self._qs.get(id=source) if isinstance(source, ObjectId) else source
+		source = self.tqs.get(id=source) if isinstance(source, ObjectId) else source
 
 		source.name = self.name
 		source.parent = self.parent
@@ -466,14 +371,14 @@ class Taxonomy(Document):
 		return source.save()
 
 	def clone(self):
-		clone = self._qs.get(id=self.id)
+		clone = self.tqs.get(id=self.id)
 		del clone.id
 		return clone
 
 	def appendTo(self, parent):
 		"""Insert this asset as a child of the asset specified by the parameter."""
 
-		parent = self._qs(pk=parent).get() if isinstance(parent, ObjectId) else parent
+		parent = self.tqs(pk=parent).get() if isinstance(parent, ObjectId) else parent
 		parent.append(self)
 
 		return self.reload()
@@ -481,7 +386,7 @@ class Taxonomy(Document):
 	def prependTo(self, parent):
 		"""Insert this asset as the left-most child of the asset specified by the parameter."""
 
-		parent = self._qs(pk=parent).get() if isinstance(parent, ObjectId) else parent
+		parent = self.tqs(pk=parent).get() if isinstance(parent, ObjectId) else parent
 		parent.prepend(self)
 
 		return self.reload()
@@ -489,7 +394,7 @@ class Taxonomy(Document):
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
 
-		sibling = self._qs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
+		sibling = self.tqs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
 		sibling.before(self)
 
 		return self.reload()
@@ -497,7 +402,7 @@ class Taxonomy(Document):
 	def insertAfter(self, sibling):
 		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
 
-		sibling = self._qs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
+		sibling = self.tqs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
 		sibling.after(self)
 
 		return self.reload()
@@ -505,46 +410,41 @@ class Taxonomy(Document):
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self._qs(__raw__={'t_p._id': self.id}).order_by('order')
+		return self.tqs(__raw__={'t_p.$id': self.id}).order_by('order')
 
 	@property
 	def contents(self):
 		"""Yield all descendants of this asset."""
-		return self._qs(parents=self).order_by('path')
-
-	@property
-	def contents(self):
-		"""Yield all descendants of this asset."""
-		return self._qs(parents=self).order_by('path')
+		return self.tqs(parents=self).order_by('path')
 
 	@property
 	def siblings(self):
 		"""All siblings of this asset, not including this asset."""
-		return self._qs(parent=self.parent, id__ne=self.id).order_by('order')
+		return self.tqs(parent=self.parent, id__ne=self.id).order_by('order')
 
 	@property
 	def next(self):
 		"""The sibling immediately following this asset."""
-		return self._qs(parent=self.parent, order__gt=self.order).order_by('order').first()
+		return self.tqs(parent=self.parent, order__gt=self.order).order_by('order').first()
 
 	@property
 	def nextAll(self):
 		"""All siblings following this asset."""
-		return self._qs(parent=self.parent, order__gt=self.order).order_by('order')
+		return self.tqs(parent=self.parent, order__gt=self.order).order_by('order')
 
 	@property
 	def prev(self):
 		"""The sibling immediately preceeding this asset."""
-		return self._qs(parent=self.parent, order__lt=self.order).order_by('-order').first()
+		return self.tqs(parent=self.parent, order__lt=self.order).order_by('-order').first()
 
 	@property
 	def prevAll(self):
 		"""All siblings preceeding this asset."""
-		return self._qs(parent=self.parent, order__lt=self.order).order_by('order')
+		return self.tqs(parent=self.parent, order__lt=self.order).order_by('order')
 
 	def contains(self, other):
 		"""The asset, specified by the parameter, is a descendant of this asset."""
-		return bool(self._qs(pk=self.pk, children=other).count())
+		return bool(self.tqs(pk=self.pk, children=other).count())
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""

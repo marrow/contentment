@@ -26,7 +26,7 @@ def update_modified_timestamp(sender, document, **kw):
 
 class Properties(DynamicEmbeddedDocument):
 	def __repr__(self):
-		return repr(self._data)
+		return repr({f: getattr(self, f) for f in self._dynamic_fields})
 	
 	def get(self, name, default=None):
 		if name not in self: return default
