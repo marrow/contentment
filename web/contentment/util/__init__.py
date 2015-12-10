@@ -27,8 +27,11 @@ def utcnow():
 def D_(trn):
 	if 'en' in trn:
 		return trn['en']
-	
-	return next(trn.values())
+
+	try:
+		return next(iter(trn.values()))
+	except StopIteration:
+		return ''
 
 def _(s):
 	return s

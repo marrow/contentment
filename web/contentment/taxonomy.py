@@ -72,37 +72,138 @@ class TaxonomyQuerySet(QuerySet):
 
 		log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
 
+		parent = self.clone().first()
 		# Detach the new child (and thus it's own child nodes).
-		child = (self.qs.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
+		child = (self.clone().get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 
 		if index < 0:
-			_max = self.qs(parent=self).order_by('-order').scalar('order').first()
+			_max = self._clone().filter(parent=parent).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 
-		self.qs(parent=self, order__gte=index).update(inc__order=1)
+		self.clone().filter(parent=parent, order__gte=index).update(inc__order=1)
 
 		log.debug("before", extra=dict(data=repr(child._data)))
 
 		child.order = index
 
-		child.path = self.path + '/' + child.name
-		child.parent = self
-		child.parents = list(self.parents)
-		child.parents.append(self)
+		child.path = parent.path + '/' + child.name
+		child.parent = parent
+		child.parents = list(parent.parents)
+		child.parents.append(parent)
 
 		log.debug("after", extra=dict(data=repr(child._data)))
 
 		child = child.save()
 
-		ancestors = list(self.qs(id=child.id).scalar('parents').no_dereference())
-		ancestors = [[a.id for a in ancs] for ancs in ancestors]
 		print("Child contents:", child.contents)
-		child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
+		child.contents.update(__raw__={'$push': {'t_a': {'$each': [i.to_dbref() for i in child.parents], '$position': 0}}})
 		# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
 
-		self._normpath(child.id)
+		parent._normpath(child.id)
 
 		return self
+
+	def detach(self, path=True):
+		"""Detach this asset from its current taxonomy."""
+
+		obj = self.clone().first()
+
+		if obj.path in (None, '', obj.name):
+			return obj
+
+		log.warn("Detaching from taxonomy." + "\n\t" + __import__('json').dumps(dict(asset=repr(obj), path=path)))
+
+		self.nextAll.update(inc__order=-1)
+
+		self.contents.update(parents__pull_all=obj.parents)
+
+		obj.order = None
+		obj.path = obj.name
+		obj.parent = None
+		del obj.parents[:]
+
+		if path:
+			obj._normpath(obj.id)
+			return obj.save()
+
+		return self
+
+	def append(self, child):
+		"""Insert an asset, specified by the parameter, as a child of this asset."""
+		return self.insert(-1, child)
+
+	def prepend(self, child):
+		return self.insert(0, child)
+
+	def after(self, sibling):
+		"""Insert an asset, specified by the parameter, after this asset."""
+		obj = self.clone().first()
+		obj.parent.insert(obj.order + 1, sibling)
+		return self
+
+	def before(self, sibling):
+		"""Insert an asset, specified by the parameter, before this asset."""
+		obj = self.clone().first()
+		obj.parent.insert(obj.order, sibling)
+		return self
+
+	def replace(self, target):
+		"""Replace an asset, specified by the parameter, with this asset."""
+
+		target = self.clone().get(id=target) if isinstance(target, ObjectId) else target
+		obj = self.clone().first()
+
+		obj.name = target.name
+		obj.parent = target.parent
+		obj.parents = target.parents
+		obj.path = target.path
+		obj.order = target.order
+
+		target.delete()
+
+		return self
+
+	def replaceWith(self, source):
+		"""Replace this asset with an asset specified by the parameter."""
+
+		source = self.clone().get(id=source) if isinstance(source, ObjectId) else source
+		obj = self.clone().first()
+
+		source.name = obj.name
+		source.parent = obj.parent
+		source.parents = obj.parents
+		source.path = obj.path
+		source.order = obj.order
+
+		obj.delete()
+
+		return self
+
+	def clone_assets(self):
+		clones = self.clone()
+		for clone in clones:
+			del clone.id
+
+		return clones
+
+	# Pivoted Manipulation
+	# These are actually implemented elsewhere.
+
+	def appendTo(self, parent):
+		"""Insert this asset as a child of the asset specified by the parameter."""
+		return self._document.objects(pk=getattr(parent, 'pk', parent)).append(self.clone())
+
+	def prependTo(self, parent):
+		"""Insert this asset as the left-most child of the asset specified by the parameter."""
+		return self._document.objects(pk=getattr(parent, 'pk', parent)).prepend(self.clone())
+
+	def insertBefore(self, sibling):
+		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
+		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).before(self.clone())
+
+	def insertAfter(self, sibling):
+		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
+		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).after(self.clone())
 
 	# Traversal
 
@@ -116,7 +217,7 @@ class TaxonomyQuerySet(QuerySet):
 	def contents(self):
 		"""Yield all descendants of this asset."""
 
-		return self._documnet.objects(parents__in=self.clone().scalar('id').all()).order_by('parent', 'order')
+		return self._document.objects(parents__in=self.clone().scalar('id').all()).order_by('parent', 'order')
 
 	@property
 	def siblings(self):
@@ -126,8 +227,8 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().only('parent', 'order').no_dereference():
-			query.append(Q(parent=parent, order__ne=order, id__ne=order))
+		for id, parent, order in self.clone().scalar('id', 'parent', 'order').no_dereference():
+			query.append(Q(parent=parent, order__ne=order, id__ne=id))
 
 		if not query:  # TODO: Armour everywhere.
 			return None
@@ -142,7 +243,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().only('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order=order + 1))
 
 		if not query:
@@ -160,7 +261,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		# Indexing note: (parent, order, id) for covered query and optimal re-use.
 		# Including id here to prevent an edge case (assets being shuffled) from including non-siblings.
-		for id, parent, order in self.clone().only('id', 'parent', 'order').no_dereference():
+		for id, parent, order in self.clone().scalar('id', 'parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order__gt=order, id__ne=id))
 
 		if not query:
@@ -176,7 +277,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().only('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order=order - 1))
 
 		if not query:
@@ -193,7 +294,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().only('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
 			query.append(Q(parent=parent, order__lt=order))
 
 		if not query:
@@ -208,7 +309,8 @@ class TaxonomyQuerySet(QuerySet):
 			from web.component.asset import Asset
 			assert isinstance(other, Asset) or isinstance(other, ObjectId), "Argument must be Asset or ObjectId instance."
 
-		return other._data['parent'].id if hasattr(other, '_data') else other in self.scalar('id')
+		parents = self.clone().scalar('id').no_dereference()
+		return bool(self._document.objects(pk=getattr(other, 'pk', other),parents__in=parents).count())
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
@@ -220,9 +322,10 @@ class TaxonomyQuerySet(QuerySet):
 
 class Taxonomy(Document):
 	meta = dict(
+		# id_field = 'id',
 		ordering = ['order'],
-		# allow_inheritance = True,
-		abstract = True,
+		allow_inheritance = True,
+		# abstract = True,
 		queryset_class = TaxonomyQuerySet,
 	)
 
@@ -265,186 +368,104 @@ class Taxonomy(Document):
 
 	def detach(self, path=True):
 		"""Detach this asset from its current taxonomy."""
-
-		if self.path in (None, '', self.name):
-			return self
-
-		log.warn("Detaching from taxonomy." + "\n\t" + __import__('json').dumps(dict(asset=repr(self), path=path)))
-
-		self.nextAll.update(inc__order=-1)
-
-		self.contents.update(parents__pull_all=self.parents)
-
-		self.order = None
-		self.path = self.name
-		self.parent = None
-		del self.parents[:]
-
-		if path:
-			self._normpath(self.id)
-			return self.save()
-
+		self.tqs(id=self.id).detach(path)
 		return self
 
 	def insert(self, index, child):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
-
-		log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
-
-		# Detach the new child (and thus it's own child nodes).
-		child = (self.tqs.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
-
-		if index < 0:
-			_max = self.tqs(parent=self).order_by('-order').scalar('order').first()
-			index = 0 if _max is None else (_max + 1)
-
-		self.tqs(parent=self, order__gte=index).update(inc__order=1)
-
-		log.debug("before", extra=dict(data=repr(child._data)))
-
-		child.order = index
-
-		child.path = self.path + '/' + child.name
-		child.parent = self
-		child.parents = list(self.parents)
-		child.parents.append(self)
-
-		log.debug("after", extra=dict(data=repr(child._data)))
-
-		child = child.save()
-
-		ancestors = list(self.tqs(id=child.id).scalar('parents').no_dereference())
-		ancestors = [[a.id for a in ancs] for ancs in ancestors]
-		print("Child contents:", child.contents)
-		child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
-		# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
-
-		self._normpath(child.id)
-
+		self.tqs(id=self.id).insert(index, child)
 		return self
 
 	def append(self, child):
 		"""Insert an asset, specified by the parameter, as a child of this asset."""
-		return self.insert(-1, child)
+		self.tqs(id=self.id).append(child)
+		return self
 
 	def prepend(self, child):
-		return self.insert(0, child)
+		self.tqs(id=self.id).prepend(child)
+		return self
 
 	def after(self, sibling):
 		"""Insert an asset, specified by the parameter, after this asset."""
-		self.parent.insert(self.order + 1, sibling)
-		return self.reload()
+		self.tqs(id=self.id).after(sibling)
+		return self
 
 	def before(self, sibling):
 		"""Insert an asset, specified by the parameter, before this asset."""
-		self.parent.insert(self.order, sibling)
-		return self.reload()
+		self.tqs(id=self.id).before(sibling)
+		return self
 
 	def replace(self, target):
 		"""Replace an asset, specified by the parameter, with this asset."""
-
-		target = self.tqs.get(id=target) if isinstance(target, ObjectId) else target
-
-		self.name = target.name
-		self.parent = target.parent
-		self.parents = target.parents
-		self.path = target.path
-		self.order = target.order
-
-		target.delete()
-
-		return self.save()
+		self.tqs(id=self.id).replace(target)
+		return self
 
 	def replaceWith(self, source):
 		"""Replace this asset with an asset specified by the parameter."""
-
-		source = self.tqs.get(id=source) if isinstance(source, ObjectId) else source
-
-		source.name = self.name
-		source.parent = self.parent
-		source.parents = self.parents
-		source.path = self.path
-		source.order = self.order
-
-		self.delete()
-
-		return source.save()
+		self.tqs(id=self.id).replace(source)
+		return source
 
 	def clone(self):
-		clone = self.tqs.get(id=self.id)
-		del clone.id
-		return clone
+		return self.tqs(id=self.id).clone_assets()[0]
 
 	def appendTo(self, parent):
 		"""Insert this asset as a child of the asset specified by the parameter."""
-
-		parent = self.tqs(pk=parent).get() if isinstance(parent, ObjectId) else parent
-		parent.append(self)
-
-		return self.reload()
+		self.tqs(id=self.id).appendTo(parent)
+		return self
 
 	def prependTo(self, parent):
 		"""Insert this asset as the left-most child of the asset specified by the parameter."""
-
-		parent = self.tqs(pk=parent).get() if isinstance(parent, ObjectId) else parent
-		parent.prepend(self)
-
-		return self.reload()
+		self.tqs(id=self.id).prependTo(parent)
+		return self
 
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-
-		sibling = self.tqs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-		sibling.before(self)
-
-		return self.reload()
+		self.tqs(id=self.id).before(sibling)
+		return self
 
 	def insertAfter(self, sibling):
 		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
-
-		sibling = self.tqs(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-		sibling.after(self)
-
-		return self.reload()
+		self.tqs(id=self.id).after(sibling)
+		return self
 
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self.tqs(__raw__={'t_p.$id': self.id}).order_by('order')
+		return self.tqs(id=self.id).children
 
 	@property
 	def contents(self):
 		"""Yield all descendants of this asset."""
-		return self.tqs(parents=self).order_by('path')
+		return self.tqs(id=self.id).contents
 
 	@property
 	def siblings(self):
 		"""All siblings of this asset, not including this asset."""
-		return self.tqs(parent=self.parent, id__ne=self.id).order_by('order')
+		return self.tqs(id=self.id).siblings
 
 	@property
 	def next(self):
 		"""The sibling immediately following this asset."""
-		return self.tqs(parent=self.parent, order__gt=self.order).order_by('order').first()
+		return self.tqs(id=self.id).next
 
 	@property
 	def nextAll(self):
 		"""All siblings following this asset."""
-		return self.tqs(parent=self.parent, order__gt=self.order).order_by('order')
+		return self.tqs(id=self.id).nextAll
 
 	@property
 	def prev(self):
 		"""The sibling immediately preceeding this asset."""
-		return self.tqs(parent=self.parent, order__lt=self.order).order_by('-order').first()
+		return self.tqs(id=self.id).prev
 
 	@property
 	def prevAll(self):
 		"""All siblings preceeding this asset."""
-		return self.tqs(parent=self.parent, order__lt=self.order).order_by('order')
+		return self.tqs(id=self.id).prevAll
 
 	def contains(self, other):
 		"""The asset, specified by the parameter, is a descendant of this asset."""
-		return bool(self.tqs(pk=self.pk, children=other).count())
+		return self.tqs(id=self.id).contains(other)
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
