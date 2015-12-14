@@ -26,7 +26,7 @@ class ContentmentDispatch:
 			yield from self._object_dispatch_chain(context, root)
 			return
 		
-		domain = 'careers.illicohodes.com'  # Hard-coded during testing.  Use: request.server_name
+		domain = request.server_name
 		search = '/' + domain + context.request.path_info.rstrip('/')  # + request.script_name ?
 		
 		if __debug__:
