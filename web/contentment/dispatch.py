@@ -26,7 +26,9 @@ class ContentmentDispatch:
 			yield from self._object_dispatch_chain(context, root)
 			return
 		
-		domain = request.server_name
+		import pudb; pudb.set_trace()
+		
+		domain, _, _ = request.host.partition(':')
 		search = '/' + domain + context.request.path_info.rstrip('/')  # + request.script_name ?
 		
 		if __debug__:
