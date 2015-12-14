@@ -70,17 +70,18 @@ class TaxonomyQuerySet(QuerySet):
 	def insert(self, index, child):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
 
-		log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
-
 		parent = self.clone().first()
+
+		log.info("Inserting asset.", extra=dict(asset=parent.id, index=index, child=getattr(child, 'id', child)))
+
 		# Detach the new child (and thus it's own child nodes).
-		child = (self.clone().get(id=child) if isinstance(child, ObjectId) else child).detach(False)
+		child = (self._document.objects.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 
 		if index < 0:
-			_max = self._clone().filter(parent=parent).order_by('-order').scalar('order').first()
+			_max = self._document.objects(parent=parent).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 
-		self.clone().filter(parent=parent, order__gte=index).update(inc__order=1)
+		q = self._document.objects(parent=parent, order__gte=index).update(inc__order=1)
 
 		log.debug("before", extra=dict(data=repr(child._data)))
 
@@ -227,8 +228,8 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for id, parent, order in self.clone().scalar('id', 'parent', 'order').no_dereference():
-			query.append(Q(parent=parent, order__ne=order, id__ne=id))
+		for id, parent in self.clone().scalar('id', 'parent').no_dereference():
+			query.append(Q(parent=parent, id__ne=id))
 
 		if not query:  # TODO: Armour everywhere.
 			return None
@@ -249,7 +250,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('path')
+		return self._document.objects(reduce(__or__, query)).order_by('path').first()
 
 	@property
 	def nextAll(self):
@@ -283,7 +284,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('parent')
+		return self._document.objects(reduce(__or__, query)).order_by('parent').first()
 
 	@property
 	def prevAll(self):
@@ -310,7 +311,7 @@ class TaxonomyQuerySet(QuerySet):
 			assert isinstance(other, Asset) or isinstance(other, ObjectId), "Argument must be Asset or ObjectId instance."
 
 		parents = self.clone().scalar('id').no_dereference()
-		return bool(self._document.objects(pk=getattr(other, 'pk', other),parents__in=parents).count())
+		return bool(self._document.objects(pk=getattr(other, 'pk', other), parents__in=parents).count())
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
@@ -374,7 +375,7 @@ class Taxonomy(Document):
 	def insert(self, index, child):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
 		self.tqs(id=self.id).insert(index, child)
-		return self
+		return self.reload()
 
 	def append(self, child):
 		"""Insert an asset, specified by the parameter, as a child of this asset."""
