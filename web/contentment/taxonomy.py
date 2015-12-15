@@ -125,7 +125,8 @@ class TaxonomyQuerySet(QuerySet):
 
 		if path:
 			obj._normpath(obj.id)
-			return obj.save()
+
+		obj.save()
 
 		return self
 
@@ -161,6 +162,7 @@ class TaxonomyQuerySet(QuerySet):
 		obj.order = target.order
 
 		target.delete()
+		obj.save()
 
 		return self
 
@@ -177,6 +179,7 @@ class TaxonomyQuerySet(QuerySet):
 		source.order = obj.order
 
 		obj.delete()
+		source.save()
 
 		return self
 
@@ -192,19 +195,19 @@ class TaxonomyQuerySet(QuerySet):
 
 	def appendTo(self, parent):
 		"""Insert this asset as a child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(parent, 'pk', parent)).append(self.clone())
+		return self._document.objects(pk=getattr(parent, 'pk', parent)).append(self.clone().first())
 
 	def prependTo(self, parent):
 		"""Insert this asset as the left-most child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(parent, 'pk', parent)).prepend(self.clone())
+		return self._document.objects(pk=getattr(parent, 'pk', parent)).prepend(self.clone().first())
 
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).before(self.clone())
+		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).before(self.clone().first())
 
 	def insertAfter(self, sibling):
-		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).after(self.clone())
+		"""Insert this asset as the right-hand child of the asset specified by the parameter."""
+		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).after(self.clone().first())
 
 	# Traversal
 
@@ -315,10 +318,11 @@ class TaxonomyQuerySet(QuerySet):
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
-		return self
+		obj = self.clone().first()
 		for other in others:
 			for child in other.children:
-				self.insert(-1, child)
+				obj.insert(-1, child)
+		return self
 
 
 class Taxonomy(Document):
@@ -370,7 +374,7 @@ class Taxonomy(Document):
 	def detach(self, path=True):
 		"""Detach this asset from its current taxonomy."""
 		self.tqs(id=self.id).detach(path)
-		return self
+		return self.reload()
 
 	def insert(self, index, child):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
@@ -421,12 +425,12 @@ class Taxonomy(Document):
 
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-		self.tqs(id=self.id).before(sibling)
+		self.tqs(id=self.id).insertBefore(sibling)
 		return self
 
 	def insertAfter(self, sibling):
 		"""Insert his asset as the right-hand child of the asset specified by the parameter."""
-		self.tqs(id=self.id).after(sibling)
+		self.tqs(id=self.id).insertAfter(sibling)
 		return self
 
 	@property
@@ -470,7 +474,5 @@ class Taxonomy(Document):
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
-
-		for other in others:
-			for child in other.children:
-				self.insert(-1, child)
+		self.tqs(id=self.id).extend(*others)
+		return self
