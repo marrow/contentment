@@ -407,7 +407,7 @@ class Taxonomy(Document):
 
 	def replaceWith(self, source):
 		"""Replace this asset with an asset specified by the parameter."""
-		self.tqs(id=self.id).replace(source)
+		self.tqs(id=self.id).replaceWith(source)
 		return source
 
 	def clone(self):
