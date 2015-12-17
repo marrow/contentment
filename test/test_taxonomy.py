@@ -135,13 +135,13 @@ class TestTaxonomy:
 	def test_replace(self, models):
 		replacer = TModel.objects.create(name='replacer', path='r')
 		models.child1.appendTo(models.parent)
-		models.child1.reload()
+		models.child1.reload(-1)
 		assert TModel.objects.count() == 4
 		replacer.replace(models.child1)
 		assert TModel.objects.count() == 3
-		assert list(models.parent.children) == [replacer.reload()]
+		assert list(models.parent.children) == [replacer.reload(-1)]
 
 		models.child2.replaceWith(replacer)
-		replacer.reload()
+		replacer.reload(-1)
 		assert models.parent.children.count() == 0
 		assert replacer.name == 'child2'

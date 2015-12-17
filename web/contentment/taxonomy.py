@@ -5,7 +5,7 @@ from itertools import chain
 from bson import ObjectId
 from mongoengine import QuerySet, Q
 from mongoengine import Document, ListField, StringField, IntField
-from mongoengine import CachedReferenceField, ReferenceField
+from mongoengine import CachedReferenceField, ReferenceField, GenericReferenceField
 from mongoengine.fields import RECURSIVE_REFERENCE_CONSTANT
 from mongoengine.signals import pre_delete
 
@@ -20,10 +20,14 @@ def remove_children(sender, document, **kw):
 
 
 class TaxonomyQuerySet(QuerySet):
-	def __init__(self, document, collection):
+	def __init__(self, document, collection, _rewrite_initial=False):
 		super(TaxonomyQuerySet, self).__init__(document, collection)
-		if self._document is Taxonomy:
+		if _rewrite_initial:
 			self._initial_query = {'_cls': {'$in': Taxonomy._subclasses}}
+
+	@property
+	def base_query(self):
+		return TaxonomyQuerySet(self._document, self._collection)
 
 	# Quick Lookup
 
@@ -62,7 +66,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		# Optimization note: this doesn't need to worry about normalizing paths, thus the _from_doc_delete.
 		# TODO: Handle potential exception: signal handlers may preemptively delete included records. That's perfectly ok!
-		self._document.objects(parents__in=parents).delete(write_concern=None, _from_doc_delete=True)  # TODO: write_concern
+		self.base_query(parents__in=parents).delete(write_concern=None, _from_doc_delete=True)  # TODO: write_concern
 
 		# Returns original QuerySet, as it'll need to re-query to check if any included results survive.
 		return self
@@ -75,13 +79,13 @@ class TaxonomyQuerySet(QuerySet):
 		log.info("Inserting asset.", extra=dict(asset=parent.id, index=index, child=getattr(child, 'id', child)))
 
 		# Detach the new child (and thus it's own child nodes).
-		child = (self._document.objects.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
+		child = (self.base_query.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 
 		if index < 0:
-			_max = self._document.objects(parent=parent).order_by('-order').scalar('order').first()
+			_max = self.base_query(parent=parent).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 
-		q = self._document.objects(parent=parent, order__gte=index).update(inc__order=1)
+		q = self.base_query(parent=parent, order__gte=index).update(inc__order=1)
 
 		log.debug("before", extra=dict(data=repr(child._data)))
 
@@ -116,12 +120,14 @@ class TaxonomyQuerySet(QuerySet):
 
 		self.nextAll.update(inc__order=-1)
 
-		self.contents.update(parents__pull_all=obj.parents)
+		self.contents.update(pull_all__parents=obj.parents)
+
 
 		obj.order = None
 		obj.path = obj.name
 		obj.parent = None
-		del obj.parents[:]
+		# We can't use `del obj.parents[:]` because of some unintentional mongoengine behaviour
+		obj.parents.clear()
 
 		if path:
 			obj._normpath(obj.id)
@@ -195,19 +201,19 @@ class TaxonomyQuerySet(QuerySet):
 
 	def appendTo(self, parent):
 		"""Insert this asset as a child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(parent, 'pk', parent)).append(self.clone().first())
+		return self.base_query(pk=getattr(parent, 'pk', parent)).append(self.clone().first())
 
 	def prependTo(self, parent):
 		"""Insert this asset as the left-most child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(parent, 'pk', parent)).prepend(self.clone().first())
+		return self.base_query(pk=getattr(parent, 'pk', parent)).prepend(self.clone().first())
 
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).before(self.clone().first())
+		return self.base_query(pk=getattr(sibling, 'pk', sibling)).before(self.clone().first())
 
 	def insertAfter(self, sibling):
 		"""Insert this asset as the right-hand child of the asset specified by the parameter."""
-		return self._document.objects(pk=getattr(sibling, 'pk', sibling)).after(self.clone().first())
+		return self.base_query(pk=getattr(sibling, 'pk', sibling)).after(self.clone().first())
 
 	# Traversal
 
@@ -215,13 +221,13 @@ class TaxonomyQuerySet(QuerySet):
 	def children(self):
 		"""Yield all direct children of this asset."""
 
-		return self._document.objects(parent__in=list(self.clone().scalar('id'))).order_by('parent', 'order')
+		return self.base_query(parent__in=self.clone()).order_by('parent', 'order')
 
 	@property
 	def contents(self):
 		"""Yield all descendants of this asset."""
 
-		return self._document.objects(parents__in=self.clone().scalar('id').all()).order_by('parent', 'order')
+		return self.base_query(parents__in=self.clone().all()).order_by('parent', 'order')
 
 	@property
 	def siblings(self):
@@ -237,7 +243,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:  # TODO: Armour everywhere.
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('parent', 'order')
+		return self.base_query(reduce(__or__, query)).order_by('parent', 'order')
 
 	@property
 	def next(self):
@@ -253,7 +259,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('path').first()
+		return self.base_query(reduce(__or__, query)).order_by('path').first()
 
 	@property
 	def nextAll(self):
@@ -271,7 +277,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('parent', 'order')
+		return self.base_query(reduce(__or__, query)).order_by('parent', 'order')
 
 	@property
 	def prev(self):
@@ -287,7 +293,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('parent').first()
+		return self.base_query(reduce(__or__, query)).order_by('parent').first()
 
 	@property
 	def prevAll(self):
@@ -304,7 +310,7 @@ class TaxonomyQuerySet(QuerySet):
 		if not query:
 			return None
 
-		return self._document.objects(reduce(__or__, query)).order_by('parent', 'order')
+		return self.base_query(reduce(__or__, query)).order_by('parent', 'order')
 
 	def contains(self, other):
 		"""The asset, specified by the parameter, is a descendant of any of the selected assets."""
@@ -314,7 +320,7 @@ class TaxonomyQuerySet(QuerySet):
 			assert isinstance(other, Asset) or isinstance(other, ObjectId), "Argument must be Asset or ObjectId instance."
 
 		parents = self.clone().scalar('id').no_dereference()
-		return bool(self._document.objects(pk=getattr(other, 'pk', other), parents__in=parents).count())
+		return bool(self.base_query(pk=getattr(other, 'pk', other), parents__in=parents).count())
 
 	def extend(self, *others):
 		"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
@@ -330,7 +336,7 @@ class Taxonomy(Document):
 		# id_field = 'id',
 		ordering = ['order'],
 		allow_inheritance = True,
-		# abstract = True,
+		abstract = True,
 		queryset_class = TaxonomyQuerySet,
 	)
 
@@ -356,7 +362,7 @@ class Taxonomy(Document):
 	
 	@property
 	def tqs(self):
-		return TaxonomyQuerySet(Taxonomy, self._get_collection())
+		return TaxonomyQuerySet(self.__class__, self._get_collection(), _rewrite_initial=True)
 
 	def tree(self, indent=''):
 		print(indent, repr(self), sep='')
