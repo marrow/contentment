@@ -19,11 +19,75 @@ def remove_children(sender, document, **kw):
 	document.empty()
 
 
+from mongoengine import EmbeddedDocument
+from bson import DBRef, SON
+from mongoengine.dereference import DeReference
+from mongoengine.base import get_document, TopLevelDocumentMetaclass
+
+
+class CustomDereference(DeReference):
+	def _find_references(self, items, depth=0):
+		"""
+		Recursively finds all db references to be dereferenced
+
+		:param items: The iterable (dict, list, queryset)
+		:param depth: The current depth of recursion
+		"""
+		reference_map = {}
+		if not items or depth >= self.max_depth:
+			return reference_map
+
+		# Determine the iterator to use
+		if not hasattr(items, 'items'):
+			iterator = enumerate(items)
+		else:
+			iterator = iter(items.items())
+
+		# Recursively find dbreferences
+		depth += 1
+		for k, item in iterator:
+			if isinstance(item, (Document, EmbeddedDocument)):
+				for field_name, field in item._fields.items():
+					v = item._data.get(field_name, None)
+					if v and getattr(field, 'document_type', object) is Taxonomy and issubclass(getattr(field, 'document_type', object), Taxonomy):
+						reference_map.setdefault(get_document(v.cls), set()).add(v.id)
+					elif getattr(field, 'document_type', object) is Taxonomy:
+						continue
+					elif isinstance(v, DBRef):
+						reference_map.setdefault(field.document_type, set()).add(v.id)
+					elif isinstance(v, (dict, SON)) and '_ref' in v:
+						reference_map.setdefault(get_document(v['_cls']), set()).add(v['_ref'].id)
+					elif isinstance(v, (dict, list, tuple)) and depth <= self.max_depth:
+						field_cls = getattr(getattr(field, 'field', None), 'document_type', None)
+						references = self._find_references(v, depth)
+						for key, refs in references.items():
+							if isinstance(field_cls, (Document, TopLevelDocumentMetaclass)):
+								key = field_cls
+							reference_map.setdefault(key, set()).update(refs)
+			elif isinstance(item, DBRef):
+				reference_map.setdefault(item.collection, set()).add(item.id)
+			elif isinstance(item, (dict, SON)) and '_ref' in item:
+				reference_map.setdefault(get_document(item['_cls']), set()).add(item['_ref'].id)
+			elif isinstance(item, (dict, list, tuple)) and depth - 1 <= self.max_depth:
+				references = self._find_references(item, depth - 1)
+				for key, refs in references.items():
+					reference_map.setdefault(key, set()).update(refs)
+
+		return reference_map
+
+
 class TaxonomyQuerySet(QuerySet):
 	def __init__(self, document, collection, _rewrite_initial=False):
 		super(TaxonomyQuerySet, self).__init__(document, collection)
+		self.__dereference = None
 		if _rewrite_initial:
 			self._initial_query = {'_cls': {'$in': Taxonomy._subclasses}}
+
+	@property
+	def _dereference(self):
+		if not self.__dereference:
+			self.__dereference = CustomDereference()
+		return self.__dereference
 
 	@property
 	def base_query(self):
@@ -331,6 +395,26 @@ class TaxonomyQuerySet(QuerySet):
 		return self
 
 
+from mongoengine.queryset import DO_NOTHING
+
+
+class CustomReferenceField(ReferenceField):
+	def __init__(self, document_type, dbref=False, reverse_delete_rule=DO_NOTHING, **kwargs):
+		super().__init__(document_type, dbref, reverse_delete_rule, **kwargs)
+		self.calculated_document = None
+
+	@property
+	def document_type(self):
+		if self.calculated_document is None:
+			return super(CustomReferenceField, self).document_type
+
+	def __get__(self, instance, owner):
+		data = instance._data.get(self.name)
+		if data is not None:
+			import ipdb; ipdb.set_trace()
+		return super().__get__(instance, owner)
+
+
 class Taxonomy(Document):
 	meta = dict(
 		# id_field = 'id',
@@ -359,6 +443,15 @@ class Taxonomy(Document):
 
 	def __repr__(self):
 		return "{0.__class__.__name__} ({0.name}, {0.path})".format(self)
+
+	@property
+	def _qs(self):
+		"""
+		Returns the queryset to use for updating / reloading / deletions
+		"""
+		if not hasattr(self, '__objects'):
+			self.__objects = self.tqs
+		return self.__objects
 	
 	@property
 	def tqs(self):
