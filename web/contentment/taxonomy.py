@@ -4,10 +4,12 @@ from itertools import chain
 
 from bson import ObjectId
 from mongoengine import QuerySet, Q
-from mongoengine import Document, ListField, StringField, IntField
-from mongoengine import CachedReferenceField, ReferenceField, GenericReferenceField
-from mongoengine.fields import RECURSIVE_REFERENCE_CONSTANT
+from mongoengine import Document, ListField, StringField, IntField, ObjectIdField
+from mongoengine import ReferenceField
 from mongoengine.signals import pre_delete
+from mongoengine.common import _import_class
+from mongoengine.base.fields import ComplexBaseField
+from mongoengine.base.datastructures import EmbeddedDocumentList, BaseList, BaseDict
 
 from .util.model import signal
 
@@ -26,13 +28,15 @@ from mongoengine.base import get_document, TopLevelDocumentMetaclass
 
 
 class CustomDereference(DeReference):
-	def _find_references(self, items, depth=0):
+	def _find_references(self, items, depth=0, finded_ids=None):
 		"""
 		Recursively finds all db references to be dereferenced
 
 		:param items: The iterable (dict, list, queryset)
 		:param depth: The current depth of recursion
 		"""
+		# if items and isinstance(items, list) and getattr(items[0], 'name', '') == 'child2':
+		# 	import pudb; pudb.set_trace()
 		reference_map = {}
 		if not items or depth >= self.max_depth:
 			return reference_map
@@ -45,31 +49,40 @@ class CustomDereference(DeReference):
 
 		# Recursively find dbreferences
 		depth += 1
+		processed_ids = finded_ids if finded_ids is not None else set()
 		for k, item in iterator:
 			if isinstance(item, (Document, EmbeddedDocument)):
 				for field_name, field in item._fields.items():
 					v = item._data.get(field_name, None)
-					if v and getattr(field, 'document_type', object) is Taxonomy and issubclass(getattr(field, 'document_type', object), Taxonomy):
-						reference_map.setdefault(get_document(v.cls), set()).add(v.id)
-					elif getattr(field, 'document_type', object) is Taxonomy:
-						continue
-					elif isinstance(v, DBRef):
-						reference_map.setdefault(field.document_type, set()).add(v.id)
-					elif isinstance(v, (dict, SON)) and '_ref' in v:
+					if (v and getattr(field, 'document_type', object) is Taxonomy and
+							isinstance(v, Taxonomy) and
+							v.id not in processed_ids):
+						processed_ids.add(v.id)
+						reference_map.setdefault(type(v), set()).add(v.id)
+					elif isinstance(v, DBRef) and v.id not in processed_ids:
+						processed_ids.add(v.id)
+						try:
+							reference_map.setdefault(get_document(v.cls), set()).add(v.id)
+						except AttributeError:
+							reference_map.setdefault(field.document_type, set()).add(v.id)
+					elif isinstance(v, (dict, SON)) and '_ref' in v and v['_ref'].id not in processed_ids:
+						processed_ids.add(v['_ref'].id)
 						reference_map.setdefault(get_document(v['_cls']), set()).add(v['_ref'].id)
 					elif isinstance(v, (dict, list, tuple)) and depth <= self.max_depth:
 						field_cls = getattr(getattr(field, 'field', None), 'document_type', None)
-						references = self._find_references(v, depth)
+						references = self._find_references(v, depth, processed_ids)
 						for key, refs in references.items():
-							if isinstance(field_cls, (Document, TopLevelDocumentMetaclass)):
+							if isinstance(field_cls, (Document, TopLevelDocumentMetaclass)) and key is Taxonomy:
 								key = field_cls
 							reference_map.setdefault(key, set()).update(refs)
-			elif isinstance(item, DBRef):
+			elif isinstance(item, DBRef) and item.id not in processed_ids:
+				processed_ids.add(item.id)
 				reference_map.setdefault(item.collection, set()).add(item.id)
-			elif isinstance(item, (dict, SON)) and '_ref' in item:
+			elif isinstance(item, (dict, SON)) and '_ref' in item and item['_ref'].id not in processed_ids:
+				processed_ids.add(item['_ref'].id)
 				reference_map.setdefault(get_document(item['_cls']), set()).add(item['_ref'].id)
 			elif isinstance(item, (dict, list, tuple)) and depth - 1 <= self.max_depth:
-				references = self._find_references(item, depth - 1)
+				references = self._find_references(item, depth - 1, processed_ids)
 				for key, refs in references.items():
 					reference_map.setdefault(key, set()).update(refs)
 
@@ -91,7 +104,7 @@ class TaxonomyQuerySet(QuerySet):
 
 	@property
 	def base_query(self):
-		return TaxonomyQuerySet(self._document, self._collection)
+		return TaxonomyQuerySet(Taxonomy, self._collection)
 
 	# Quick Lookup
 
@@ -126,7 +139,9 @@ class TaxonomyQuerySet(QuerySet):
 		Warning: If run on all assets this will only leave the root element intact. It would also be expensive.
 		"""
 
-		parents = self.clone().filter(*q_objs, **query).scalar('id')
+		# import ipdb; ipdb.set_trace()
+
+		parents = self.clone().filter(*q_objs, **query)
 
 		# Optimization note: this doesn't need to worry about normalizing paths, thus the _from_doc_delete.
 		# TODO: Handle potential exception: signal handlers may preemptively delete included records. That's perfectly ok!
@@ -301,7 +316,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for id, parent in self.clone().scalar('id', 'parent').no_dereference():
+		for id, parent in self.clone().scalar('id', 'parent'):#.no_dereference():
 			query.append(Q(parent=parent, id__ne=id))
 
 		if not query:  # TODO: Armour everywhere.
@@ -317,7 +332,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
 			query.append(Q(parent=parent, order=order + 1))
 
 		if not query:
@@ -335,7 +350,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		# Indexing note: (parent, order, id) for covered query and optimal re-use.
 		# Including id here to prevent an edge case (assets being shuffled) from including non-siblings.
-		for id, parent, order in self.clone().scalar('id', 'parent', 'order').no_dereference():
+		for id, parent, order in self.clone().scalar('id', 'parent', 'order'):#.no_dereference():
 			query.append(Q(parent=parent, order__gt=order, id__ne=id))
 
 		if not query:
@@ -351,7 +366,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
 			query.append(Q(parent=parent, order=order - 1))
 
 		if not query:
@@ -368,7 +383,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().scalar('parent', 'order').no_dereference():
+		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
 			query.append(Q(parent=parent, order__lt=order))
 
 		if not query:
@@ -395,48 +410,79 @@ class TaxonomyQuerySet(QuerySet):
 		return self
 
 
-from mongoengine.queryset import DO_NOTHING
-
-
-class CustomReferenceField(ReferenceField):
-	def __init__(self, document_type, dbref=False, reverse_delete_rule=DO_NOTHING, **kwargs):
-		super().__init__(document_type, dbref, reverse_delete_rule, **kwargs)
-		self.calculated_document = None
-
-	@property
-	def document_type(self):
-		if self.calculated_document is None:
-			return super(CustomReferenceField, self).document_type
-
+class CustomDereferenceMixin(ComplexBaseField):
 	def __get__(self, instance, owner):
-		data = instance._data.get(self.name)
-		if data is not None:
-			import ipdb; ipdb.set_trace()
-		return super().__get__(instance, owner)
+		"""Descriptor to automatically dereference references.
+		"""
+		if instance is None:
+			# Document class being used rather than a document object
+			return self
+
+		ReferenceField = _import_class('ReferenceField')
+		GenericReferenceField = _import_class('GenericReferenceField')
+		EmbeddedDocumentListField = _import_class('EmbeddedDocumentListField')
+		dereference = (self._auto_dereference and
+					   (self.field is None or isinstance(self.field,
+														 (GenericReferenceField, ReferenceField))))
+
+		_dereference = CustomDereference()
+
+		self._auto_dereference = instance._fields[self.name]._auto_dereference
+		if instance._initialised and dereference and instance._data.get(self.name):
+			instance._data[self.name] = _dereference(
+				instance._data.get(self.name), max_depth=1, instance=instance,
+				name=self.name
+			)
+
+		value = super(ComplexBaseField, self).__get__(instance, owner)
+
+		# Convert lists / values so we can watch for any changes on them
+		if isinstance(value, (list, tuple)):
+			if (issubclass(type(self), EmbeddedDocumentListField) and
+					not isinstance(value, EmbeddedDocumentList)):
+				value = EmbeddedDocumentList(value, instance, self.name)
+			elif not isinstance(value, BaseList):
+				value = BaseList(value, instance, self.name)
+			instance._data[self.name] = value
+		elif isinstance(value, dict) and not isinstance(value, BaseDict):
+			value = BaseDict(value, instance, self.name)
+			instance._data[self.name] = value
+
+		if (self._auto_dereference and instance._initialised and
+				isinstance(value, (BaseList, BaseDict)) and
+				not value._dereferenced):
+			value = _dereference(
+				value, max_depth=1, instance=instance, name=self.name
+			)
+			value._dereferenced = True
+			instance._data[self.name] = value
+
+		return value
+
+
+class CustomListField(CustomDereferenceMixin, ListField):
+	pass
 
 
 class Taxonomy(Document):
 	meta = dict(
-		# id_field = 'id',
+		id_field = 'id',
 		ordering = ['order'],
 		allow_inheritance = True,
 		abstract = True,
 		queryset_class = TaxonomyQuerySet,
 	)
 
-	# parent = CachedReferenceField(
 	parent = ReferenceField(
 			'self',
 			db_field = 't_p',
-			# fields = ['name'],
 			export=False
 		)
-	# parents = ListField(CachedReferenceField(
-	parents = ListField(ReferenceField(
+	parents = CustomListField(ReferenceField(
 			'self',
-			# fields = ['name', 'acl'],
 		), db_field='t_a', export=False)
 
+	id = ObjectIdField(db_field='_id', primary_key=True, default=ObjectId)
 	name = StringField(db_field='n', export=True, simple=True)
 	path = StringField(db_field='t_P', unique=True, export=True, simple=True)
 	order = IntField(db_field='t_o', default=0, export=True, simple=True)
