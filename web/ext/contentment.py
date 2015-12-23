@@ -33,3 +33,6 @@ class ContentmentExtension:
 			log.info("Found asset type: " + repr(asset_type))
 		
 		# registry.register(render_asset, Asset)
+	
+	def prepare(self, context):
+		context.domain, _, _ = context.request.host.partition(':')

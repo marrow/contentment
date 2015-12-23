@@ -5,7 +5,7 @@ from bson import ObjectId
 from marrow.package.cache import PluginCache
 from mongoengine import Document
 from mongoengine import EmbeddedDocumentField
-from mongoengine import StringField, IntField, MapField, DateTimeField, CachedReferenceField, ListField
+from mongoengine import StringField, IntField, MapField, DateTimeField, ReferenceField, CachedReferenceField, ListField
 
 from web.contentment.acl import ACLRule
 from web.contentment.taxonomy import remove_children, TaxonomyQuerySet, Taxonomy
@@ -26,7 +26,6 @@ class Asset(Taxonomy):
 			collection = 'asset',
 			ordering = ['order'],
 			allow_inheritance = True,
-			# queryset_class = TaxonomyQuerySet,
 			index_cls = False,
 			
 			# TODO: Bug in MongoEngine?
@@ -49,24 +48,7 @@ class Asset(Taxonomy):
 		title = importers.translated_field,
 		description = importers.translated_field,
 	)
-	
-	# # Taxonomy
-	#
-	# parent = CachedReferenceField(
-	# 		'Asset',
-	# 		db_field = 't_p',
-	# 		fields = ['name'],
-	# 		custom_data=P(export=False),
-	# 	)
-	# parents = ListField(CachedReferenceField(
-	# 		'Asset',
-	# 		fields = ['name', 'acl'],
-	# 	), db_field='t_a', custom_data=P(export=False))
-	#
-	# name = StringField(db_field='n', export=True, simple=True)
-	# path = StringField(db_field='t_P', unique=True, export=True, simple=True)
-	# order = IntField(db_field='t_o', default=0, export=True, simple=True)
-	#
+
 	# Basic Properties
 	title = MapField(StringField(), db_field='a_t', default=dict, export=True, simple=False)  # TODO: TranslatedField
 	description = MapField(StringField(), db_field='a_d', default=dict, export=True, simple=False)  # TODO: TranslatedField
@@ -171,214 +153,3 @@ class Asset(Taxonomy):
 		return ""
 	
 	as_text = property(lambda self: self.__text__())
-	
-	# # Taxonomy
-	#
-	# # Internal Management
-	#
-	# def _normpath(self, parent):
-	# 	for child in self._get_collection().find({'t_a._id': parent}, {'n': 1, 't_a.n': 1}).sort('t_P'):
-	# 		Asset.objects(id=child['_id']).update_one(set__path='/' + '/'.join(chain((i['n'] for i in child['t_a']), [child['n']])))
-	#
-	# # Basic Management
-	#
-	# def empty(self):
-	# 	"""Delete all descendants of this asset."""
-	# 	log.warn("Emptying asset of children.", extra=dict(asset=self.id))
-	# 	# "only" here is an optimization to speed up signal delivery
-	# 	self.children.only('id').delete(_from_doc_delete=True)
-	# 	return self
-	#
-	# def insert(self, index, child):
-	# 	"""Add an asset, specified by the parameter, as a child of this asset."""
-	#
-	# 	log.info("Inserting asset.", extra=dict(asset=self.id, index=index, child=getattr(child, 'id', child)))
-	#
-	# 	# Detach the new child (and thus it's own child nodes).
-	# 	child = (Asset.objects.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
-	#
-	# 	if index < 0:
-	# 		_max = Asset.objects(parent=self).order_by('-order').scalar('order').first()
-	# 		index = 0 if _max is None else (_max + 1)
-	#
-	# 	Asset.objects(parent=self, order__gte=index).update(inc__order=1)
-	#
-	# 	log.debug("before", extra=dict(data=repr(child._data)))
-	#
-	# 	child.order = index
-	#
-	# 	child.path = self.path + '/' + child.name
-	# 	child.parent = self
-	# 	child.parents = list(self.parents)
-	# 	child.parents.append(self)
-	#
-	# 	log.debug("after", extra=dict(data=repr(child._data)))
-	#
-	# 	child = child.save()
-	#
-	# 	ancestors = list(Asset.objects(id=child.id).scalar('parents').no_dereference())
-	# 	print("Child contents:", child.contents)
-	# 	child.contents.update(__raw__={'$push': {'t_a': {'$each': ancestors, '$position': 0}}})
-	# 	# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
-	#
-	# 	self._normpath(child.id)
-	#
-	# 	return self
-	#
-	# def detach(self, path=True):
-	# 	"""Detach this asset from its current taxonomy."""
-	#
-	# 	if self.path in (None, '', self.name):
-	# 		return self
-	#
-	# 	log.warn("Detaching from taxonomy." + "\n\t" + __import__('json').dumps(dict(asset=repr(self), path=path)))
-	#
-	# 	self.nextAll.update(inc__order=-1)
-	#
-	# 	self.contents.update(parents__pull_all=self.parents)
-	#
-	# 	self.order = None
-	# 	self.path = self.name
-	# 	self.parent = None
-	# 	del self.parents[:]
-	#
-	# 	if path:
-	# 		self._normpath(self.id)
-	# 		return self.save()
-	#
-	# 	return self
-	#
-	# def append(self, child):
-	# 	"""Insert an asset, specified by the parameter, as a child of this asset."""
-	# 	return self.insert(-1, child)
-	#
-	# def prepend(self, child):
-	# 	return self.insert(0, child)
-	#
-	# def after(self, sibling):
-	# 	"""Insert an asset, specified by the parameter, after this asset."""
-	# 	self.parent.insert(self.order + 1, sibling)
-	# 	return self.reload()
-	#
-	# def before(self, sibling):
-	# 	"""Insert an asset, specified by the parameter, before this asset."""
-	# 	self.parent.insert(self.order, sibling)
-	# 	return self.reload()
-	#
-	# def replace(self, target):
-	# 	"""Replace an asset, specified by the parameter, with this asset."""
-	#
-	# 	target = Asset.objects.get(id=target) if isinstance(target, ObjectId) else target
-	#
-	# 	self.name = target.name
-	# 	self.parent = target.parent
-	# 	self.parents = target.parents
-	# 	self.path = target.path
-	# 	self.order = target.order
-	#
-	# 	target.delete()
-	#
-	# 	return self.save()
-	#
-	# def replaceWith(self, source):
-	# 	"""Replace this asset with an asset specified by the parameter."""
-	#
-	# 	source = Asset.objects.get(id=source) if isinstance(source, ObjectId) else source
-	#
-	# 	source.name = self.name
-	# 	source.parent = self.parent
-	# 	source.parents = self.parents
-	# 	source.path = self.path
-	# 	source.order = self.order
-	#
-	# 	self.delete()
-	#
-	# 	return source.save()
-	#
-	# def clone(self):
-	# 	clone = Asset.objects.get(id=self.id)
-	# 	del clone.id
-	# 	return clone
-	#
-	# # Pivoted Manipulation
-	# # These are actually implemented elsewhere.
-	#
-	# def appendTo(self, parent):
-	# 	"""Insert this asset as a child of the asset specified by the parameter."""
-	#
-	# 	parent = Asset.objects(pk=parent).get() if isinstance(parent, ObjectId) else parent
-	# 	parent.append(self)
-	#
-	# 	return self.reload()
-	#
-	# def prependTo(self, parent):
-	# 	"""Insert this asset as the left-most child of the asset specified by the parameter."""
-	#
-	# 	parent = Asset.objects(pk=parent).get() if isinstance(parent, ObjectId) else parent
-	# 	parent.prepend(self)
-	#
-	# 	return self.reload()
-	#
-	# def insertBefore(self, sibling):
-	# 	"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
-	#
-	# 	sibling = Asset.objects(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-	# 	sibling.before(self)
-	#
-	# 	return self.reload()
-	#
-	# def insertAfter(self, sibling):
-	# 	"""Insert his asset as the right-hand child of the asset specified by the parameter."""
-	#
-	# 	sibling = Asset.objects(pk=sibling).get() if isinstance(sibling, ObjectId) else sibling
-	# 	sibling.after(self)
-	#
-	# 	return self.reload()
-	#
-	# # Traversal
-	#
-	# @property
-	# def children(self):
-	# 	"""Yield all direct children of this asset."""
-	# 	return Asset.objects(__raw__={'t_p._id': self.id}).order_by('order')
-	#
-	# @property
-	# def contents(self):
-	# 	"""Yield all descendants of this asset."""
-	# 	return Asset.objects(parents=self).order_by('path')
-	#
-	# @property
-	# def siblings(self):
-	# 	"""All siblings of this asset, not including this asset."""
-	# 	return Asset.objects(parent=self.parent, id__ne=self.id).order_by('order')
-	#
-	# @property
-	# def next(self):
-	# 	"""The sibling immediately following this asset."""
-	# 	return Asset.objects(parent=self.parent, order__gt=self.order).order_by('order').first()
-	#
-	# @property
-	# def nextAll(self):
-	# 	"""All siblings following this asset."""
-	# 	return Asset.objects(parent=self.parent, order__gt=self.order).order_by('order')
-	#
-	# @property
-	# def prev(self):
-	# 	"""The sibling immediately preceeding this asset."""
-	# 	return Asset.objects(parent=self.parent, order__lt=self.order).order_by('-order').first()
-	#
-	# @property
-	# def prevAll(self):
-	# 	"""All siblings preceeding this asset."""
-	# 	return Asset.objects(parent=self.parent, order__lt=self.order).order_by('order')
-	#
-	# def contains(self, other):
-	# 	"""The asset, specified by the parameter, is a descendant of this asset."""
-	# 	return bool(Asset.objects(pk=self.pk, children=other).count())
-	#
-	# def extend(self, *others):
-	# 	"""Merge the contents of another asset or assets, specified by positional parameters, with this one."""
-	#
-	# 	for other in others:
-	# 		for child in other.children:
-	# 			self.insert(-1, child)
