@@ -26,7 +26,7 @@ class ContentmentDispatch:
 			yield from self._object_dispatch_chain(context, root)
 			return
 		
-		search = '/' + context.domain + context.request.path_info.rstrip('/')  # + request.script_name ?
+		search = context.request.path_info
 		
 		if __debug__:
 			log.debug("Starting Contentment dispatch.", extra=dict(
@@ -51,4 +51,4 @@ class ContentmentDispatch:
 		#import pudb; pu.db
 		document, controller = nearest.controller
 		
-		yield nearest.path.split('/')[2:], controller(context, document), False
+		yield nearest.path.split('/')[1:], controller(context, document), False
