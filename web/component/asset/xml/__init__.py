@@ -22,7 +22,7 @@ def get_simple_fields(record):
 		field = record._fields.get(field_name)
 		if field is None:
 			continue
-		meta = field.custom_data or {}
+		meta = getattr(field, 'custom_data', {})
 		if not meta.get('export', True):
 			continue
 
@@ -42,7 +42,7 @@ def get_complex_fields(record, level):
 		field = record._fields.get(field_name)
 		if field is None:
 			continue
-		meta = field.custom_data or {}
+		meta = getattr(field, 'custom_data', {})
 		if not meta.get('export', True):
 			continue
 
