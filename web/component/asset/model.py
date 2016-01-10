@@ -200,7 +200,7 @@ class Asset(Document):
 		
 		Asset.objects(parent=self, order__gte=index).update(inc__order=1)
 		
-		log.debug("before", extra=dict(data=repr(child._data)))
+		log.debug("before", extra=dict(data=repr(dict(child._data))))
 		
 		child.order = index
 		
