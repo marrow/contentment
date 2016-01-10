@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from web.core import local
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
 
@@ -65,5 +66,7 @@ class ContentmentExtension:
 			context.theme = load(context.croot.properties.theme + ':page')
 		else:
 			context.theme = load('web.theme.bootstrap.base:page')
+		
+		local.context = context
 		
 		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
