@@ -15,15 +15,15 @@ def indent(context, lines, padding='\t'):
 
 
 MAP = {
-		'localhost': ('career.nse-automatech.com', 'en'),
+		'localhost': ('career.nse-automatech.com', 'en', 'http://localhost:8080/'),
 		
 		# NSE Automatech
 		# Testing URLs
-		'en.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'en'),
-		'fr.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'fr'),
+		'en.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'en', 'fr.nse.illico.cleverapps.io'),
+		'fr.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'fr', 'en.nse.illico.cleverapps.io'),
 		# Production URLs
-		'career.nse-automatech.com': ('career.nse-automatech.com', 'en'),
-		'carrieres.nse-automatech.com': ('career.nse-automatech.com', 'fr'),
+		'career.nse-automatech.com': ('career.nse-automatech.com', 'en', 'http://carrieres.nse-automatech.com'),
+		'carrieres.nse-automatech.com': ('career.nse-automatech.com', 'fr', 'http://career.nse-automatech.com'),
 		
 	}
 
@@ -60,6 +60,7 @@ class ContentmentExtension:
 		parts = MAP.get(dom, (dom, 'en'))
 		context.domain = parts[0]
 		context.lang = parts[1]
+		context.otherlang = parts[2]
 		context.croot = Asset.objects.nearest('/' + context.domain)
 		
 		if context.croot:
