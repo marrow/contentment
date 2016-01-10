@@ -3,6 +3,7 @@ import re
 import csv
 from xml.etree import ElementTree
 from mongoengine import ListField, EmbeddedDocument
+from bson import ObjectId
 
 
 SPACES_RE = re.compile(r'[^\S\r\n]{2,}')
@@ -34,7 +35,7 @@ def from_xml(data):
 	return _from_xml(element)
 
 
-def _from_xml(element):
+def _from_xml(element, parent=None, parent_order=None):
 	from . import get_asset_class
 	from web.component.asset.xml import get_xml_importer
 
@@ -76,7 +77,7 @@ def _from_xml(element):
 			field = cls._fields[field_name]
 		except KeyError as exc:
 			try:
-				field_name, field = next(((fldname, fld) for fldname, fld in cls._fields.items() if fld.verbose_name == field_name))
+				field_name, field = next(((fldname, fld) for fldname, fld in cls._fields.items() if getattr(fld, 'verbose_name', None) == field_name))
 			except StopIteration:
 				raise exc
 
@@ -86,26 +87,44 @@ def _from_xml(element):
 
 		importer = getattr(cls, '__xml_importers__', {}).get(field_name) or process_field
 		result = importer(data, field, child)
-
+		
 		if result is None and field_name in data:
 			continue
-
+		
 		data[field_name] = result
 
-	def save_model(obj):
-		obj.__class__.objects(id=obj.id).update_one(upsert=True, **obj._data)
-
-	result_obj = cls(**data)
-	if not isinstance(result_obj, EmbeddedDocument):
-		save_model(result_obj)
-
-	for child in children:
-		child_obj = _from_xml(child)
-		child_obj.parent = result_obj
-		if not isinstance(child_obj, EmbeddedDocument):
-			save_model(child_obj)
-
-	return result_obj
+	def save_model(cls, data):
+		if issubclass(cls, EmbeddedDocument):
+			obj = cls(**data)
+			return obj
+		
+		obj = cls(**data)
+		
+		if parent:
+			if not obj.path:
+				obj.path = parent.path.rstrip('/') + '/' + obj.name
+		
+			obj.parent = parent
+			obj.parents = (parent.parents or []) + [parent.to_dbref()]
+			obj.order = parent_order
+		
+		if obj.id:
+			identifier = obj.id
+			del obj.id
+			
+			cls._get_collection().update({'_id': identifier}, {'$set': obj.to_mongo()}, upsert=True)
+			
+			return cls.objects.get(id=identifier)
+		
+		obj.save()
+		return obj
+		
+	parent_obj = save_model(cls, data)
+	
+	for i, child in enumerate(children):
+		_from_xml(child, parent=parent_obj, parent_order=i)
+	
+	return parent_obj
 
 
 def process_field(data, field, element):
@@ -122,6 +141,13 @@ def list_field(data, field, element):
 
 def reference_field(data, field, element):
 	from bson import DBRef
+	from web.component.asset.model import Asset
+	
+	identifier = element.get('id')
+	
+	if not identifier:
+		return Asset.objects.only('id').get(path=element.get('path')).to_dbref()
+	
 	return DBRef(collection=element.get('collection'), id=element.get('id'))
 
 
