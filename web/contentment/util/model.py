@@ -36,10 +36,13 @@ class Properties(DynamicEmbeddedDocument):
 	def __xml_importer__(cls, element):
 		if not element.text or not element.text.strip():
 			return cls(**element.attrib)
-
+		
 		from marrow.package.loader import load
-
-		return cls(**{element.get('name'): load(element.get('type'))(element.text)})
+		
+		if element.get('type'):
+			return cls(**{element.get('name'): load(element.get('type'))(element.text)})
+		
+		return cls(**{element.get('name'): element.text})
 
 	__xml__ = properties
 
