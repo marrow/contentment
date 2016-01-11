@@ -20,6 +20,7 @@ MAP = {
 		'localhost': ('career.nse-automatech.com', 'fr', 'http://localhost:8080/'),
 		
 		# NSE Automatech
+		'app-15b75793-4441-4fe2-9c12-1f13b90d00be.cleverapps.io': ('career.nse-automatech.com', 'en', 'http://app-15b75793-4441-4fe2-9c12-1f13b90d00be.cleverapps.io'),
 		# Testing URLs
 		'en.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'en', 'fr.nse.illico.cleverapps.io'),
 		'fr.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'fr', 'en.nse.illico.cleverapps.io'),
