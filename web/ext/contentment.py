@@ -1,8 +1,10 @@
 # encoding: utf-8
 
 from web.core import local
+from web.core.response import registry
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
+from mongoengine import ImageGridFsProxy
 
 from web.component.asset.model import Asset
 
@@ -15,7 +17,7 @@ def indent(context, lines, padding='\t'):
 
 
 MAP = {
-		'localhost': ('career.nse-automatech.com', 'en', 'http://localhost:8080/'),
+		'localhost': ('career.nse-automatech.com', 'fr', 'http://localhost:8080/'),
 		
 		# NSE Automatech
 		# Testing URLs
@@ -53,7 +55,7 @@ class ContentmentExtension:
 		for asset_type in PluginManager('web.component'):
 			log.info("Found asset type: " + repr(asset_type))
 		
-		# registry.register(render_asset, Asset)
+		registry.register(self.render_gridfs_image, ImageGridFsProxy)
 	
 	def prepare(self, context):
 		dom = context.request.host.partition(':')[0]
@@ -71,3 +73,12 @@ class ContentmentExtension:
 		local.context = context
 		
 		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
+	
+	def render_gridfs_image(self, context, result):
+		response = context.response
+		
+		response.content_type = 'image/' + result.format.lower()
+		result.seek(0)
+		response.body = result.read()
+		
+		return True
