@@ -10,15 +10,15 @@
 			:dict_data[name] = data
 			:continue
 		:end
-<property name="${name}" \
+<Properties name="${name}" \
 		:if isinstance(data, dict)
 &{data} />
 		:else
-type="${module_name(data)}">${_bless(data)}</property>
+type="${module_name(data)}">${_bless(data)}</Properties>
 		:end
 		:flush
 	:end
 	:if dict_data
-<property&{dict_data} />
+<Properties&{dict_data} />
 	:end
 :end

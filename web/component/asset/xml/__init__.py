@@ -1,81 +1,135 @@
 # encoding: utf-8
+
 import io
 import csv
 import inspect
+import cinje
+
+from inspect import getargs, getmembers, ismodule, isclass
+from warnings import warn
 from functools import partial
+from collections import namedtuple
+from bson.objectid import ObjectId
+from mongoengine import EmbeddedDocumentField, ListField, ObjectIdField
 
-from mongoengine import EmbeddedDocumentField, ListField
+from .importers import from_xml
+from .templates import asset as export_asset, embedded_document as export_embedded_document
 
-from . importers import from_xml
 
-
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 XML_EXPORTERS_REGISTRY = {}
 XML_IMPORTERS_REGISTRY = {}
 ASSETS_REGISTRY = {}
 __initialized = False
 
 
-def get_simple_fields(record):
-	for field_name, field in record._fields.items():
-		if not getattr(field, 'export', True):
+FieldMetadata = namedtuple('FieldMetadata', ('name', 'export', 'simple'))
+
+
+def collect_field_metadata(record):
+	for name in record._fields_ordered:
+		field = record._fields.get(name)
+		
+		if field is None:
 			continue
+		
+		# Deprecated approach first.
+		try:
+			meta = field.custom_data
+		except:
+			# This is the proper way.
+			export = getattr(field, 'export', True)
+			simple = getattr(field, 'simple', True)
+		else:  # Let someone know.
+			if __debug__:  # Quiet down a bit in production environments.
+				warnings.warn(
+						'Deprecated use of "custom_data" field annotation on ' + field_name + ' '
+						'of ' + repr(record.__class__),
+						DeprecationWarning
+					)
+			
+			# Load the values out the old way.
+			export, simple = meta.get('export', True), meta.get('simple', True)
+		
+		return field, FieldMetadata(name, export, simple)
 
-		data = record._data[field_name]
-		if getattr(field, 'simple', True):
-			if isinstance(field, ListField):
-				output = io.StringIO()
-				writer = csv.writer(output)
-				writer.writerow(data)
-				data = output.getvalue().strip()
 
-			yield field_name, data
+def get_simple_fields(record):
+	for field, (name, export, simple) in collect_field_metadata(record):
+		if not export or not simple:  # Potentially subtle difference here.
+			continue
+		
+		data = record._data[name]
+		
+		if isinstance(field, ListField):  # CSV?  Interesting approach... --A
+			output = io.StringIO()
+			writer = csv.writer(output)
+			writer.writerow(data)
+			data = output.getvalue().strip()
+		
+		yield name, data
 
 
 def get_complex_fields(record, level):
-	for field_name, field in record._fields.items():
-		if not getattr(field, 'export', True):
+	for field, (name, export, simple) in collect_field_metadata(record):
+		if not export or simple:  # Potentially subtle difference here.
 			continue
-
-		if getattr(field, 'simple', True):
+		
+		data = record._data[name]
+		
+		if data is None:
 			continue
-
-		data = record._data[field_name]
-
-		yield from process_field(data, field, field_name, record, level=level)
+		
+		yield from process_field(data, field, name, record, level=level)
 
 
-def process_field(data, field, field_name, record, **kwargs):
-	exporter = None
-	# Get __xml__ of embedded document
-	if isinstance(field, EmbeddedDocumentField) and hasattr(field.document_type, '__xml__'):
-		exporter = partial(field.document_type.__xml__, data)
+# Check for explosions; former **kw --A
+def process_field(data, field, field_name, record, level=0, _in_list=False):
+	def export_consumer(exporter, *args, **kw):
+		if 'level' in getargs(exporter.func.__code__).args:  # Veeeery safe... optional API.
+			return exporter(*args, level=kw.get('level', level))
+		else:
+			return exporter(*args)
+	
+	def find_relevant_exporter(getter, direct, indirect=None):
+		if hasattr(direct, '__xml__'):
+			return export_consumer(field.__xml__, data)
+		
+		if indirect is not None and field_name in getattr(indirect, '__xml_exporters__', {}):
+			return export_consumer(indirect.__xml_exporters__[field_name])
+		
+		try:  # Look up the field class in the appropriate registry.
+			exporter = getter(direct)
+		except (KeyError, TypeError):
+			pass
+		else:
+			kw = {}
+			args = getargs(exporter.func.__code__).args
+			if 'record' in args: kw['record'] = record
+			if 'field_name' in args: kw['field_name'] = field_name
+			return export_consumer(exporter, data=data, **kw)  # TODO: Standardize this!
+		
+		raise TypeError("No exporter found.")
+	
+	try:
+		return find_relevant_exporter(get_xml_exporter, field, record)
+	except TypeError:
+		pass
+	
+	if not isinstance(field, EmbeddedDocumentField):  # We've exhausted our options at this point.
+		return []
+	
+	try:
+		exporter = usual_culprits(get_xml_exporter, field.document_type)
+	except TypeError:
+		# Use the default XML exporter for documents.
+		exporter = export_consumer(export_asset, data, level=level + 1)
+	
+	if not _in_list:
+		exporter = export_consumer(export_embedded_document, record, field_name, exporter())
+	
+	return exporter
 
-	# Or get field.__xml__
-	if exporter is None:
-		exporter = partial(field.__xml__, data) if hasattr(field, '__xml__') else None
-
-	if exporter is None:
-		# Or find XML exporter at class level
-		exporter = getattr(record, '__xml_exporters__', {}).get(field_name)
-		if exporter is None:
-			# Or get XML exporter for this field's class
-			exporter = get_xml_exporter(field)
-		if exporter is not None:
-			exporter = partial(exporter, record, field_name, data)
-
-	# Or get XML exporter for this embedded document's class
-	if exporter is None and isinstance(field, EmbeddedDocumentField):
-		exporter = get_xml_exporter(field.document_type)
-		if exporter is not None:
-			exporter = partial(exporter, data)
-
-	if exporter is not None:
-		meta = {}
-		args = inspect.getargs(exporter.func.__code__).args
-		if 'level' in args:
-			meta['level'] = kwargs.get('level', 0)
-		yield from exporter(**meta)
 
 
 def __init():
@@ -95,6 +149,8 @@ def __init():
 		ListField: importers.list_field,
 		ReferenceField: importers.reference_field,
 		DateTimeField: importers.datetime_field,
+		ObjectIdField: lambda d, f, e: ObjectId(e),
+		EmbeddedDocumentField: importers.embedded_document_field,
 	}
 
 	__inflate_assets()
@@ -114,17 +170,17 @@ def __inflate_assets():
 	while modules:
 		module = modules.pop(0)
 
-		for member in inspect.getmembers(module):
+		for member in getmembers(module):
 			member = member[1]
 
-			if inspect.ismodule(member):
+			if ismodule(member):
 				if member in visited:
 					continue
 
 				visited.add(member)
 				modules.append(member)
 
-			elif inspect.isclass(member) and issubclass(member, BaseDocument) and hasattr(member, '__xml__'):
+			elif isclass(member) and issubclass(member, BaseDocument) and hasattr(member, '__xml__'):
 				models.add(member)
 
 	global ASSETS_REGISTRY
@@ -134,21 +190,21 @@ def __inflate_assets():
 def get_xml_exporter(obj):
 	if not __initialized:
 		__init()
-	if not inspect.isclass(obj):
+	if not isclass(obj):
 		obj = type(obj)
-	return XML_EXPORTERS_REGISTRY.get(obj)
+	return XML_EXPORTERS_REGISTRY[obj]
 
 
 def get_xml_importer(obj):
 	if not __initialized:
 		__init()
-	if not inspect.isclass(obj):
+	if not isclass(obj):
 		obj = type(obj)
-	return XML_IMPORTERS_REGISTRY.get(obj)
+	return XML_IMPORTERS_REGISTRY[obj]
 
 
 def get_asset_class(name):
 	if not __initialized:
 		__init()
 
-	return ASSETS_REGISTRY.get(name)
+	return ASSETS_REGISTRY[name]

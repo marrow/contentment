@@ -19,6 +19,7 @@ class MongoEngineExtension:
 	
 	def __init__(self, uri, **config):
 		self.uri = uri
+		prefix = config.pop('prefix', '')
 		
 		log.info("Connecting MongoEngine to '%s'.", _safe_uri_replace.sub(r'\1://\2@', uri))
 		
@@ -40,7 +41,7 @@ class MongoEngineExtension:
 		# Accept additional keyword arguments to mongoengine.connect() from the INI.
 		for k, v in items(config):
 			pfx, _, k = k.rpartition('.')
-			if pfx != prefix or k in ('alias', 'engine', 'model', 'ready'): continue
+			if pfx != prefix or k in ('engine', 'model', 'ready'): continue
 			connection[k] = int(v) if v.isdigit() else v
 		
 		self.cb = config.get('ready', None)

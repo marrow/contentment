@@ -2,6 +2,7 @@
 
 import json
 import logging
+from web.core import local
 
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
@@ -25,13 +26,16 @@ def utcnow():
 
 
 def D_(trn):
-	if 'en' in trn:
-		return trn['en']
-
+	context = getattr(local, 'context', {})
+	lang = getattr(context, 'lang', 'en')
+	
 	try:
-		return next(iter(trn.values()))
+		return trn.get(lang, next(iter(trn.values())))
 	except StopIteration:
-		return ''
+		if __debug__:
+			return "(!MISSING!)"
+		return ""
+
 
 def _(s):
 	return s
