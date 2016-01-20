@@ -13,7 +13,7 @@ from bson.objectid import ObjectId
 from mongoengine import EmbeddedDocumentField, ListField, ObjectIdField
 
 from .importers import from_xml
-from .templates import asset as export_asset, embedded_document as export_embedded_document
+from .templates import export_document, export_embedded_document
 
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -96,6 +96,12 @@ def process_field(data, field, field_name, record, level=0, _in_list=False):
 			return export_consumer(field.__xml__, data)
 		
 		if indirect is not None and field_name in getattr(indirect, '__xml_exporters__', {}):
+			if __debug__:
+				warnings.warn(
+						'Deprecated use of "__xml_exporters__" field annotation for ' + field_name + ' '
+						'on ' + repr(indirect) + ', pass as "exporter=" to the field itself instead.',
+						DeprecationWarning
+					)
 			return export_consumer(indirect.__xml_exporters__[field_name])
 		
 		try:  # Look up the field class in the appropriate registry.
@@ -123,7 +129,7 @@ def process_field(data, field, field_name, record, level=0, _in_list=False):
 		exporter = usual_culprits(get_xml_exporter, field.document_type)
 	except TypeError:
 		# Use the default XML exporter for documents.
-		exporter = export_consumer(export_asset, data, level=level + 1)
+		exporter = export_consumer(export_document, data, level=level + 1)
 	
 	if not _in_list:
 		exporter = export_consumer(export_embedded_document, record, field_name, exporter())
