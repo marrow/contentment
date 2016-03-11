@@ -1,19 +1,43 @@
 # encoding: utf-8
 import re
 import csv
-from mongoengine.base import BaseDocument
-from mongoengine import ListField, EmbeddedDocumentField, EmbeddedDocument
+from xml.etree import ElementTree
+from mongoengine import ListField, EmbeddedDocument
+from bson import ObjectId
 
 
 SPACES_RE = re.compile(r'[^\S\r\n]{2,}')
 
 
 def tag(element):
-	return element.tag.rsplit('}', 1)[1]
+	data = element.tag.rsplit('}', 1)
+	try:
+		return data[1]
+	except IndexError:
+		return data[0]
 
 
-def from_xml(element):
+def from_xml(data):
+	element = None
+	if hasattr(data, 'read') and callable(data.read):
+		element = ElementTree.fromstring(data.read())[0]
+
+	if isinstance(data, str):
+		try:
+			with open(data, 'rt') as file:
+				element = ElementTree.parse(file).getroot()[0]
+		except FileNotFoundError:
+			element = ElementTree.fromstring(data)
+
+	if element is None:
+		raise ValueError("data must be file-like object, file path string or XML string.")
+
+	return _from_xml(element)
+
+
+def _from_xml(element, parent=None, parent_order=None):
 	from . import get_asset_class
+	from web.component.asset.xml import get_xml_importer
 
 	cls = get_asset_class(tag(element))
 	if cls is None:
@@ -22,10 +46,23 @@ def from_xml(element):
 	if hasattr(cls, '__xml_importer__'):
 		return cls.__xml_importer__(element)
 
-	data = dict(element.attrib)
-	for field_name, value in data.items():
-		if isinstance(cls._fields[field_name], ListField):
+	data = {}
+
+	for field_name, value in element.attrib.items():
+		field = cls._fields[field_name]
+		importer = get_xml_importer(field)
+		if importer is not None:
+			result = importer(data, field, value)
+			if result is None and field_name in data:
+				continue
+			data[field_name] = result
+			continue
+
+		if isinstance(field, ListField):
 			data[field_name] = next(csv.reader([value]))
+			continue
+
+		data[field_name] = value
 
 	children = []
 
@@ -40,7 +77,7 @@ def from_xml(element):
 			field = cls._fields[field_name]
 		except KeyError as exc:
 			try:
-				field_name, field = next(((fldname, fld) for fldname, fld in cls._fields.items() if fld.verbose_name == field_name))
+				field_name, field = next(((fldname, fld) for fldname, fld in cls._fields.items() if getattr(fld, 'verbose_name', None) == field_name))
 			except StopIteration:
 				raise exc
 
@@ -48,43 +85,50 @@ def from_xml(element):
 			data[field_name] = list_field(data, field, child)
 			continue
 
-		if isinstance(field, EmbeddedDocumentField):
-			importer = getattr(field.document_type, '__xml_importer__', lambda: None)
-			result = importer(child)
-		else:
-			importer = getattr(cls, '__xml_importers__', {}).get(field_name) or process_field
-			result = importer(data, field, child)
-
+		importer = getattr(cls, '__xml_importers__', {}).get(field_name) or process_field
+		result = importer(data, field, child)
+		
 		if result is None and field_name in data:
 			continue
-
-		if field_name in data:
-			if isinstance(result, BaseDocument):
-				data[field_name]._data.update(result._data)
-				continue
-
+		
 		data[field_name] = result
 
-	result_obj = cls(**data)
-	if not isinstance(result_obj, EmbeddedDocument):
-		result_obj.save()
-
-	for child in children:
-		child_obj = from_xml(child)
-		print(child_obj)
-		child_obj.parent = result_obj
-		if not isinstance(child_obj, EmbeddedDocument):
-			child_obj.save()
-
-	return result_obj
+	def save_model(cls, data):
+		if issubclass(cls, EmbeddedDocument):
+			obj = cls(**data)
+			return obj
+		
+		obj = cls(**data)
+		
+		if parent:
+			if not obj.path:
+				obj.path = parent.path.rstrip('/') + '/' + obj.name
+		
+			obj.parent = parent
+			obj.parents = (parent.parents or []) + [parent.to_dbref()]
+			obj.order = parent_order
+		
+		if obj.id:
+			identifier = obj.id
+			del obj.id
+			
+			cls._get_collection().update({'_id': identifier}, {'$set': obj.to_mongo()}, upsert=True)
+			
+			return cls.objects.get(id=identifier)
+		
+		obj.save()
+		return obj
+		
+	parent_obj = save_model(cls, data)
+	
+	for i, child in enumerate(children):
+		_from_xml(child, parent=parent_obj, parent_order=i)
+	
+	return parent_obj
 
 
 def process_field(data, field, element):
 	from web.component.asset.xml import get_xml_importer
-
-	if isinstance(field, EmbeddedDocumentField):
-		content = from_xml(element)
-		return content
 
 	importer = get_xml_importer(field)
 	if importer is not None:
@@ -97,6 +141,13 @@ def list_field(data, field, element):
 
 def reference_field(data, field, element):
 	from bson import DBRef
+	from web.component.asset.model import Asset
+	
+	identifier = element.get('id')
+	
+	if not identifier:
+		return Asset.objects.only('id').get(path=element.get('path')).to_dbref()
+	
 	return DBRef(collection=element.get('collection'), id=element.get('id'))
 
 
@@ -113,3 +164,15 @@ def datetime_field(data, field, element):
 	from datetime import datetime
 	from . import DATETIME_FORMAT
 	return datetime.strptime(element.get('at').strip(), DATETIME_FORMAT)
+
+
+def embedded_document_field(data, field, element):
+	if tag(element) in field.document_type._subclasses:
+		obj = _from_xml(element)
+	else:
+		data = {}
+		for sub in element:
+			sub = _from_xml(sub)
+			data.update(sub._data)
+		obj = field.document_type(**data) if data else None
+	return obj

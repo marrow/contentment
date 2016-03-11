@@ -3,13 +3,14 @@ import io
 import csv
 import inspect
 from functools import partial
+from bson.objectid import ObjectId
 
-from mongoengine import EmbeddedDocumentField, ListField
+from mongoengine import EmbeddedDocumentField, ListField, ObjectIdField
 
 from . importers import from_xml
 
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 XML_EXPORTERS_REGISTRY = {}
 XML_IMPORTERS_REGISTRY = {}
 ASSETS_REGISTRY = {}
@@ -17,7 +18,10 @@ __initialized = False
 
 
 def get_simple_fields(record):
-	for field_name, field in record._fields.items():
+	for field_name in record._fields_ordered:
+		field = record._fields.get(field_name)
+		if field is None:
+			continue
 		if not getattr(field, 'export', True):
 			continue
 
@@ -33,7 +37,10 @@ def get_simple_fields(record):
 
 
 def get_complex_fields(record, level):
-	for field_name, field in record._fields.items():
+	for field_name in record._fields_ordered:
+		field = record._fields.get(field_name)
+		if field is None:
+			continue
 		if not getattr(field, 'export', True):
 			continue
 
@@ -41,19 +48,17 @@ def get_complex_fields(record, level):
 			continue
 
 		data = record._data[field_name]
+		if data is None:
+			continue
 
 		yield from process_field(data, field, field_name, record, level=level)
 
 
 def process_field(data, field, field_name, record, **kwargs):
 	exporter = None
-	# Get __xml__ of embedded document
-	if isinstance(field, EmbeddedDocumentField) and hasattr(field.document_type, '__xml__'):
-		exporter = partial(field.document_type.__xml__, data)
 
 	# Or get field.__xml__
-	if exporter is None:
-		exporter = partial(field.__xml__, data) if hasattr(field, '__xml__') else None
+	exporter = partial(field.__xml__, data) if hasattr(field, '__xml__') else None
 
 	if exporter is None:
 		# Or find XML exporter at class level
@@ -64,11 +69,24 @@ def process_field(data, field, field_name, record, **kwargs):
 		if exporter is not None:
 			exporter = partial(exporter, record, field_name, data)
 
-	# Or get XML exporter for this embedded document's class
 	if exporter is None and isinstance(field, EmbeddedDocumentField):
-		exporter = get_xml_exporter(field.document_type)
-		if exporter is not None:
-			exporter = partial(exporter, data)
+		from .templates import asset, embedded_document
+
+		# Get __xml__ of embedded document
+		if hasattr(field.document_type, '__xml__'):
+			exporter = partial(field.document_type.__xml__, data)
+
+		if exporter is None:
+			# Or get XML exporter for this embedded document's class
+			exporter = get_xml_exporter(field.document_type)
+			if exporter is not None:
+				exporter = partial(exporter, data)
+			else:
+				# Or use default XML exporter for documents
+				exporter = partial(asset, data, level=kwargs.pop('level', 0) + 1)
+
+		if not kwargs.get('_in_list', False):
+			exporter = partial(embedded_document, record, field_name, exporter())
 
 	if exporter is not None:
 		meta = {}
@@ -95,6 +113,8 @@ def __init():
 		ListField: importers.list_field,
 		ReferenceField: importers.reference_field,
 		DateTimeField: importers.datetime_field,
+		ObjectIdField: lambda d, f, e: ObjectId(e),
+		EmbeddedDocumentField: importers.embedded_document_field,
 	}
 
 	__inflate_assets()
