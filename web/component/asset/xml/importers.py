@@ -99,20 +99,23 @@ def _from_xml(element, parent=None, parent_order=None):
 			return obj
 		
 		obj = cls(**data)
-		
+
 		if parent:
 			if not obj.path:
 				obj.path = parent.path.rstrip('/') + '/' + obj.name
 		
 			obj.parent = parent
 			obj.parents = (parent.parents or []) + [parent.to_dbref()]
+			# Evaluate obj.parents so it will be saved as dbrefs.
+			obj.parents
 			obj.order = parent_order
 		
 		if obj.id:
 			identifier = obj.id
-			del obj.id
+			obj_data = obj.to_mongo()
+			del obj_data[obj._fields[obj._meta['id_field']].db_field]
 			
-			cls._get_collection().update({'_id': identifier}, {'$set': obj.to_mongo()}, upsert=True)
+			cls._get_collection().update({'_id': identifier}, {'$set': obj_data}, upsert=True)
 			
 			return cls.objects.get(id=identifier)
 		
