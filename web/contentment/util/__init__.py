@@ -32,6 +32,8 @@ def D_(trn):
 	try:
 		return trn.get(lang, next(iter(trn.values())))
 	except StopIteration:
+		if __debug__:
+			return "(!MISSING!)"
 		return ""
 
 

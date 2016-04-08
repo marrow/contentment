@@ -138,6 +138,10 @@ def process_field(data, field, element):
 		return importer(data, field, element)
 
 
+def string_field(data, field, element):
+	return element.text if hasattr(element, 'text') else element
+
+
 def list_field(data, field, element):
 	return [process_field(data, field.field, child) for child in element]
 

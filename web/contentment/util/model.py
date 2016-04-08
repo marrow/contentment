@@ -26,12 +26,12 @@ def update_modified_timestamp(sender, document, **kw):
 
 class Properties(DynamicEmbeddedDocument):
 	def __repr__(self):
-		return repr(dict(self._data))
-
+		return repr({f: getattr(self, f) for f in self._dynamic_fields})
+	
 	def get(self, name, default=None):
 		if name not in self: return default
 		return getattr(self, name)
-
+	
 	@classmethod
 	def __xml_importer__(cls, element):
 		if not element.text or not element.text.strip():

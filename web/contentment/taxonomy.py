@@ -1,8 +1,9 @@
 # encoding: utf-8
 
 from itertools import chain
-
-from bson import ObjectId
+from operator import __or__
+from functools import reduce
+from bson import ObjectId, DBRef, SON
 from mongoengine import QuerySet, Q
 from mongoengine import Document, ListField, StringField, IntField, ObjectIdField
 from mongoengine import ReferenceField
@@ -10,6 +11,9 @@ from mongoengine.signals import pre_delete
 from mongoengine.common import _import_class
 from mongoengine.base.fields import ComplexBaseField
 from mongoengine.base.datastructures import EmbeddedDocumentList, BaseList, BaseDict
+from mongoengine import EmbeddedDocument
+from mongoengine.dereference import DeReference
+from mongoengine.base import get_document, TopLevelDocumentMetaclass
 
 from .util.model import signal
 
@@ -19,12 +23,6 @@ log = __import__('logging').getLogger(__name__)
 @signal(pre_delete)
 def remove_children(sender, document, **kw):
 	document.empty()
-
-
-from mongoengine import EmbeddedDocument
-from bson import DBRef, SON
-from mongoengine.dereference import DeReference
-from mongoengine.base import get_document, TopLevelDocumentMetaclass
 
 
 class CustomDereference(DeReference):
@@ -104,7 +102,7 @@ class TaxonomyQuerySet(QuerySet):
 
 	@property
 	def base_query(self):
-		return TaxonomyQuerySet(Taxonomy, self._collection)
+		return TaxonomyQuerySet(self._document, self._collection)
 
 	# Quick Lookup
 
@@ -149,195 +147,190 @@ class TaxonomyQuerySet(QuerySet):
 
 		# Returns original QuerySet, as it'll need to re-query to check if any included results survive.
 		return self
-
+	
 	def insert(self, index, child):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
-
+		
 		parent = self.clone().first()
-
+		
 		log.info("Inserting asset.", extra=dict(asset=parent.id, index=index, child=getattr(child, 'id', child)))
-
+		
 		# Detach the new child (and thus it's own child nodes).
 		child = (self.base_query.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
-
+		
 		if index < 0:
 			_max = self.base_query(parent=parent).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
-
+		
 		q = self.base_query(parent=parent, order__gte=index).update(inc__order=1)
-
-		log.debug("before", extra=dict(data=repr(child._data)))
-
+		
 		child.order = index
-
+		
 		child.path = parent.path + '/' + child.name
 		child.parent = parent
 		child.parents = list(parent.parents)
 		child.parents.append(parent)
-
-		log.debug("after", extra=dict(data=repr(child._data)))
-
+		
 		child = child.save()
-
-		print("Child contents:", child.contents)
-		child.contents.update(__raw__={'$push': {'t_a': {'$each': [i.to_dbref() for i in child.parents], '$position': 0}}})
-		# child.contents.update(push__ancestors={'$each': ancestors, '$position': 0})  # Unimplemented.
-
-		parent._normpath(child.id)
-
+		
+		child.contents.update(__raw__={
+				'$push': {
+						child.db_field_map['parents']: {
+								'$each': [
+										i.to_dbref() for i in child.parents
+									],
+								'$position': 0
+							}
+					}
+			})
+		
+		child._normpath()
+		
 		return self
-
+	
 	def detach(self, path=True):
 		"""Detach this asset from its current taxonomy."""
-
+		
 		obj = self.clone().first()
-
+		
 		if obj.path in (None, '', obj.name):
 			return obj
-
-		log.warn("Detaching from taxonomy." + "\n\t" + __import__('json').dumps(dict(asset=repr(obj), path=path)))
-
+		
+		log.warn("Detaching from taxonomy.", extra=dict(asset=repr(obj), path=path))
+		
 		self.nextAll.update(inc__order=-1)
-
 		self.contents.update(pull_all__parents=obj.parents)
-
-
+		
 		obj.order = None
 		obj.path = obj.name
 		obj.parent = None
-		# We can't use `del obj.parents[:]` because of some unintentional mongoengine behaviour
-		obj.parents.clear()
-
-		if path:
-			obj._normpath(obj.id)
-
+		obj.parents.clear()  # We can't use `del obj.parents[:]` because MongoEngine detects that.
 		obj.save()
-
-		return self
-
+		
+		if path:
+			obj._normpath()
+		
+		return obj
+	
 	def append(self, child):
 		"""Insert an asset, specified by the parameter, as a child of this asset."""
 		return self.insert(-1, child)
-
+	
 	def prepend(self, child):
 		return self.insert(0, child)
-
+	
 	def after(self, sibling):
 		"""Insert an asset, specified by the parameter, after this asset."""
 		obj = self.clone().first()
 		obj.parent.insert(obj.order + 1, sibling)
 		return self
-
+	
 	def before(self, sibling):
 		"""Insert an asset, specified by the parameter, before this asset."""
 		obj = self.clone().first()
 		obj.parent.insert(obj.order, sibling)
 		return self
-
+	
 	def replace(self, target):
 		"""Replace an asset, specified by the parameter, with this asset."""
-
+		
 		target = self.clone().get(id=target) if isinstance(target, ObjectId) else target
 		obj = self.clone().first()
-
+		
 		obj.name = target.name
 		obj.parent = target.parent
 		obj.parents = target.parents
 		obj.path = target.path
 		obj.order = target.order
-
+		
 		target.delete()
 		obj.save()
-
+		
 		return self
-
+	
 	def replaceWith(self, source):
 		"""Replace this asset with an asset specified by the parameter."""
-
+		
 		source = self.clone().get(id=source) if isinstance(source, ObjectId) else source
 		obj = self.clone().first()
-
+		
 		source.name = obj.name
 		source.parent = obj.parent
 		source.parents = obj.parents
 		source.path = obj.path
 		source.order = obj.order
-
+		
 		obj.delete()
 		source.save()
-
+		
 		return self
 
 	def clone_assets(self):
 		clones = self.clone()
 		for clone in clones:
 			del clone.id
-
+		
 		return clones
-
+	
 	# Pivoted Manipulation
 	# These are actually implemented elsewhere.
-
+	
 	def appendTo(self, parent):
 		"""Insert this asset as a child of the asset specified by the parameter."""
 		return self.base_query(pk=getattr(parent, 'pk', parent)).append(self.clone().first())
-
+	
 	def prependTo(self, parent):
 		"""Insert this asset as the left-most child of the asset specified by the parameter."""
 		return self.base_query(pk=getattr(parent, 'pk', parent)).prepend(self.clone().first())
-
+	
 	def insertBefore(self, sibling):
 		"""Insert this asset as the left-hand sibling of the asset specified by the parameter."""
 		return self.base_query(pk=getattr(sibling, 'pk', sibling)).before(self.clone().first())
-
+	
 	def insertAfter(self, sibling):
 		"""Insert this asset as the right-hand child of the asset specified by the parameter."""
 		return self.base_query(pk=getattr(sibling, 'pk', sibling)).after(self.clone().first())
-
+	
 	# Traversal
-
+	
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-
-		return self.base_query(parent__in=self.clone()).order_by('parent', 'order')
-
+		return self.base_query(parent__in=self.clone())
+	
 	@property
 	def contents(self):
 		"""Yield all descendants of this asset."""
-
-		return self.base_query(parents__in=self.clone().all()).order_by('parent', 'order')
-
+		return self.base_query(parents__in=self.clone())
+	
 	@property
 	def siblings(self):
 		"""All siblings of the currently selected assets, not including these assets."""
-		from operator import __or__
-		from functools import reduce
-
+		
 		query = []
-
+		
 		for id, parent in self.clone().scalar('id', 'parent'):#.no_dereference():
 			query.append(Q(parent=parent, id__ne=id))
-
+		
 		if not query:  # TODO: Armour everywhere.
 			return None
-
+		
 		return self.base_query(reduce(__or__, query)).order_by('parent', 'order')
-
+	
 	@property
 	def next(self):
 		"""The sibling immediately following this asset."""
 		from operator import __or__
 		from functools import reduce
-
+		
 		query = []
-
+		
 		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
 			query.append(Q(parent=parent, order=order + 1))
-
+		
 		if not query:
 			return None
-
+		
 		return self.base_query(reduce(__or__, query)).order_by('path').first()
 
 	@property
@@ -472,47 +465,64 @@ class Taxonomy(Document):
 		abstract = True,
 		queryset_class = TaxonomyQuerySet,
 	)
-
+	
 	parent = ReferenceField(
 			'self',
 			db_field = 't_p',
-			export=False
+			export = False
 		)
-	parents = CustomListField(ReferenceField(
+	parents = CustomListField(ReferenceField(  # Serious quesiton as to why custom?  --A
 			'self',
 		), db_field='t_a', export=False)
-
+	
 	id = ObjectIdField(db_field='_id', primary_key=True, default=ObjectId)
-	name = StringField(db_field='n', export=True, simple=True)
-	path = StringField(db_field='t_P', unique=True, export=True, simple=True)
-	order = IntField(db_field='t_o', default=0, export=True, simple=True)
-
+	name = StringField(db_field='n')
+	path = StringField(db_field='t_P', unique=True)
+	order = IntField(db_field='t_o', default=0)
+	
 	def __repr__(self):
 		return "{0.__class__.__name__} ({0.name}, {0.path})".format(self)
-
+	
 	@property
 	def _qs(self):
-		"""
-		Returns the queryset to use for updating / reloading / deletions
-		"""
+		"""Return the queryset for updating, reloading, and deletions."""
+		
 		if not hasattr(self, '__objects'):
 			self.__objects = self.tqs
+		
 		return self.__objects
 	
 	@property
 	def tqs(self):
 		return TaxonomyQuerySet(self.__class__, self._get_collection(), _rewrite_initial=True)
-
+	
 	def tree(self, indent=''):
-		print(indent, repr(self), sep='')
+		"""Visualization of the Asset tree."""
+		
+		print(indent, repr(self), sep="")
 
 		for child in self.children:
-			child.tree(indent + '    ')
+			child.tree(indent + "\t")
 
-	def _normpath(self, parent):
-		for child in self._get_collection().find({'t_a._id': parent}, {'n': 1, 't_a.n': 1}).sort('t_P'):
-			self.tqs(id=child['_id']).update_one(set__path='/' + '/'.join(chain((i['n'] for i in child['t_a']), [child['n']])))
-
+	def _normpath(self):
+		"""Recalculate the paths for all descendants of this asset."""
+		
+		cache = {}
+		
+		descendants = self.contents.order_by('path').no_dereference().only('parent', 'name')
+		
+		for i, child in enumerate(descendants):
+			pid = str(child.parent._id)
+			
+			if pid not in cache:
+				cache[pid] = self.tqs(id=child.parent._id).scalar('path')
+			
+			parent_path = cache[child.parent._id]
+			
+			child.update(set__path=parent_path + '/' + child.name)
+		
+		return i
+	
 	def empty(self):
 		self.tqs(id=self.id).empty()
 

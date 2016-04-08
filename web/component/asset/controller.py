@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from webob.exc import HTTPNotFound
 from markupsafe import Markup, escape
 
 from .model import Asset
@@ -13,9 +14,6 @@ class AssetController:
 		self._doc = document
 		
 		log.info("Loaded asset.", extra=dict(asset=repr(document.id)))
-	
-	def __call__(self):
-		return "Asset!"
 	
 	# TODO: Decorate as embedded handler.
 	def __embed__(self):
