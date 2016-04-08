@@ -21,6 +21,9 @@ except:
 	str = unicode
 
 
+log = logging.getLogger(__name__)
+
+
 def utcnow():
 	return datetime.utcnow().replace(microsecond=0, tzinfo=utc)
 
@@ -33,6 +36,8 @@ def D_(trn):
 		return trn.get(lang, next(iter(trn.values())))
 	except StopIteration:
 		if __debug__:
+			log.debug("Missing language value for " + lang + ": " + repr(trn))
+			# 1/0
 			return "(!MISSING!)"
 		return ""
 

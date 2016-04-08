@@ -139,7 +139,7 @@ def process_field(data, field, field_name, record, level=0, _in_list=False):
 
 
 def __init():
-	from mongoengine import StringField, ListField, ReferenceField, DateTimeField
+	from mongoengine import StringField, ListField, ReferenceField, DateTimeField, MapField
 	from web.component.asset.xml.templates import list_field, reference_field, datetime_field # circular reference
 	from . import importers
 
@@ -154,6 +154,7 @@ def __init():
 	XML_IMPORTERS_REGISTRY = {
 		StringField: importers.string_field,
 		ListField: importers.list_field,
+		MapField: importers.map_field,
 		ReferenceField: importers.reference_field,
 		DateTimeField: importers.datetime_field,
 		ObjectIdField: lambda d, f, e: ObjectId(e),
