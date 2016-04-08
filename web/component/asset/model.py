@@ -10,8 +10,6 @@ from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties
 
 from .xml.templates import export_document
-from .xml.templates import translated_field as export_translated_field
-from .xml.importers import translated_field as import_translated_field
 
 
 log = __import__('logging').getLogger(__name__)
@@ -37,25 +35,18 @@ class Asset(Taxonomy):
 	
 	title = MapField(  # TODO: TranslatedField
 			StringField(),
-			db_field = 'a_t',  # TODO: Stop doing this.
 			default = dict,
-			importer = import_translated_field,
-			exporter = export_translated_field,
 			simple = False
 		)
 		
 	description = MapField(  # TODO: TranslatedField
 			StringField(),
-			db_field = 'a_d',  # TODO: Stop doing this.
 			default = dict,
-			importer = import_translated_field,
-			exporter = export_translated_field,
 			simple = False
 		)
 	
 	tags = ListField(
 			StringField(),
-			db_field='a_T',  # TODO: Stop doing this.
 			default=list
 		)
 	
@@ -63,23 +54,21 @@ class Asset(Taxonomy):
 	
 	properties = EmbeddedDocumentField(
 			Properties,
-			db_field = 'a_p',  # TODO: Stop doing this.
 			default = Properties,
 			simple = False
 		)
 		
 	acl = ListField(
 			EmbeddedDocumentField(ACLRule),
-			db_field = 'a_a',  # TODO: Stop doing this.
 			default = list,
 			simple = False
 		)
 	
-	handler = StringField(db_field='a_h')  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
+	handler = StringField()  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
 	# Metadata
-	created = DateTimeField(db_field='a_dc', default=utcnow, simple=False)
-	modified = DateTimeField(db_field='a_dm', default=utcnow, simple=False)
+	created = DateTimeField(default=utcnow, simple=False)
+	modified = DateTimeField(default=utcnow, simple=False)
 
 	# Controller Lookup
 	

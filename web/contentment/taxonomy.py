@@ -468,17 +468,16 @@ class Taxonomy(Document):
 	
 	parent = ReferenceField(
 			'self',
-			db_field = 't_p',
 			export = False
 		)
 	parents = CustomListField(ReferenceField(  # Serious quesiton as to why custom?  --A
 			'self',
-		), db_field='t_a', export=False)
+		), export=False)
 	
 	id = ObjectIdField(db_field='_id', primary_key=True, default=ObjectId)
-	name = StringField(db_field='n')
-	path = StringField(db_field='t_P', unique=True)
-	order = IntField(db_field='t_o', default=0)
+	name = StringField()
+	path = StringField(unique=True)
+	order = IntField(default=0)
 	
 	def __repr__(self):
 		return "{0.__class__.__name__} ({0.name}, {0.path})".format(self)

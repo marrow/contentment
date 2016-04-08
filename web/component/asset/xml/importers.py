@@ -3,7 +3,6 @@ import re
 import csv
 from xml.etree import ElementTree
 from mongoengine import ListField, EmbeddedDocument
-from bson import ObjectId
 
 
 SPACES_RE = re.compile(r'[^\S\r\n]{2,}')
@@ -158,13 +157,22 @@ def reference_field(data, field, element):
 	return DBRef(collection=element.get('collection'), id=element.get('id'))
 
 
-def translated_field(data, field, element):
-	data.setdefault(tag(element), {})[next(iter(element.attrib.values()))] = element.text
+def map_field(data, field, element):
+	from web.component.asset.xml import get_xml_importer
+	
+	key = next(iter(element.attrib.values()))
+	
+	importer = get_xml_importer(field.field)
+	if importer is not None:
+		data.setdefault(tag(element), {})[key] = importer(data, field.field, element)
+		return
+	
+	data.setdefault(tag(element), {})[key] = element.text
 
 
 def text_block_content(data, field, element):
 	element.text = re.sub(SPACES_RE, ' ', element.text)
-	translated_field(data, field, element)
+	map_field(data, field, element)
 
 
 def datetime_field(data, field, element):
