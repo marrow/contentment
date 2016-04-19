@@ -4,7 +4,8 @@ import re
 from mongoengine import connect
 
 from marrow.package.loader import load
-from web.core.compat import native, items
+from marrow.util.compat import native
+from web.core.compat import items
 
 
 log = __import__('logging').getLogger(__name__)
