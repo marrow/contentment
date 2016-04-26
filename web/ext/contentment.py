@@ -1,9 +1,10 @@
 # encoding: utf-8
 
-from web.core import local
+from functools import partial
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
 from mongoengine import ImageGridFsProxy
+from web.contentment.util import D_
 
 from web.component.asset.model import Asset
 
@@ -49,13 +50,12 @@ class ContentmentExtension:
 		context.lang = parts[1]
 		context.otherlang = parts[2]
 		context.croot = Asset.objects.nearest('/' + context.domain)
+		context.D = partial(D_, lang=parts[1])
 		
 		if context.croot:
 			context.theme = load(context.croot.properties.theme + ':page')
 		else:
 			context.theme = load('web.theme.bootstrap.base:page')
-		
-		local.context = context
 		
 		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
 	

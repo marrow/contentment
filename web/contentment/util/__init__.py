@@ -28,12 +28,12 @@ def utcnow():
 	return datetime.utcnow().replace(microsecond=0, tzinfo=utc)
 
 
-def D_(trn):
+def D_(trn, lang=None, fallback='en'):
 	context = getattr(local, 'context', {})
-	lang = getattr(context, 'lang', 'en')
+	lang = getattr(context, 'lang', fallback) if lang is None else lang
 	
 	try:
-		return trn.get(lang, next(iter(trn.values())))
+		return trn.get(lang, trn.get(fallback, next(iter(trn.values()))))
 	except StopIteration:
 		if __debug__:
 			log.debug("Missing language value for " + lang + ": " + repr(trn))
