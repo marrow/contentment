@@ -47,4 +47,6 @@ class ContentmentDispatch:
 		# the dispatcher for the call.
 		document, controller = nearest.controller
 		
+		context.asset = document
+		
 		yield nearest.path.split('/')[1:], controller(context, document), False
