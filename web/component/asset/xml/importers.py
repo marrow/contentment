@@ -37,16 +37,16 @@ def from_xml(data):
 def _from_xml(element, parent=None, parent_order=None):
 	from . import get_asset_class
 	from web.component.asset.xml import get_xml_importer
-
+	
 	cls = get_asset_class(tag(element))
 	if cls is None:
 		return
-
+	
 	if hasattr(cls, '__xml_importer__'):
 		return cls.__xml_importer__(element)
-
+	
 	data = {}
-
+	
 	for field_name, value in element.attrib.items():
 		field = cls._fields[field_name]
 		importer = get_xml_importer(field)
@@ -98,7 +98,7 @@ def _from_xml(element, parent=None, parent_order=None):
 			return obj
 		
 		obj = cls(**data)
-
+		
 		if parent:
 			if not obj.path:
 				obj.path = parent.path.rstrip('/') + '/' + obj.name

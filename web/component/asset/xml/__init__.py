@@ -5,6 +5,7 @@ import csv
 import inspect
 import cinje
 
+from mongoengine.base.common import _document_registry as DOCUMENT_REGISTRY
 from inspect import getargs, getmembers, ismodule, isclass
 from warnings import warn
 from functools import partial
@@ -19,7 +20,6 @@ from .templates import export_document, export_embedded_document
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 XML_EXPORTERS_REGISTRY = {}
 XML_IMPORTERS_REGISTRY = {}
-ASSETS_REGISTRY = {}
 __initialized = False
 
 
@@ -161,38 +161,7 @@ def __init():
 		EmbeddedDocumentField: importers.embedded_document_field,
 	}
 
-	__inflate_assets()
 	__initialized = True
-
-
-def __inflate_assets():
-	import inspect
-	from importlib import import_module
-	from mongoengine.base import BaseDocument
-
-	models = set()
-	visited = set()
-	modules = ['web.component', 'web.contentment']
-	modules = [import_module(module) for module in modules]
-
-	while modules:
-		module = modules.pop(0)
-
-		for member in getmembers(module):
-			member = member[1]
-
-			if ismodule(member):
-				if member in visited:
-					continue
-
-				visited.add(member)
-				modules.append(member)
-
-			elif isclass(member) and issubclass(member, BaseDocument) and hasattr(member, '__xml__'):
-				models.add(member)
-
-	global ASSETS_REGISTRY
-	ASSETS_REGISTRY = {model.__name__: model for model in models}
 
 
 def get_xml_exporter(obj):
@@ -214,5 +183,10 @@ def get_xml_importer(obj):
 def get_asset_class(name):
 	if not __initialized:
 		__init()
-
-	return ASSETS_REGISTRY.get(name)
+	
+	try:
+		name = next(iter(i for i in DOCUMENT_REGISTRY if i == name or i.endswith('.' + name)))
+	except StopIteration:
+		return None
+	
+	return DOCUMENT_REGISTRY.get(name)
