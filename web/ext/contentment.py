@@ -51,6 +51,7 @@ class ContentmentExtension:
 		context.otherlang = parts[2]
 		context.croot = Asset.objects.nearest('/' + context.domain)
 		context.D = partial(D_, lang=parts[1])
+		context.replacement = dict(context=context)
 		
 		if context.croot:
 			context.theme = load(context.croot.properties.theme + ':page')
