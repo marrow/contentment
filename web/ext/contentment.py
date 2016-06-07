@@ -17,16 +17,7 @@ def indent(context, lines, padding='\t'):
 
 
 MAP = {
-		'localhost': ('career.nse-automatech.com', 'fr', 'http://localhost:8080/'),
-		
-		# NSE Automatech
-		'app-15b75793-4441-4fe2-9c12-1f13b90d00be.cleverapps.io': ('career.nse-automatech.com', 'en', 'http://app-15b75793-4441-4fe2-9c12-1f13b90d00be.cleverapps.io'),
-		# Testing URLs
-		'en.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'en', 'fr.nse.illico.cleverapps.io'),
-		'fr.nse.illico.cleverapps.io': ('career.nse-automatech.com', 'fr', 'en.nse.illico.cleverapps.io'),
-		# Production URLs
-		'career.nse-automatech.com': ('career.nse-automatech.com', 'en', 'http://carrieres.nse-automatech.com'),
-		'carrieres.nse-automatech.com': ('career.nse-automatech.com', 'fr', 'http://career.nse-automatech.com'),
+		'localhost': ('localhost', 'en', 'http://localhost:8080/'),
 	}
 
 
@@ -45,11 +36,11 @@ class ContentmentExtension:
 	
 	def prepare(self, context):
 		dom = context.request.host.partition(':')[0]
-		parts = MAP.get(dom, (dom, 'en'))
+		parts = MAP.get(dom, (dom, 'en', ''))
 		context.domain = parts[0]
 		context.lang = parts[1]
 		context.otherlang = parts[2]
-		context.croot = Asset.objects.nearest('/' + context.domain)
+		context.site = context.croot = Asset.objects.nearest('/' + context.domain)
 		context.D = partial(D_, lang=parts[1])
 		context.replacements = dict(context=context)
 		
