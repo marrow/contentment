@@ -36,18 +36,24 @@ class Asset(Taxonomy):
 	title = MapField(  # TODO: TranslatedField
 			StringField(),
 			default = dict,
-			simple = False
+			simple = False,
+			read = True,
+			write = True,
 		)
 		
 	description = MapField(  # TODO: TranslatedField
 			StringField(),
 			default = dict,
-			simple = False
+			simple = False,
+			read = True,
+			write = True,
 		)
 	
 	tags = ListField(
 			StringField(),
-			default=list
+			default = list,
+			read = True,
+			write = True,
 		)
 	
 	# Magic Properties
@@ -55,21 +61,25 @@ class Asset(Taxonomy):
 	properties = EmbeddedDocumentField(
 			Properties,
 			default = Properties,
-			simple = False
+			simple = False,
+			read = True,
+			write = True,
 		)
 		
 	acl = ListField(
 			EmbeddedDocumentField(ACLRule),
 			default = list,
-			simple = False
+			simple = False,
+			read = False,
+			write = False,
 		)
 	
-	handler = StringField()  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
+	handler = StringField(read=True, write=True)  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
 	
 	# Metadata
-	created = DateTimeField(default=utcnow, simple=False)
-	modified = DateTimeField(default=utcnow, simple=False)
-
+	created = DateTimeField(default=utcnow, simple=False, read=True, write=False)
+	modified = DateTimeField(default=utcnow, simple=False, read=True, write=False)
+	
 	# Controller Lookup
 	
 	_controller_cache = PluginCache('web.component')
