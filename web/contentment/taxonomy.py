@@ -175,7 +175,7 @@ class TaxonomyQuerySet(QuerySet):
 		
 		child.contents.update(__raw__={
 				'$push': {
-						child.db_field_map['parents']: {
+						'parents': {
 								'$each': [
 										i.to_dbref() for i in child.parents
 									],
@@ -510,6 +510,8 @@ class Taxonomy(Document):
 		
 		descendants = self.contents.order_by('path').no_dereference().only('parent', 'name')
 		
+		i = -1
+		
 		for i, child in enumerate(descendants):
 			pid = str(child.parent._id)
 			
@@ -520,7 +522,7 @@ class Taxonomy(Document):
 			
 			child.update(set__path=parent_path + '/' + child.name)
 		
-		return i
+		return i + 1
 	
 	def empty(self):
 		self.tqs(id=self.id).empty()

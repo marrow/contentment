@@ -10,6 +10,7 @@ from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties
 
 from .xml.templates import export_document
+from .render import render_asset_panel
 
 
 log = __import__('logging').getLogger(__name__)
@@ -28,8 +29,6 @@ class Asset(Taxonomy):
 			indexes = [
 				]
 		)
-	
-	__icon__ = 'folder-o'
 	
 	# Basic Properties
 	
@@ -94,6 +93,11 @@ class Asset(Taxonomy):
 		
 		handler = self.children.named(self.handler).get()
 		return handler.controller
+	
+	def __page_panel__(self, context, wrap=False):
+		return render_asset_panel(context, self, wrap)
+	
+	__icon__ = 'folder-o'
 	
 	# Python Methods
 	
