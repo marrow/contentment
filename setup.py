@@ -102,13 +102,12 @@ setup(
 	
 	install_requires = [
 			# 'WebCore',  # web framework  # pending 2.0 release; use requirements.txt for now
-			'mongoengine>=0.10.5',  # database layer
+			'marrow.mongo',  # database layer
 			'pytz',  # timzone support
 			'blinker',  # signals
 			'markupsafe',  # injection protection
 			'babel',  # internationalization and localization
 			'webassets',  # static asset management
-			'tablib',  # data interchange
 		],
 	
 	extras_require = dict(
