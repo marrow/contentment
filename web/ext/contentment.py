@@ -1,6 +1,8 @@
 # encoding: utf-8
 
+from collections import namedtuple
 from functools import partial
+from socket import gethostname
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
 from mongoengine import ImageGridFsProxy
@@ -16,23 +18,35 @@ def indent(context, lines, padding='\t'):
 	return padding + ('\n' + padding).join(lines.split('\n'))
 
 
-MAP = {
-		'localhost': ('localhost', 'en', 'http://localhost:8080/'),
-	}
+DomainMapping = namedtuple('DomainMapping', ('domain', 'language', 'homepage'))
+
+MAPPING = {'localhost': DomainMapping('localhost', None, 'http://localhost:8080/')}
+try:
+	_name = gethostname()
+	MAPPING[_name] = DomainMapping(_name, None, None)
 
 
 class ContentmentExtension:
-	needs = ()
+	"""WebCore extension for managing Contentment concerns.
+	
+	On startup this registers and enumerates the various Contentment plugin namespaces. It provides a minimal number
+	of configuration options:
+	
+	* `prefixed` - Use the server_name as a path prefix when looking up assets matching the current URI?
+	"""
+	
+	needs = {'mongodb'}
+	
+	def __init__(self, prefixed=False):
+		self.prefixed = prefixed
 	
 	def start(self, context):
-		log = __import__('logging').getLogger(__name__)
 		log.info("Starting Contentment extension.")
 		
 		for asset_type in PluginManager('web.component'):
 			log.info("Found asset type: " + repr(asset_type))
 		
 		context.view.register(dict, self.render_json_response)
-		context.view.register(ImageGridFsProxy, self.render_gridfs_image)
 	
 	def prepare(self, context):
 		dom = context.request.host.partition(':')[0]
@@ -61,12 +75,4 @@ class ContentmentExtension:
 		response.text = json.dumps(result)
 
 		return True
-	
-	def render_gridfs_image(self, context, result):
-		response = context.response
-		
-		response.content_type = 'image/' + result.format.lower()
-		result.seek(0)
-		response.body = result.read()
-		
-		return True
+
