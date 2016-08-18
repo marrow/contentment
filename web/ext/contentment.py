@@ -1,12 +1,15 @@
 # encoding: utf-8
 
+import os
 from functools import partial
+from itsdangerous import TimestampSigner
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
 from mongoengine import ImageGridFsProxy
+from urllib.parse import quote_plus, unquote_plus
 from web.contentment.util import D_
-
 from web.component.asset.model import Asset
+from webob.cookies import Base64Serializer, CookieProfile
 
 
 log = __import__('logging').getLogger(__name__)
@@ -19,6 +22,16 @@ def indent(context, lines, padding='\t'):
 MAP = {
 		'localhost': ('localhost', 'en', 'http://localhost:8080/'),
 	}
+
+
+class PlainSerializer(object):
+	def dumps(self, string):
+		return quote_plus(string).encode('ascii')
+	def loads(self, string):
+		return unquote_plus(string.decode('ascii'))
+
+
+user_cookie = CookieProfile('uid', httponly=True, serializer=Base64Serializer(serializer=PlainSerializer()))
 
 
 class ContentmentExtension:
@@ -48,6 +61,18 @@ class ContentmentExtension:
 			context.theme = load(context.croot.properties.theme + ':page')
 		else:
 			context.theme = load('web.theme.bootstrap.base:page')
+		
+		if 'SECRET' in os.environ and 'uid' in context.request.cookies:
+			s = TimestampSigner(os.environ['SECRET'])
+			try:
+				uc = user_cookie.bind(context.request)
+				token = uc.get_value()
+				token = s.unsign(token, max_age=60*60*24).decode('ascii')
+			except:
+				context.uid = None
+				if __debug__: raise
+			else:
+				context.uid = token.partition('-')[2]
 		
 		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
 	
