@@ -3,8 +3,8 @@
 from marrow.package.loader import load
 from marrow.package.host import PluginManager
 
-from web.core.context import Context
-from web.core.util import lazy
+from ..core.context import Context
+from ..core.util import lazy
 
 
 log = __import__('logging').getLogger(__name__)
