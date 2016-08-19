@@ -1,65 +1,69 @@
 # encoding: utf-8
 
-from collections import namedtuple
-from socket import gethostname
 from marrow.package.loader import load
-from marrow.package.canonical import name
 from marrow.package.host import PluginManager
 
 from web.core.context import Context
+from web.core.util import lazy
 
 
 log = __import__('logging').getLogger(__name__)
 
 
-# If the language is None, it will be inferred normally.
-DomainMapping = namedtuple('DomainMapping', ('domain', 'language'))
-
-MAPPING = {'localhost': DomainMapping('localhost', None)}
-try:
-	_name = gethostname()
-	MAPPING[_name] = DomainMapping(_name, None)
-except:
-	pass
+class ContentmentContext(Context):
+	@lazy
+	def site(self):
+		"""Retrieve the site root from the database.
+		
+		This is colocation aware, i.e. will attempt to look up the path `/<domain>`, falling back automatically to
+		retrieval of the literal root Asset.  There is no particular additional overhead for this fallback behaviour.
+		"""
+		
+		return self.taxonomy.nearest('/' + self._ctx.request.domain)
+	
+	@lazy
+	def theme(self):
+		"""Retrieve the active site theme.
+		
+		This must be an object API-compatible with the `page` template from `cinje.std.html`.
+		"""
+		
+		theme = self.site.properties.get('theme', 'cinje.std.html:page')
+		
+		if ':' not in theme:
+			theme += ':page'
+		
+		return load(theme)
+	
+	@lazy
+	def replacements(self):
+		"""A dictionary used to perform simple template-like variable replacement in generated chunks."""
+		return {'context': self._ctx}
 
 
 class ContentmentExtension:
-	"""WebCore extension for managing Contentment concerns.
-	
-	On startup this registers and enumerates the various Contentment plugin namespaces.
-	"""
+	"""WebCore extension for managing Contentment concerns."""
 	
 	needs = {'mongodb', 'serialization'}
 	provides = {'contentment'}
 	extensions = {'web.component'}
 	
-	def __init__(self):
-		self.context = Context(mapping=dict(MAPPING))
-	
 	def start(self, context):
-		log.info("Starting Contentment extension.")
-		c9t = context.contentment = self.context.promote('ContentmentContext', False)
+		"""Service startup support code to register and enumerate plugin namespaces."""
 		
 		for namespace in self.extensions:
 			if __debug__:
 				log.debug("Preparing Contentment plugin namespace: " + namespace)
 			
-			setattr(c9t, namespace.rpartition('.')[2], PluginManager(namespace))
-	
-	def prepare(self, context):
-		req = context.request
-		c9t = context.contentment = context.contentment()  # Instantiate the ContentmentContext for this request.
-		
-		c9t.domain = c9t.domain_mapping.get(req.server_name, DomainMapping(req.server_name, None))
-		c9t.site = c9t.taxonomy.nearest('/' + c9t.domain)  # TODO: Defer or cache this?
-		c9t.replacements = dict(context=context)
-		
-		# We allow for colocation of sites, so we need to pull this out of the active site on demand.  TODO: Defer?
-		if c9t.site and 'theme' in c9t.site.properties:
-			c9t.theme = load(c9t.site.properties.theme + ':page')
-		else:
-			c9t.theme = load('web.theme.bootstrap.base:page')
+			setattr(self, namespace.rpartition('.')[2], PluginManager(namespace))
 		
 		if __debug__:
-			log.debug("Prepared Contentment context.", extra=dict(domain=c9t.domain, site=repr(c9t.site), theme=name(context.theme)))
+			log.debug("Contentment has finished starting.")
+	
+	def prepare(self, context):
+		"""Prepare the request-local execution context by adding our own context to it."""
+		context.contentment = ContentmentContext(_ctx=context)  # Instantiate the ContentmentContext for this request.
+		
+		if __debug__:
+			log.debug("Contentment context prepared.")
 
