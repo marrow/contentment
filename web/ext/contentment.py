@@ -73,6 +73,8 @@ class ContentmentExtension:
 				if __debug__: raise
 			else:
 				context.uid = token.partition('-')[2]
+		else:
+			context.uid = None
 		
 		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
 	
