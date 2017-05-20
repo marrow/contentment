@@ -170,6 +170,11 @@ def map_field(data, field, element):
 	data.setdefault(tag(element), {})[key] = element.text
 
 
+def mapping_field(data, field, element):
+	key = element.attrib.pop('key')
+	data.setdefault(tag(element), {})[key] = element.attrib
+
+
 def text_block_content(data, field, element):
 	element.text = re.sub(SPACES_RE, ' ', element.text)
 	map_field(data, field, element)
