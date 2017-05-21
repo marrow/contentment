@@ -6,7 +6,7 @@ from itertools import chain
 from pymongo.errors import BulkWriteError
 
 from marrow.mongo import Document, Field, Index, U
-from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId
+from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId, Translated
 from marrow.mongo.trait import Derived, Localized, Published, Queryable, Identified
 
 
@@ -53,6 +53,9 @@ class Asset(Derived, Localized, Published, Queryable):
 	parent = Reference('.', default=None, assign=True)  # Required for fast immediate child lookups; not infrequent.
 	path = Path(required=True)  # Required for fast path enumeration and parents/descendants lookups; most frequent.
 	dependent = Array(Reference('.'), assign=True)  # Other assets which depend on this one. Used for cache updates.
+	
+	title = Translated('title')
+	description = Translated('description')
 	
 	acl = Array(Embed('ACLRule'), assign=True)  # Security predicates applicable to this Asset.
 	tag = Array(String(), assign=True)  # TODO: Set field.
@@ -150,7 +153,7 @@ class Asset(Derived, Localized, Published, Queryable):
 			if 'path' in kw:
 				raise TypeError("Can not define positional name and keyword path simultaneously.")
 			
-			kw['path'], args = args
+			kw['path'], *args = args
 		
 		super(Asset, self).__init__(*args, **kw)
 	

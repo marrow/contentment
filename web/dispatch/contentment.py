@@ -11,6 +11,8 @@ class ContentmentDispatch:
 		return "{self.__class__.__name__}(0x{id})".format(self=self, id=id(self))
 	
 	def __call__(self, context, obj, path):
+		# TODO: Fetch current-language locale content only.
+		
 		if __debug__:
 			log.debug("Starting Contentment dispatch.", extra=dict(
 					request = id(context.request),
@@ -37,10 +39,7 @@ class ContentmentDispatch:
 			log.debug("Attempting to identify asset nearest path: " + str(apath))
 		
 		for asset in Asset.find_nearest(apath, site.descendants):
-			cpath = asset.path.parts[depth:]
-			
-			yield cpath, asset, False
-			
+			yield asset.path.parts[depth:], asset, False
 			depth = len(asset.path.parts)
 		
 		context.asset = asset
