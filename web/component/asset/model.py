@@ -3,10 +3,10 @@
 from re import escape
 from pathlib import PurePosixPath
 from itertools import chain
-from pymongo import BulkWriteError
+from pymongo.errors import BulkWriteError
 
 from marrow.mongo import Document, Field, Index, U
-from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference
+from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId
 from marrow.mongo.trait import Derived, Localized, Published, Queryable, Identified
 
 
@@ -49,7 +49,7 @@ class Asset(Derived, Localized, Published, Queryable):
 	
 	# Fields
 	
-	id = Queryable.id.adapt(positional=False)
+	id = ObjectId('_id', assign=True, write=False, repr=False, positional=False)
 	parent = Reference('.', default=None, assign=True)  # Required for fast immediate child lookups; not infrequent.
 	path = Path(required=True)  # Required for fast path enumeration and parents/descendants lookups; most frequent.
 	dependent = Array(Reference('.'), assign=True)  # Other assets which depend on this one. Used for cache updates.
@@ -86,13 +86,23 @@ class Asset(Derived, Localized, Published, Queryable):
 	
 	# Queryable Helpers
 	
-	def get_nearest(self, path):
+	def get_nearest(self, path, base=None):
 		"""Find and return the deepest Asset matching the given path."""
 		
-		if not isinstance(path, PurePosixPath):
-			path = PurePosixPath(path)
+		path = PurePosixPath(path)
 		
 		return self.find_one(path__in=chain((path, ), path.parents), sort=('-path', ))
+	
+	def find_nearest(self, path, *args, **kw):
+		"""Find all nodes up to the deepest node matched by the given path.
+		
+		Conceptually the reverse of `get_nearest`.
+		"""
+		
+		path = PurePosixPath(path)
+		
+		for doc in self.find(*args, path__in=chain((path, ), path.parents), sort=('path', ), **kw):
+			yield self.from_mongo(doc)
 	
 	def attach(self, parent):
 		"""Attach this asset (and any descendants) to another parent."""
@@ -146,6 +156,7 @@ class Asset(Derived, Localized, Published, Queryable):
 	
 	# Contentment Protocols
 	
+	@property
 	def __link__(self):
 		component = _Resolver(self.__class__)['plugin']
 		return 'asset:{component}:{identifier!s}'.format(component=component, identifier=self.id)
@@ -161,7 +172,19 @@ class Asset(Derived, Localized, Published, Queryable):
 	def __html__(self):
 		"""Return the rendered HTML version of this asset."""
 		
-		return
+		buffer = []
+		context = {}
+		
+		for chunk in self.__embed__(context):
+			if not chunk:
+				continue
+			
+			if hasattr(chunk, 'result'):
+				chunk = chunk.result()  # We don't mess around with deferred chunks at this level.
+			
+			buffer.append(chunk)
+		
+		return "".join(buffer)
 	
 	def __html_format__(self, spec=None):
 		"""Special handler for use in MarkupSafe formatting and %{} cinje replacements.
@@ -175,6 +198,9 @@ class Asset(Derived, Localized, Published, Queryable):
 		if spec == 'link':
 			return self.path
 		
+		if spec == 'urn':
+			return self.__link__
+		
 		elif spec:
 			raise ValueError("Invalid format specification for Asset: " + spec)
 		
@@ -183,7 +209,7 @@ class Asset(Derived, Localized, Published, Queryable):
 	def __stream__(self, context):
 		"""Produce a mixed cinje content and component stream representing the "rendered" form of this asset."""
 		
-		pass
+		yield None
 	
 	def __embed__(self, context):
 		"""Produce a pure cinje content stream representing the "embedded" form of this asset.
@@ -191,7 +217,7 @@ class Asset(Derived, Localized, Published, Queryable):
 		Assets (components) emitted by `__stream__` will be embedded.
 		"""
 		
-		pass
+		yield None
 	
 	def __present__(self, context):
 		"""Perform any work useful prior to presentation of this object by the back-end.

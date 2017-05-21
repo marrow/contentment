@@ -1,8 +1,4 @@
-# encoding: utf-8
-
-from inspect import isroutine
-
-from ..component.asset.model import Asset
+from ..component.asset import Asset
 
 
 log = __import__('logging').getLogger(__name__)
@@ -15,19 +11,6 @@ class ContentmentDispatch:
 		return "{self.__class__.__name__}(0x{id})".format(self=self, id=id(self))
 	
 	def __call__(self, context, obj, path):
-		# TODO: Move into web.dispatch.meta as "FallbackDispatch".
-		# First, try with object dispatch.  This handles custom root controller attachments such as statics.
-		try:
-			result = list(context.dispatch['object'](context, obj, path))
-		except LookupError:
-			pass
-		else:
-			if result and result[-1][2] and isroutine(result[-1][1]):  # Endpoint found.
-				yield from result
-				return
-			
-			del result
-		
 		if __debug__:
 			log.debug("Starting Contentment dispatch.", extra=dict(
 					request = id(context.request),
@@ -37,16 +20,30 @@ class ContentmentDispatch:
 					search = context.request.path_info,
 				))
 		
+		# Identify the site root using the current host name as a form of virtual hosting.
+		
+		site = context.site = Asset.get_nearest('/' + '/'.join(reversed(context.request.server_name.split('.'))))
+		if not site: raise LookupError("Failed to identify site root.")
+		
+		depth = len(site.path)  # The number of elements to strip off asset paths when yielding.
+		apath = site.path / '/'.join(path)
+		asset = site
+		
+		yield None, site, False  # Announce discovery of site root.
+		
 		# This is database-driven dispatch, so we optimize to find the deepest possible element first.
-		nearest = Asset.objects.nearest(context.request.path_info)
 		
-		if not nearest:  # No Asset could be found, and root dispatch already failed.
-			return
+		if __debug__:
+			log.debug("Attempting to identify asset nearest path: " + str(apath))
 		
-		# By stopping before we yield a "final" (retval[2] == True) value we force dispatch to re-evaluate
-		# the dispatcher for the call.
-		document, controller = nearest.controller
+		for asset in Asset.find_nearest(apath, site.descendants):
+			cpath = asset.path.parts[depth:]
+			
+			yield cpath, asset, False
+			
+			depth = len(asset.path.parts)
 		
-		context.asset = document
+		context.asset = asset
 		
-		yield nearest.path.split('/')[1:], controller(context, document), False
+		# By stopping before we yield a "final" (retval[2] == True) value we force dispatch to re-evaluate.
+		yield None, asset.handler(context, nearest), False

@@ -78,8 +78,8 @@ setup(
 	
 	install_requires = [
 			'WebCore>=2.0,<3.0',  # web framework
-			'marrow.mongo>=1.1.1,<2.0',  # database layer
 			'cinje>=1.0,<2.0',  # template engine
+			'marrow.mongo>=1.1.1,<2.0',  # database layer
 		],
 	
 	extras_require = dict(
