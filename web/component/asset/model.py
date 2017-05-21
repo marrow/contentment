@@ -1,145 +1,167 @@
 # encoding: utf-8
 
-from marrow.package.cache import PluginCache
-from mongoengine import StringField, MapField, DateTimeField
-from mongoengine import EmbeddedDocumentField, ListField
+from re import escape
+from pathlib import PurePosixPath
+from itertools import chain
+from pymongo import BulkWriteError
 
-from web.contentment.acl import ACLRule
-from web.contentment.taxonomy import remove_children, Taxonomy, TaxonomyQuerySet
-from web.contentment.util import utcnow, D_
-from web.contentment.util.model import update_modified_timestamp, Properties
-
-from .xml.templates import export_document
-from .render import render_asset_panel
+from marrow.mongo import Document, Field, Index, U
+from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference
+from marrow.mongo.trait import Derived, Localized, Published, Queryable, Identified
 
 
 log = __import__('logging').getLogger(__name__)
 
 
-@remove_children.signal
-@update_modified_timestamp.signal
-class Asset(Taxonomy):
-	meta = dict(
-			collection = 'asset',
-			ordering = ['parent', 'order'],
-			allow_inheritance = True,
-			index_cls = False,
-			queryset_class = TaxonomyQuerySet,
-			
-			indexes = [
-				]
-		)
+class _Resolver(Document):
+	plugin = PluginReference(namespace='web.component.model')
+
+
+class Asset(Derived, Localized, Published, Queryable):
+	"""The definition of a Contentment Asset.
 	
-	# Basic Properties
+	This is the primary mechanism of dispatch, that is, looking up the handler for a given resource. To facilitate
+	this the Asset model contains the security information, taxonomy, and basic metadata. The abstract properties
+	feature is meant for user annotation, not technical use. Technical use should utilize proper fields declared
+	in Asset subclasses.
 	
-	title = MapField(  # TODO: TranslatedField
-			StringField(),
-			default = dict,
-			simple = False,
-			read = True,
-			write = True,
-		)
-		
-	description = MapField(  # TODO: TranslatedField
-			StringField(),
-			default = dict,
-			simple = False,
-			read = True,
-			write = True,
-		)
+	Bare assets are often utilized as containers for other, more richly described assets such as pages.
+	"""
 	
-	tags = ListField(
-			StringField(),
-			default = list,
-			read = True,
-			write = True,
-		)
+	# Database Metadata
 	
-	# Magic Properties
-	
-	properties = EmbeddedDocumentField(
-			Properties,
-			default = Properties,
-			simple = False,
-			read = True,
-			write = True,
-		)
-		
-	acl = ListField(
-			EmbeddedDocumentField(ACLRule),
-			default = list,
-			simple = False,
-			read = False,
-			write = False,
-		)
-	
-	handler = StringField(read=True, write=True)  # TODO: PythonReferenceField('web.component') | URLPath allowing relative
-	
-	# Metadata
-	created = DateTimeField(default=utcnow, simple=False, read=True, write=False)
-	modified = DateTimeField(default=utcnow, simple=False, read=True, write=False)
-	
-	# Controller Lookup
-	
-	_controller_cache = PluginCache('web.component')
-	
-	@property
-	def controller(self):  # TODO: Move this into PythonReferencefield.
-		if not self.handler:
-			return self, self._controller_cache['web.component.asset:AssetController']
-		
-		if ':' in self.handler:
-			return self, self._controller_cache[self.handler]
-		
-		handler = self.children.named(self.handler).get()
-		return handler.controller
-	
-	def __page_panel__(self, context, wrap=False):
-		return render_asset_panel(context, self, wrap)
-	
+	__database__ = 'default'
+	__collection__ = 'asset'
 	__icon__ = 'folder-o'
 	
-	# Python Methods
+	# Embedded Documents
 	
-	def __str__(self):
-		return D_(self.title)
+	class Locale(Localized.Locale):
+		"""Language-dependent Asset content."""
+		
+		title = String()
+		description = String()
 	
-	def __repr__(self):
-		return "{0.__class__.__name__}({2}, {1!r}, {0.handler}, {0.properties!r})".format(self, D_(self.title), self.path or self.name)
+	class Property(Identified):
+		id = String('_id')
+		value = Field()
+		language = String(default=None)
 	
-	# Data Portability
+	# Fields
 	
-	def __xml__(self, recursive=False):
-		"""Return an XML representation for this Asset."""
-
-		return export_document(self, recursive, root=True)
-
-	as_xml = property(lambda self: self.__xml__(recursive=False))
+	id = Queryable.id.adapt(positional=False)
+	parent = Reference('.', default=None, assign=True)  # Required for fast immediate child lookups; not infrequent.
+	path = Path(required=True)  # Required for fast path enumeration and parents/descendants lookups; most frequent.
+	dependent = Array(Reference('.'), assign=True)  # Other assets which depend on this one. Used for cache updates.
 	
-	def __json__(self):
-		"""Return a JSON-safe (and YAML-safe) representation for this Asset."""
-		return dict(
-				id = str(self.id),
-				title = self.title,
-				description = self.description,
-				tags = [i for i in self.tags if ':' not in i],
-				created = self.created,
-				modified = self.modified
-			)
+	acl = Array(Embed('ACLRule'), assign=True)  # Security predicates applicable to this Asset.
+	tag = Array(String(), assign=True)  # TODO: Set field.
+	attr = Array(Embed(Property), assign=True)
 	
-	as_json = property(lambda self: self.__json__())
+	handler = PluginReference('web.component', default=None)
 	
-	def __html_stream__(self):
-		"""Return a cinje-compatible template representing the HTML version of this Asset."""
-		return []
+	# Indexes
 	
-	as_stream = property(lambda self: self.__html_stream__)  # Note: doesn't call!
+	_text = Index('$tags', '$locale.title', '$locale.description')
+	_parent = Index('parent')
+	_path = Index('path', unique=True)
+	_property = Index('property.name', 'property.value')
+	
+	# Related Query Fragment Generators
+	
+	def children(self):
+		"""Query fragment selecting immediate children."""
+		
+		return Asset.parent == self
+	
+	def parents(self):
+		"""A query fragment selecting parents """
+		
+		return Asset.path.any(self.path.parents)
+	
+	def descendants(self):
+		"""Query fragment selecting children of all depths."""
+		
+		return Asset.path.re(r'^', escape(str(self.path)), r'\/')
+	
+	# Queryable Helpers
+	
+	def get_nearest(self, path):
+		"""Find and return the deepest Asset matching the given path."""
+		
+		if not isinstance(path, PurePosixPath):
+			path = PurePosixPath(path)
+		
+		return self.find_one(path__in=chain((path, ), path.parents), sort=('-path', ))
+	
+	def attach(self, parent):
+		"""Attach this asset (and any descendants) to another parent."""
+		
+		if not isinstance(parent, Asset):
+			parent = Asset.find_one(parent, project=('path', ))
+		
+		descendants = self.find(self.descendants, project=('path', ))
+		length = len(str(self.path.parent)) + 1  # We use simplified string manipulation to calculate updated paths.
+		ops = self.get_collection().initialize_unordered_bulk_op()
+		
+		# Update ourselves.
+		ops.find(Asset.id == self).update_one(U(Asset, parent=parent, path=parent.path / self.path.name))
+		
+		# Update descendants, if any.
+		for offspring in descendants:
+			opath = parent.path / offspring['path'][length:]
+			ops.find(Asset.id == offspring).update_one(U(Asset, path=opath))
+		
+		# Alas, we can't sensibly reach other records, such as any loaded copies of descendants, to update them.
+		self.parent = parent  # Assign a local copy for convienence sake.
+		self.path = parent.path / self.path.name  # Also assign the updated path.
+		
+		try:  # TODO: Better error handling.
+			ops.execute()
+		except BulkWriteError as e:
+			__import__('pprint').pprint(e.details)
+			raise
+		
+		return self
+	
+	# Data Interoperability
+	# from/to_json are provided by Document
+	
+	def from_xml(self, content, context=None):
+		pass
+	
+	def to_xml(self, context=None):
+		pass
+	
+	# Python Protocols
+	
+	def __init__(self, *args, **kw):
+		if args:
+			if 'path' in kw:
+				raise TypeError("Can not define positional name and keyword path simultaneously.")
+			
+			kw['path'], args = args
+		
+		super(Asset, self).__init__(*args, **kw)
+	
+	# Contentment Protocols
+	
+	def __link__(self):
+		component = _Resolver(self.__class__)['plugin']
+		return 'asset:{component}:{identifier!s}'.format(component=component, identifier=self.id)
+	
+	def __depends__(self, context):
+		"""Identify the elements required for this asset to function.
+		
+		This may identify CSS, JS, or other Asset dependencies.
+		"""
+		
+		pass
 	
 	def __html__(self):
-		"""Return the rendered HTML representation of this Asset."""
-		return "".join(self.__html_stream__())
-	
-	as_html = property(lambda self: self.__html__())
+		"""Return the rendered HTML version of this asset."""
+		
+		return
 	
 	def __html_format__(self, spec=None):
 		"""Special handler for use in MarkupSafe formatting and %{} cinje replacements.
@@ -158,12 +180,28 @@ class Asset(Taxonomy):
 		
 		return self.__html__()
 	
-	def __text__(self):
-		"""Return the full content of the page as a single block of text.
+	def __stream__(self, context):
+		"""Produce a mixed cinje content and component stream representing the "rendered" form of this asset."""
 		
-		This is principally used for full-text content extraction as part of the indexing process.
-		"""
-		return ""
+		pass
 	
-	as_text = property(lambda self: self.__text__())
-
+	def __embed__(self, context):
+		"""Produce a pure cinje content stream representing the "embedded" form of this asset.
+		
+		Assets (components) emitted by `__stream__` will be embedded.
+		"""
+		
+		pass
+	
+	def __present__(self, context):
+		"""Perform any work useful prior to presentation of this object by the back-end.
+		
+		This can be used to assign appropriate last-modified and cache control headers, amongst other uses.
+		"""
+		
+		context.response.last_modified = self.modified
+	
+	def __panel__(self, context):
+		"""Yield a component stream of tiles to add to management panels."""
+		
+		pass

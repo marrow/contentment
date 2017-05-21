@@ -1,12 +1,33 @@
 language: python
 sudo: false
+cache: pip
 
-env:
-  - TOXENV=py34
+branches:
+  except:
+      - /^[^/]+/.+$/
+      - book
+      - /^book/.+$/
 
-install: travis_retry pip install tox
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
-script: .tox.sh
+before_install:
+  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-3.4.1.tgz -O /tmp/mongodb.tgz
+  - tar -xvf /tmp/mongodb.tgz
+  - mkdir /tmp/data
+  - ${PWD}/mongodb-linux-x86_64-3.4.1/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --noauth &> /dev/null &
+
+install:
+  - travis_retry pip install --upgrade setuptools pip pytest pytest-cov codecov 'setuptools_scm>=1.9' cffi
+  - pip install -e '.[development]'
+
+script:
+    python setup.py test
+
+after_script:
+    bash <(curl -s https://codecov.io/bash)
 
 notifications:
   irc:
@@ -19,7 +40,3 @@ notifications:
     template:
       - "%{repository_slug}:%{branch}@%{commit} %{message}"
       - "Duration: %{duration} - Details: %{build_url}"
-
-after_success:
-  - coveralls
-  

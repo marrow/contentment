@@ -16,51 +16,41 @@ except ImportError:
 from setuptools.command.test import test as TestCommand
 
 
-if sys.version_info < (2, 7):
-	raise SystemExit("Python 2.7 or later is required.")
-elif sys.version_info > (3, 0) and sys.version_info < (3, 3):
-	raise SystemExit("Python 3.3 or later is required.")
+if sys.version_info < (3, 4):
+	raise SystemExit("Python 3.4 or later is required.")
 
+version = description = url = author = ''  # Actually loaded on the next line; be quiet, linter.
 exec(open(os.path.join("web", "contentment", "release.py")).read())
 
 
-class PyTest(TestCommand):
-	def finalize_options(self):
-		TestCommand.finalize_options(self)
-		
-		self.test_args = []
-		self.test_suite = True
-	
-	def run_tests(self):
-		import pytest
-		sys.exit(pytest.main(self.test_args))
-
-
 here = os.path.abspath(os.path.dirname(__file__))
+
+py2 = sys.version_info < (3,)
+py26 = sys.version_info < (2, 7)
+py32 = sys.version_info > (3,) and sys.version_info < (3, 3)
+pypy = hasattr(sys, 'pypy_version_info')
+
 
 tests_require = [
 		'pytest',  # test collector and extensible runner
 		'pytest-cov',  # coverage reporting
 		'pytest-flakes',  # syntax validation
-		'pytest-cagoule',  # intelligent test execution
-		'pytest-spec<=0.2.22',  # output formatting
+		'pytest-catchlog',  # log capture
+		'pytest-isort',  # import ordering
+		'pytest-pudb',  # interactive debugging
 	]
 
 
 setup(
 	name = "Contentment",
 	version = version,
-	
 	description = description,
 	long_description = codecs.open(os.path.join(here, 'README.rst'), 'r', 'utf8').read(),
 	url = url,
-	download_url = 'https://warehouse.python.org/project/Contentment/',
-	
 	author = author.name,
 	author_email = author.email,
-	
 	license = 'MIT',
-	keywords = '',
+	keywords = ['mongodb', 'cms', 'content management', 'component management', 'cmf', 'marrow'],
 	classifiers = [
 			"Development Status :: 5 - Production/Stable",
 			"Environment :: Console",
@@ -76,48 +66,44 @@ setup(
 			"Topic :: Software Development :: Libraries :: Python Modules",
 		],
 	
-	packages = find_packages(exclude=['test', 'script', 'example']),
+	packages = find_packages(exclude=['test', 'example', 'benchmark', 'htmlcov']),
 	include_package_data = True,
-	namespace_packages = [
-			'web',
-			'web.ext',
-			'web.component',
-		],
+	package_data = {'': ['README.rst', 'LICENSE.txt']},
+	namespace_packages = ['web', 'web.component', 'web.dispatch', 'web.ext'],
+	zip_safe = False,
 	
-	entry_points = {
-			'web.extension': [
-					'contentment = web.ext.contentment:ContentmentExtension',
-					#' = web.ext.:Extension',
-				],
-			
-			'web.component': [
-					'core.asset = web.component.asset:AssetComponent',
-					#' = web.component:Component',
-				],
-			
-			'web.dispatch': [
-					'contentment = web.contentment.dispatch:ContentmentDispatch',
-				]
-		},
+	# Dependencies
+	
+	setup_requires = ['pytest-runner'] if {'pytest', 'test', 'ptr'}.intersection(sys.argv) else [],
 	
 	install_requires = [
-			# 'WebCore',  # web framework  # pending 2.0 release; use requirements.txt for now
-			'marrow.mongo',  # database layer
-			'pytz',  # timzone support
-			'blinker',  # signals
-			'markupsafe',  # injection protection
-			'babel',  # internationalization and localization
-			'webassets',  # static asset management
+			'WebCore>=2.0,<3.0',  # web framework
+			'marrow.mongo>=1.1.1,<2.0',  # database layer
+			'cinje>=1.0,<2.0',  # template engine
 		],
 	
 	extras_require = dict(
-			development = tests_require,
+			development = tests_require + ['pre-commit'],
 		),
 	
 	tests_require = tests_require,
 	
-	zip_safe = True,
-	cmdclass = dict(
-			test = PyTest,
-		)
+	# Plugin Registration
+	
+	entry_points = {
+			'marrow.mongo.document': [
+					'Asset = web.component.asset.model:Asset',
+				],
+			'web.component': [
+					'core.asset = web.component.asset:AssetComponent',
+					#' = web.component:Component',
+				],
+			'web.dispatch': [
+					'contentment = web.dispatch.contentment:ContentmentDispatch',
+				],
+			'web.extension': [
+					'contentment = web.ext.contentment:ContentmentExtension',
+					#' = web.ext.:Extension',
+				],
+		},
 )
