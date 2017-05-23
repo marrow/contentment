@@ -42,8 +42,10 @@ class Asset(Derived, Localized, Published, Queryable):
 		title = String()
 		description = String()
 	
-	class Property(Identified):
-		id = String('_id')
+	class Property(Document):
+		__pk__ = 'name'
+		
+		name = String()
 		value = Field()
 		language = String(default=None)
 	
