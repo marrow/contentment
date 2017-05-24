@@ -1,14 +1,9 @@
 # encoding: utf-8
 
-from re import escape
-from pathlib import PurePosixPath
-from itertools import chain
-from pymongo.errors import BulkWriteError
-
 from cinje.util import interruptable
-from marrow.mongo import Document, Field, Index, U
-from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId, Translated, Integer, Set
-from marrow.mongo.trait import Derived, Localized, Published, Queryable, Identified
+from marrow.mongo import Document, Field, Index
+from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, Translated, Integer, Set
+from marrow.mongo.trait import Derived, Localized, Published, Queryable, HPath, HParent
 
 
 log = __import__('logging').getLogger(__name__)
@@ -51,7 +46,7 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	
 	# Fields
 	
-	id = Identified.id.adapt(positional=False)
+	id = HParent.id.adapt(positional=False)
 	dependent = Array(Reference('.'), assign=True)  # Other assets which depend on this one. Used for cache updates.
 	
 	title = Translated('title')
@@ -238,12 +233,10 @@ class Block(Derived, Queryable):
 			yield cls.from_mongo(record)
 
 
-
 class File(Asset):
 	handler = Asset.handler.adapt(default='org.contentment.file.default')
 	backend = PluginReference('web.contentment.storage', default='gridfs')
 	
-
 
 class Search(Asset):
 	query = String(default=None)
