@@ -5,8 +5,9 @@ from pathlib import PurePosixPath
 from itertools import chain
 from pymongo.errors import BulkWriteError
 
+from cinje.util import interruptable
 from marrow.mongo import Document, Field, Index, U
-from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId, Translated
+from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, ObjectId, Translated, Integer, Set
 from marrow.mongo.trait import Derived, Localized, Published, Queryable, Identified
 
 
@@ -14,10 +15,10 @@ log = __import__('logging').getLogger(__name__)
 
 
 class _Resolver(Document):
-	plugin = PluginReference(namespace='web.component.model')
+	plugin = PluginReference(namespace='web.component')
 
 
-class Asset(Derived, Localized, Published, Queryable):
+class Asset(Derived, Localized, Published, HPath, HParent):
 	"""The definition of a Contentment Asset.
 	
 	This is the primary mechanism of dispatch, that is, looking up the handler for a given resource. To facilitate
@@ -32,7 +33,6 @@ class Asset(Derived, Localized, Published, Queryable):
 	
 	__database__ = 'default'
 	__collection__ = 'asset'
-	__icon__ = 'folder-o'
 	
 	# Embedded Documents
 	
@@ -51,17 +51,15 @@ class Asset(Derived, Localized, Published, Queryable):
 	
 	# Fields
 	
-	id = ObjectId('_id', assign=True, write=False, repr=False, positional=False)
-	parent = Reference('.', default=None, assign=True)  # Required for fast immediate child lookups; not infrequent.
-	path = Path(required=True)  # Required for fast path enumeration and parents/descendants lookups; most frequent.
+	id = Identified.id.adapt(positional=False)
 	dependent = Array(Reference('.'), assign=True)  # Other assets which depend on this one. Used for cache updates.
 	
 	title = Translated('title')
 	description = Translated('description')
 	
 	acl = Array(Embed('ACLRule'), assign=True)  # Security predicates applicable to this Asset.
-	tag = Array(String(), assign=True)  # TODO: Set field.
-	attr = Array(Embed(Property), assign=True)
+	tag = Set(String(), assign=True)
+	attr = Array(Embed('.Property'), assign=True)
 	
 	handler = PluginReference('web.component', default=None)
 	
@@ -71,73 +69,6 @@ class Asset(Derived, Localized, Published, Queryable):
 	_parent = Index('parent')
 	_path = Index('path', unique=True)
 	_property = Index('property.name', 'property.value')
-	
-	# Related Query Fragment Generators
-	
-	def children(self):
-		"""Query fragment selecting immediate children."""
-		
-		return Asset.parent == self
-	
-	def parents(self):
-		"""A query fragment selecting parents """
-		
-		return Asset.path.any(self.path.parents)
-	
-	def descendants(self):
-		"""Query fragment selecting children of all depths."""
-		
-		return Asset.path.re(r'^', escape(str(self.path)), r'\/')
-	
-	# Queryable Helpers
-	
-	def get_nearest(self, path, base=None):
-		"""Find and return the deepest Asset matching the given path."""
-		
-		path = PurePosixPath(path)
-		
-		return self.find_one(path__in=chain((path, ), path.parents), sort=('-path', ))
-	
-	def find_nearest(self, path, *args, **kw):
-		"""Find all nodes up to the deepest node matched by the given path.
-		
-		Conceptually the reverse of `get_nearest`.
-		"""
-		
-		path = PurePosixPath(path)
-		
-		for doc in self.find(*args, path__in=chain((path, ), path.parents), sort=('path', ), **kw):
-			yield self.from_mongo(doc)
-	
-	def attach(self, parent):
-		"""Attach this asset (and any descendants) to another parent."""
-		
-		if not isinstance(parent, Asset):
-			parent = Asset.find_one(parent, project=('path', ))
-		
-		descendants = self.find(self.descendants, project=('path', ))
-		length = len(str(self.path.parent)) + 1  # We use simplified string manipulation to calculate updated paths.
-		ops = self.get_collection().initialize_unordered_bulk_op()
-		
-		# Update ourselves.
-		ops.find(Asset.id == self).update_one(U(Asset, parent=parent, path=parent.path / self.path.name))
-		
-		# Update descendants, if any.
-		for offspring in descendants:
-			opath = parent.path / offspring['path'][length:]
-			ops.find(Asset.id == offspring).update_one(U(Asset, path=opath))
-		
-		# Alas, we can't sensibly reach other records, such as any loaded copies of descendants, to update them.
-		self.parent = parent  # Assign a local copy for convienence sake.
-		self.path = parent.path / self.path.name  # Also assign the updated path.
-		
-		try:  # TODO: Better error handling.
-			ops.execute()
-		except BulkWriteError as e:
-			__import__('pprint').pprint(e.details)
-			raise
-		
-		return self
 	
 	# Data Interoperability
 	# from/to_json are provided by Document
@@ -236,3 +167,95 @@ class Asset(Derived, Localized, Published, Queryable):
 		"""Yield a component stream of tiles to add to management panels."""
 		
 		pass
+
+
+class Style(Document):
+	# Template engine stuff.
+	container = PluginReference(default=None)  # The cinje wrapping template to use.
+	attributes = Embed(Document, default=None)  # Arguments to the cinje wrapping template.
+	
+	# CSS stuff.
+	identifier = String(default=None)  # The HTML identifier.
+	classes = Set(String(), assign=True)  # CSS classes applied.
+	
+	# Theme stuff.
+	selectors = Array(Embed(Asset.Property), assign=True)  # CSS selector mappings.
+
+
+class Page(Asset):
+	related = Array(Reference(Asset), assign=True)
+	template = Reference(Asset, default=None)
+	style = Embed(Style, assign=True)
+	
+	handler = Asset.handler.adapt(default='org.contentment.page.default')
+	
+	def blocks(self):
+		# from marrow.mongo.document import Block
+		return Block.blocks_for(self)
+	
+	def __embed__(self, context):
+		container = self.style.container
+		
+		if container:  # Given a wrapping container template, stream the prefix.
+			kw = dict(self.style.attributes) if self.style.attributes else {}
+			kw.setdefault('id', str(self.id))
+			container = container(context, **kw)
+			
+			yield from interruptable(container)
+		
+		for block in self.blocks:
+			yield from block.__embed__(context)
+		
+		if container:  # Yield the remainder (postfix) of the wrapping template.
+			yield from container
+
+
+class Block(Derived, Queryable):
+	__database__ = 'default'
+	__collection__ = 'block'
+	
+	class Placement(Document):
+		page = Reference(Page)
+		position = Integer(default=None)
+	
+	language = String(default=None)
+	places = Array(Embed('.Placement'), assign=True)  # The Page instances this block is utilized within.
+	
+	acl = Array(Embed('ACLRule'), assign=True)  # Security predicates applicable to this block.
+	tag = Set(String(), assign=True)
+	attr = Array(Embed(Asset.Property), assign=True)
+	
+	_place = Index('places.page', 'language', 'places.position', unique=True)  # Two objects may not occupy the same space.
+	
+	@classmethod
+	def blocks_for(cls, page, language=None):
+		q = cls.places.page == page
+		
+		if language:
+			q &= cls.language == language
+		
+		for record in cls.find(q, sort=('places__S__position', )):
+			yield cls.from_mongo(record)
+
+
+
+class File(Asset):
+	handler = Asset.handler.adapt(default='org.contentment.file.default')
+	backend = PluginReference('web.contentment.storage', default='gridfs')
+	
+
+
+class Search(Asset):
+	query = String(default=None)
+	base = Path(default='/')
+	exclude = Array(String(), assign=True)
+	
+	handler = Asset.handler.adapt(default='org.contentment.search.default')
+
+
+class Settings(Asset):
+	handler = Asset.handler.adapt(default='org.contentment.settings.default')
+
+
+class Theme(Asset):
+	handler = Asset.handler.adapt(default='org.contentment.theme.default')
