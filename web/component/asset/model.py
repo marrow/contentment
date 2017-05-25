@@ -9,6 +9,25 @@ from marrow.mongo.trait import Derived, Localized, Published, Queryable, HPath, 
 log = __import__('logging').getLogger(__name__)
 
 
+
+class Depend:
+	NS = 'org.python.setuptools.entry_point'
+	PLUGIN = 'org.marrow.package.load'
+	ASSET = 'web.component.asset'
+	BUNDLE = 'web.asset.bundle'
+	STYLE = 'web.asset.selector'
+	EVENT = 'web.asset.event'
+	
+	ALL = (NS, PLUGIN, ASSET, BUNDLE, STYLE, EVENT)
+	
+	@classmethod
+	def collect(cls, obj, *only):
+		if not only:
+			only = cls.ALL
+		
+		yield from obj.__depend__(obj, only)
+
+
 class _Resolver(Document):
 	plugin = PluginReference(namespace='web.component')
 
@@ -40,6 +59,9 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	
 	class Locale(Localized.Locale):
 		"""Language-dependent Asset content."""
+		
+		# This is a magical property to store "additional full text content" extracted from rich assets.
+		text = String('_text', project=False, read=False, write=False, repr=False, positional=False)
 		
 		title = String()
 		description = String()
@@ -99,13 +121,36 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 		component = _Resolver(self.__class__)['plugin']
 		return 'asset:{component}:{identifier!s}'.format(component=component, identifier=self.id)
 	
-	def __depends__(self, context):
+	def __depends__(self, only):
 		"""Identify the elements required for this asset to function.
 		
-		This may identify CSS, JS, or other Asset dependencies.
+		This may declare static asset bundle dependencies, theme selectors, event names, other assets, etc.
+		
+		Falsy (e.g. `None`) values will be ignored by the collector and are safe (if silly) to provide.
 		"""
 		
-		pass
+		handler = self.__class__.handler
+		
+		if Depend.NS in only:  # Declare namespaces we utilize plugins from.
+			yield Depend.NS, handler.namespace
+		
+		if Depend.PLUGIN in only:  # Declare explicit plugins (or dot-colon import paths) we utilize.
+			# We need to avoid typecasting on dereferencing... and explosion noises.
+			
+			if ~handler in self or handler.default:
+				yield Depend.PLUGIN, handler.namespace, self.get(~handler, handler.default)
+		
+		if Depend.BUNDLE in only:
+			yield Depend.BUNDLE, 'web.component.asset'
+		
+		if Depend.ASSET in only:  # Declare other Assets this one directly depends upon.
+			yield Depend.ASSET, self.parent  # Might, in some rare circumstances, actually be None. Whoops!
+	
+	def __text__(self):
+		"""Yield additional chunks of optionally language-dependent textual content to full-text index."""
+		
+		return
+		yield
 	
 	def __html__(self):
 		"""Return the rendered HTML version of this asset."""
