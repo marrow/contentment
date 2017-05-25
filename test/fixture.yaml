@@ -1,0 +1,185 @@
+---
+_cls: Asset  # Actually, most likely a Site.
+path: /
+
+locale:
+ - language: en
+   title: Boyd's Toast
+   description: It's better than Gozilla farts!
+ - language: fr
+   title: Toast de Boyd
+   description: C’est mieux que Godzilla pets !
+
+attr:  # Most of these would be real properties of a Site.
+ - name: org.contentment
+   value:
+      theme: default
+ - name: org.w3.css
+   value:
+      cls: ['css-class']
+ - name: org.w3.html.title
+   value:
+      separator: ": "
+      direction: ltr
+      case: title
+ - name: com.google.analytics
+   value: UA-XXXXXXXX-1
+
+---
+_cls: Asset
+path: /error
+
+locale:
+ - language: en
+   title: Error Pages
+ - language: fr
+   title: Pages d'erreur
+
+
+---
+_cls: Asset  # Actually, most likely a Page.
+path: /error/401
+
+locale:
+ - language: en
+   title: Not Authorized
+ - language: fr
+   title: Ne pas autorisé
+
+---
+_cls: Asset  # Actually, most likely a Page.
+path: /error/403
+
+locale:
+ - language: en
+   title: Forbidden
+ - language: fr
+   title: Interdit
+
+---
+_cls: Asset  # Actually, most likely a Page.
+path: /error/404
+
+locale:
+ - language: en
+   title: Not Found
+ - language: fr
+   title: Non trouvée
+
+---
+_cls: Asset  # Actually, most likely a Page.
+path: /error/500
+
+locale:
+ - language: en
+   title: Catastrophic Error
+ - language: fr
+   title: Erreur Erreur Errreur
+
+---
+_cls: Asset  # Actually, most likely a Page.
+path: /error/550
+
+locale:
+ - language: en
+   title: Undefined Presentation
+
+---
+_cls: Asset
+path: /theme
+
+locale:
+ - language: en
+   title: Site Theme
+ - language: fr
+   title: Thème du site
+
+---
+_cls: Asset  # Probably a StaticManager specializing in image upload management.
+path: /theme/img
+
+locale:
+ - language: en
+   title: Images
+
+---
+_cls: Asset  # Probably a StaticManager specializing in CSS/SCSS.
+path: /theme/css
+
+locale:
+ - language: en
+   title: Styles
+
+---
+_cls: Asset  # Probably a StaticManager specializing in JavaScript event customization.
+path: /theme/js
+
+locale:
+ - language: en
+   title: Scripts
+ - language: fr
+   title: Scriptes
+
+---
+_cls: Asset  # Probably a ComponentManager specializing in Page instances.
+path: /theme/part
+
+locale:
+ - language: en
+   title: Parts
+ - language: fr
+   title: Pièces détachées
+
+---
+_cls: Asset  # Actually, probably a Page.
+path: /theme/part/header
+
+locale:
+ - language: en
+   title: Default Page Header
+ - language: fr
+   title: En-tête de Page par défaut
+
+---
+_cls: Asset  # Actually, probably a Page.
+path: /theme/part/footer
+
+locale:
+ - language: en
+   title: Default Page Footer
+ - language: fr
+   title: Pied de Page par défaut
+
+---
+_cls: Asset  # Actually, probably a Page.
+path: /about
+
+locale:
+ - language: en
+   title: About
+
+---
+_cls: Asset  # Actually, probably a Page.
+path: /about/terms
+
+locale:
+ - language: en
+   title: Terms of Use
+
+---
+_cls: Asset  # Actually, probably a Page.
+path: /about/privacy
+
+locale:
+ - language: en
+   title: Privacy Policy
+
+---
+_cls: Asset  # Might be a Page, or Alias, or LocalizedLanding, or ...
+path: /__default__
+
+locale:
+ - language: en
+   title: Welcome
+ - language: fr
+   title: Bienvenue
