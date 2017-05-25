@@ -22,6 +22,13 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	in Asset subclasses.
 	
 	Bare assets are often utilized as containers for other, more richly described assets such as pages.
+	
+	Subclasses are used to override defaults (such as the handler) and add new data model properties appropriate for
+	the derived type. For example, a very simple Page might define its contents as a String field. Some Asset
+	derivitives may define no new fields at all. This serves two purposes: handler default assignment, and
+	clear specification of the object to reference when loading the record, indirectly through assignment to `cls`.
+	
+	Additionally, subclasses are expected to populate a number of Contentment protocol methods and properties.
 	"""
 	
 	# Database Metadata
