@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+from functools import partial
+
 from cinje.util import interruptable
 from marrow.mongo import Document, Field, Index
 from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, Translated, Integer, Set
@@ -8,6 +10,19 @@ from marrow.mongo.trait import Derived, Localized, Published, Queryable, HPath, 
 
 log = __import__('logging').getLogger(__name__)
 
+
+class classinstancemethod:
+	"""A decorator to allow protocol methods to behave as class and instance methods."""
+	
+	def __init__(self, fn):
+		self.fn = staticmethod(fn)
+	
+	def __get__(self, obj, cls=None):
+		# There's probably a way, way, way better way of doing this!
+		return partial(self.fn, cls if obj is None else obj)
+	
+	def __set__(self, obj, value):
+		raise TypeError("Dual class/instance methods can not be written to.")
 
 
 class Depend:
@@ -26,6 +41,10 @@ class Depend:
 			only = cls.ALL
 		
 		yield from obj.__depend__(obj, only)
+	
+	@classmethod
+	def declare(cls, fn):
+		return classinstancemethod(fn)
 
 
 class _Resolver(Document):
@@ -116,11 +135,13 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	
 	# Contentment Protocols
 	
-	@property
+	__vary__ = ('id', 'modified')  # The attributes to fetch for cache key generation.
+	
 	def __link__(self):
 		component = _Resolver(self.__class__)['plugin']
 		return 'asset:{component}:{identifier!s}'.format(component=component, identifier=self.id)
 	
+	@classinstancemethod
 	def __depends__(self, only):
 		"""Identify the elements required for this asset to function.
 		
@@ -182,7 +203,7 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 			return self.path
 		
 		if spec == 'urn':
-			return self.__link__
+			return self.__link__()
 		
 		elif spec:
 			raise ValueError("Invalid format specification for Asset: " + spec)
