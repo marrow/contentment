@@ -1,19 +1,10 @@
 #!/usr/bin/env python
-# encoding: utf-8
-
-from __future__ import print_function
 
 import os
 import sys
 import codecs
 
-
-try:
-	from setuptools.core import setup, find_packages
-except ImportError:
-	from setuptools import setup, find_packages
-
-from setuptools.command.test import test as TestCommand
+from setuptools import setup, find_packages
 
 
 if sys.version_info < (3, 4):
@@ -25,17 +16,13 @@ exec(open(os.path.join("web", "contentment", "release.py")).read())
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-py2 = sys.version_info < (3,)
-py26 = sys.version_info < (2, 7)
-py32 = sys.version_info > (3,) and sys.version_info < (3, 3)
-pypy = hasattr(sys, 'pypy_version_info')
-
 
 tests_require = [
-		'pytest',  # test collector and extensible runner
+		'pytest>=3.1',  # test collector and extensible runner
+		
+		'pytest-catchlog',  # log capture
 		'pytest-cov',  # coverage reporting
 		'pytest-flakes',  # syntax validation
-		'pytest-catchlog',  # log capture
 		'pytest-isort',  # import ordering
 		'pytest-pudb',  # interactive debugging
 	]
@@ -77,13 +64,22 @@ setup(
 	setup_requires = ['pytest-runner'] if {'pytest', 'test', 'ptr'}.intersection(sys.argv) else [],
 	
 	install_requires = [
-			'WebCore>=2.0,<3.0',  # web framework
-			'cinje>=1.0,<2.0',  # template engine
-			'marrow.mongo>=1.1.1,<2.0',  # database layer
+			'WebCore>=2.0.3,<3',  # web framework
+			
+			'cinje<2',  # template engine
+			'markupsafe>=1,<2',  # injection protection, advanced formatting, self-rendering protocol
+			'marrow.mongo[logger,markdown]>=1.1.1,<2.0',  # MongoDB-backed declarative schema, tools
+			'marrow.package<2.0',  # dynamic execution and plugin management
+			'web.db>=2.0.1,<3',  # database adapter layer
+			'web.dispatch.resource',  # verb-based restful API interfaces
 		],
 	
 	extras_require = dict(
-			development = tests_require + ['pre-commit'],
+			development = tests_require + [
+					'pre-commit',
+					'WebCore[development]>=2.0.3,<3',
+				],
+			markdown = ['marrow.mongo[markdown]>=1.1.1,<2.0'],
 		),
 	
 	tests_require = tests_require,
@@ -91,19 +87,55 @@ setup(
 	# Plugin Registration
 	
 	entry_points = {
-			'marrow.mongo.document': [
+			'marrow.mongo.document': [  # document class registry for name-based loading
 					'Asset = web.component.asset.model:Asset',
+					'Page = web.component.page.model:Page',
+					'Site = web.component.site.model:Site',
+					'Theme = web.component.theme.model:Theme',
+					'Upload = web.component.upload.model:Upload',
+					#' = web.component..model:',
+					# Note: Import the class here from its real, original location to benefit from shortening.
 				],
-			'web.component': [
+			
+			'web.block': [  # self-rendering blocks
+					'core.button = web.block:Block',
+					'core.description = web.block:Block',
+					'core.image = web.block:Block',
+					'core.map = web.block:Block',
+					'core.quote = web.block:Block',
+					'core.reference = web.block:Block',
+					'core.text = web.block:Block',
+					'core.video = web.block:Block',
+					#' = web.block:Block',
+				],
+			
+			'web.component': [  # high-level resource and collection components
 					'core.asset = web.component.asset:AssetComponent',
+					'core.page = web.component.page:PageComponent',
+					'core.site = web.component.site:SiteComponent',
+					'core.theme = web.component.theme:ThemeComponent',
+					'core.upload = web.component.upload:UploadComponent',
 					#' = web.component:Component',
 				],
-			'web.dispatch': [
-					'contentment = web.dispatch.contentment:ContentmentDispatch',
+			
+			'web.content': [
+					'core.basic = web.content.sanitize:BasicContent',
+					'core.bbcode = web.content.bbcode:BBCodeContent',
+					'core.markdown = web.content.markdown:MarkdownContent',
+					'core.sanitize = web.content.sanitize:SanitizedContent',
+					'core.template = web.content.template:TemplateContent',
+					#' = web.content:Content',
 				],
-			'web.extension': [
+			
+			'web.dispatch': [  # WebCore custom dispatcher
+					'contentment = web.dispatch.contentment:ContentmentDispatch',
+					#' = web.dispatch:Dispatch',
+				],
+			
+			'web.extension': [  # WebCore framework extensions
 					'contentment = web.ext.contentment:ContentmentExtension',
 					#' = web.ext.:Extension',
 				],
+			
 		},
 )
