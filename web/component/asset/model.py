@@ -2,9 +2,8 @@
 
 from functools import partial
 
-from cinje.util import interruptable
 from marrow.mongo import Document, Field, Index
-from marrow.mongo.field import Array, Embed, String, Path, PluginReference, Reference, Translated, Integer, Set
+from marrow.mongo.field import Array, Embed, String, PluginReference, Reference, Translated, Set
 from marrow.mongo.trait import Derived, Localized, Published, Queryable, HPath, HParent
 
 
@@ -25,33 +24,12 @@ class classinstancemethod:
 		raise TypeError("Dual class/instance methods can not be written to.")
 
 
-class Depend:
-	NS = 'org.python.setuptools.entry_point'
-	PLUGIN = 'org.marrow.package.load'
-	ASSET = 'web.component.asset'
-	BUNDLE = 'web.asset.bundle'
-	STYLE = 'web.asset.selector'
-	EVENT = 'web.asset.event'
-	
-	ALL = (NS, PLUGIN, ASSET, BUNDLE, STYLE, EVENT)
-	
-	@classmethod
-	def collect(cls, obj, *only):
-		if not only:
-			only = cls.ALL
-		
-		yield from obj.__depend__(obj, only)
-	
-	@classmethod
-	def declare(cls, fn):
-		return classinstancemethod(fn)
-
 
 class _Resolver(Document):
 	plugin = PluginReference(namespace='web.component')
 
 
-class Asset(Derived, Localized, Published, HPath, HParent):
+class Asset(Derived, Localized, Published, HPath, HParent, Queryable):
 	"""The definition of a Contentment Asset.
 	
 	This is the primary mechanism of dispatch, that is, looking up the handler for a given resource. To facilitate
@@ -73,6 +51,29 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	
 	__database__ = 'default'
 	__collection__ = 'asset'
+	
+	# Dependency Declaration
+	
+	class Depend:
+		NS = 'org.python.setuptools.entry_point'
+		PLUGIN = 'org.marrow.package.load'
+		ASSET = 'web.component.asset'
+		BUNDLE = 'web.asset.bundle'
+		STYLE = 'web.asset.selector'
+		EVENT = 'web.asset.event'
+		
+		ALL = (NS, PLUGIN, ASSET, BUNDLE, STYLE, EVENT)
+		
+		@classmethod
+		def collect(cls, obj, *only):
+			if not only:
+				only = cls.ALL
+			
+			yield from obj.__depend__(obj, only)
+		
+		@classmethod
+		def declare(cls, fn):
+			return classinstancemethod(fn)
 	
 	# Embedded Documents
 	
@@ -104,7 +105,7 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	tag = Set(String(), assign=True)
 	attr = Array(Embed('.Property'), assign=True)
 	
-	handler = PluginReference('web.component', default=None)
+	handler = PluginReference('web.component.${cls.__name__}', default='default')
 	
 	# Indexes
 	
@@ -139,7 +140,7 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 	
 	def __link__(self):
 		component = _Resolver(self.__class__)['plugin']
-		return 'asset:{component}:{identifier!s}'.format(component=component, identifier=self.id)
+		return 'asset:{identifier!s}'.format(component=component, identifier=self.id)
 	
 	@classinstancemethod
 	def __depends__(self, only):
@@ -150,22 +151,23 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 		Falsy (e.g. `None`) values will be ignored by the collector and are safe (if silly) to provide.
 		"""
 		
+		D = self.Depend
 		handler = self.__class__.handler
 		
-		if Depend.NS in only:  # Declare namespaces we utilize plugins from.
-			yield Depend.NS, handler.namespace
+		if D.NS in only:  # Declare namespaces we utilize plugins from.
+			yield D.NS, handler.namespace
 		
-		if Depend.PLUGIN in only:  # Declare explicit plugins (or dot-colon import paths) we utilize.
+		if D.PLUGIN in only:  # Declare explicit plugins (or dot-colon import paths) we utilize.
 			# We need to avoid typecasting on dereferencing... and explosion noises.
 			
 			if ~handler in self or handler.default:
-				yield Depend.PLUGIN, handler.namespace, self.get(~handler, handler.default)
+				yield D.PLUGIN, handler.namespace, self.get(~handler, handler.default)
 		
-		if Depend.BUNDLE in only:
-			yield Depend.BUNDLE, 'web.component.asset'
+		if D.BUNDLE in only:
+			yield D.BUNDLE, 'web.component.asset'
 		
-		if Depend.ASSET in only:  # Declare other Assets this one directly depends upon.
-			yield Depend.ASSET, self.parent  # Might, in some rare circumstances, actually be None. Whoops!
+		if D.ASSET in only:  # Declare other Assets this one directly depends upon.
+			yield D.ASSET, self.parent  # Might, in some rare circumstances, actually be None. Whoops!
 	
 	def __text__(self):
 		"""Yield additional chunks of optionally language-dependent textual content to full-text index."""
@@ -235,93 +237,3 @@ class Asset(Derived, Localized, Published, HPath, HParent):
 		"""Yield a component stream of tiles to add to management panels."""
 		
 		pass
-
-
-class Style(Document):
-	# Template engine stuff.
-	container = PluginReference(default=None)  # The cinje wrapping template to use.
-	attributes = Embed(Document, default=None)  # Arguments to the cinje wrapping template.
-	
-	# CSS stuff.
-	identifier = String(default=None)  # The HTML identifier.
-	classes = Set(String(), assign=True)  # CSS classes applied.
-	
-	# Theme stuff.
-	selectors = Array(Embed(Asset.Property), assign=True)  # CSS selector mappings.
-
-
-class Page(Asset):
-	related = Array(Reference(Asset), assign=True)
-	template = Reference(Asset, default=None)
-	style = Embed(Style, assign=True)
-	
-	handler = Asset.handler.adapt(default='org.contentment.page.default')
-	
-	def blocks(self):
-		# from marrow.mongo.document import Block
-		return Block.blocks_for(self)
-	
-	def __embed__(self, context):
-		container = self.style.container
-		
-		if container:  # Given a wrapping container template, stream the prefix.
-			kw = dict(self.style.attributes) if self.style.attributes else {}
-			kw.setdefault('id', str(self.id))
-			container = container(context, **kw)
-			
-			yield from interruptable(container)
-		
-		for block in self.blocks:
-			yield from block.__embed__(context)
-		
-		if container:  # Yield the remainder (postfix) of the wrapping template.
-			yield from container
-
-
-class Block(Derived, Queryable):
-	__database__ = 'default'
-	__collection__ = 'block'
-	
-	class Placement(Document):
-		page = Reference(Page)
-		position = Integer(default=None)
-	
-	language = String(default=None)
-	places = Array(Embed('.Placement'), assign=True)  # The Page instances this block is utilized within.
-	
-	acl = Array(Embed('ACLRule'), assign=True)  # Security predicates applicable to this block.
-	tag = Set(String(), assign=True)
-	attr = Array(Embed(Asset.Property), assign=True)
-	
-	_place = Index('places.page', 'language', 'places.position', unique=True)  # Two objects may not occupy the same space.
-	
-	@classmethod
-	def blocks_for(cls, page, language=None):
-		q = cls.places.page == page
-		
-		if language:
-			q &= cls.language == language
-		
-		for record in cls.find(q, sort=('places__S__position', )):
-			yield cls.from_mongo(record)
-
-
-class File(Asset):
-	handler = Asset.handler.adapt(default='org.contentment.file.default')
-	backend = PluginReference('web.contentment.storage', default='gridfs')
-	
-
-class Search(Asset):
-	query = String(default=None)
-	base = Path(default='/')
-	exclude = Array(String(), assign=True)
-	
-	handler = Asset.handler.adapt(default='org.contentment.search.default')
-
-
-class Settings(Asset):
-	handler = Asset.handler.adapt(default='org.contentment.settings.default')
-
-
-class Theme(Asset):
-	handler = Asset.handler.adapt(default='org.contentment.theme.default')
