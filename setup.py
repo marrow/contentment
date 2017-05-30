@@ -97,10 +97,15 @@ setup(
 					# Note: Import the class here from its real, original location to benefit from shortening.
 				],
 			
+			'marrow.mongo.trait': [  # document trait registry for name-based loading
+					'Linked = web.contentment.model.linked:Linked',
+					'Redirecting = web.contentment.model.linked:Redirecting',
+					#' = web.component..model:',
+				],
+			
 			'web.block': [  # self-rendering blocks
 					'core.button = web.block:Block',
 					'core.description = web.block:Block',
-					'core.image = web.block:Block',
 					'core.map = web.block:Block',
 					'core.quote = web.block:Block',
 					'core.reference = web.block:Block',
@@ -116,6 +121,12 @@ setup(
 					'core.theme = web.component.theme:ThemeComponent',
 					'core.upload = web.component.upload:UploadComponent',
 					#' = web.component:Component',
+				],
+			
+			'web.component.handler': [
+					#' = web.component:Resource',  # Resource dispatch endpoint resource.
+					#' = web.component:Collection',  # Resource dispatch collection resource.
+					#' = web.component:Controller',  # Object dispatch resource or collection.
 				],
 			
 			'web.content': [
