@@ -115,19 +115,48 @@ setup(
 				],
 			
 			'web.component': [  # high-level resource and collection components
-					'core.asset = web.component.asset:AssetComponent',
-					'core.page = web.component.page:PageComponent',
-					'core.site = web.component.site:SiteComponent',
-					'core.theme = web.component.theme:ThemeComponent',
-					'core.upload = web.component.upload:UploadComponent',
-					#' = web.component:Component',
+					'core.alias = web.component.alias.model:Alias',
+					'core.asset = web.component.asset.model:Asset',
+					'core.page = web.component.page.model:Page',
+					'core.rewrite = web.component.rewrite.model:Rewrite',
+					'core.site = web.component.site.model:Site',
+					'core.theme = web.component.theme.model.theme:Theme',
+					'core.upload = web.component.upload.model:Upload',
+					#' = web.component..model:Component',
 				],
 			
-			'web.component.handler': [
-					#' = web.component:Resource',  # Resource dispatch endpoint resource.
-					#' = web.component:Collection',  # Resource dispatch collection resource.
-					#' = web.component:Controller',  # Object dispatch resource or collection.
+			'web.component.Alias': [
+					'core.default = web.component.alias.handler:DefaultHandler',
 				],
+			
+			'web.component.Asset': [
+					'core.default = web.component.asset.handler:DefaultHandler',
+				],
+			
+			'web.component.Page': [
+					'core.default = web.component.page.handler:DefaultHandler',
+				],
+			
+			'web.component.Rewrite': [
+					'core.default = web.component.rewrite.handler:DefaultHandler',
+				],
+			
+			'web.component.Site': [
+					'core.default = web.component.site.handler:DefaultHandler',
+				],
+			
+			'web.component.Theme': [
+					'core.default = web.component.theme.handler:DefaultHandler',
+				],
+			
+			'web.component.Upload': [
+					'core.default = web.component.upload.handler:DefaultHandler',
+				],
+			
+			#'web.component.': [
+					#'core.default = web.component..handler:DefaultHandler',
+					#' = web.component..handler:Handler',
+			#	],
 			
 			'web.content': [
 					'core.basic = web.content.sanitize:BasicContent',
