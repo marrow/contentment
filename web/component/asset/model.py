@@ -9,7 +9,6 @@ from web.contentment.taxonomy import remove_children, Taxonomy, TaxonomyQuerySet
 from web.contentment.util import utcnow, D_
 from web.contentment.util.model import update_modified_timestamp, Properties
 
-from .xml.templates import export_document
 from .render import render_asset_panel
 
 
@@ -111,8 +110,8 @@ class Asset(Taxonomy):
 	
 	def __xml__(self, recursive=False):
 		"""Return an XML representation for this Asset."""
-
-		return export_document(self, recursive, root=True)
+		raise NotImplementedError()
+		#return export_document(self, recursive, root=True)
 
 	as_xml = property(lambda self: self.__xml__(recursive=False))
 	
