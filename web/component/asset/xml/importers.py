@@ -176,7 +176,10 @@ def mapping_field(data, field, element):
 
 
 def text_block_content(data, field, element):
-	element.text = re.sub(SPACES_RE, ' ', element.text)
+	if not element.text and element.get('from', None):
+		element.text = open(element.get('from'), 'r').read()
+	
+	element.text = SPACES_RE.sub(' ', element.text)
 	map_field(data, field, element)
 
 
