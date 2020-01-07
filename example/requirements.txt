@@ -26,6 +26,6 @@ pytest-spec==2.0.0
 python-logging-json-formatter==0.1.0
 pytz==2019.3
 tox==3.14.2
-waitress==1.4.1
+waitress==1.4.2
 webassets==2.0
 WebOb==1.8.5
