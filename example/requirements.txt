@@ -15,17 +15,17 @@
 -e git+https://github.com/marrow/web.theme.bootstrap.git@develop#egg=web.theme.bootstrap-develop
 
 # Dependencies
-MarkupSafe==0.23
+MarkupSafe==1.1.1
 marrow.util==1.2.3
-mongoengine==0.10.7
-Pillow==3.4.2
-Pygments==2.1.3
-pymongo==3.3.1
-pytest==3.0.4
-pytest-spec==1.0.1
+mongoengine==0.19.0
+Pillow==6.2.1
+Pygments==2.5.2
+pymongo==3.10.0
+pytest==5.3.2
+pytest-spec==2.0.0
 python-logging-json-formatter==0.1.0
-pytz==2016.7
-tox==2.5.0
-waitress==1.0.1
-webassets==0.12.0
-WebOb==1.6.3
+pytz==2019.3
+tox==3.14.2
+waitress==1.4.1
+webassets==2.0
+WebOb==1.8.5
