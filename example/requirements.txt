@@ -17,15 +17,15 @@
 # Dependencies
 MarkupSafe==1.1.1
 marrow.util==1.2.3
-mongoengine==0.19.1
-Pillow==7.0.0
-Pygments==2.5.2
-pymongo==3.10.0
-pytest==5.3.2
+mongoengine==0.20.0
+Pillow==7.1.2
+Pygments==2.6.1
+pymongo==3.10.1
+pytest==5.4.3
 pytest-spec==2.0.0
 python-logging-json-formatter==0.1.0
-pytz==2019.3
-tox==3.14.3
-waitress==1.4.3
+pytz==2020.1
+tox==3.16.0
+waitress==1.4.4
 webassets==2.0
-WebOb==1.8.5
+WebOb==1.8.6
