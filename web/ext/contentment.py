@@ -62,9 +62,6 @@ class ContentmentExtension:
 		else:
 			context.theme = load('web.theme.bootstrap.base:page')
 		
-		log.warn("'SECRET' in os.environ: " + str('SECRET' in os.environ))
-		log.warn("'uid' in context.request.cookies: " + str('uid' in context.request.cookies))
-		
 		if 'SECRET' in os.environ and 'uid' in context.request.cookies:
 			log.warn("Authenticated request.")
 			s = TimestampSigner(os.environ['SECRET'])
@@ -77,7 +74,9 @@ class ContentmentExtension:
 				context.uid = None
 				if __debug__: raise
 			else:
+				log.warn("Token: " + token)
 				context.uid = token.partition('-')[2]
+				log.warn("UID: " + context.uid)
 		else:
 			context.uid = None
 		
