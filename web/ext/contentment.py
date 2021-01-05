@@ -63,12 +63,14 @@ class ContentmentExtension:
 			context.theme = load('web.theme.bootstrap.base:page')
 		
 		if 'SECRET' in os.environ and 'uid' in context.request.cookies:
+			log.info("Authenticated request.")
 			s = TimestampSigner(os.environ['SECRET'])
 			try:
 				uc = user_cookie.bind(context.request)
 				token = uc.get_value()
 				token = s.unsign(token, max_age=60*60*24).decode('ascii')
-			except:
+			except Exception as e:
+				log.exception("Error de-serializing UID: " + str(e), exc_info=True)
 				context.uid = None
 				if __debug__: raise
 			else:
@@ -76,7 +78,7 @@ class ContentmentExtension:
 		else:
 			context.uid = None
 		
-		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme)))
+		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
 	
 	def render_json_response(self, context, result):
 		import json
