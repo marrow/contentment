@@ -78,7 +78,7 @@ class ContentmentExtension:
 		else:
 			context.uid = None
 		
-		log.info("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
+		log.warn("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
 	
 	def render_json_response(self, context, result):
 		import json
