@@ -56,6 +56,7 @@ class ContentmentExtension:
 		context.site = context.croot = Asset.objects.nearest('/' + context.domain)
 		context.D = partial(D_, lang=parts[1])
 		context.replacements = dict(context=context)
+		context.uid = None
 		
 		if context.croot:
 			context.theme = load(context.croot.properties.theme + ':page')
@@ -70,15 +71,13 @@ class ContentmentExtension:
 				token = uc.get_value()
 				token = s.unsign(token, max_age=60*60*24).decode('ascii')
 			except Exception as e:
-				log.exception("Error de-serializing UID: " + str(e), exc_info=True)
+				log.error("Error de-serializing UID: " + str(e), exc_info=True)
 				context.uid = None
 				if __debug__: raise
 			else:
 				log.warn("Token: " + token)
 				context.uid = token.partition('-')[2]
 				log.warn("UID: " + context.uid)
-		else:
-			context.uid = None
 		
 		log.debug("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
 	
