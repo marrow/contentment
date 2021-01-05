@@ -62,8 +62,11 @@ class ContentmentExtension:
 		else:
 			context.theme = load('web.theme.bootstrap.base:page')
 		
+		log.warn("'SECRET' in os.environ: " + str('SECRET' in os.environ))
+		log.warn("'uid' in context.request.cookies: " + str('uid' in context.request.cookies))
+		
 		if 'SECRET' in os.environ and 'uid' in context.request.cookies:
-			log.info("Authenticated request.")
+			log.warn("Authenticated request.")
 			s = TimestampSigner(os.environ['SECRET'])
 			try:
 				uc = user_cookie.bind(context.request)
@@ -78,7 +81,7 @@ class ContentmentExtension:
 		else:
 			context.uid = None
 		
-		log.warn("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
+		log.debug("Prepared context.", extra=dict(domain=[dom, context.domain], lang=context.lang, root=repr(context.croot), theme=repr(context.theme), uid=context.uid))
 	
 	def render_json_response(self, context, result):
 		import json
