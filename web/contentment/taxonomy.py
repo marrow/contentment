@@ -137,9 +137,7 @@ class TaxonomyQuerySet(QuerySet):
 		Warning: If run on all assets this will only leave the root element intact. It would also be expensive.
 		"""
 
-		# import ipdb; ipdb.set_trace()
-
-		parents = self.clone().filter(*q_objs, **query)
+		parents = [DBRef('asset', i) for i in self.clone().filter(*q_objs, **query).scalar('id')]
 
 		# Optimization note: this doesn't need to worry about normalizing paths, thus the _from_doc_delete.
 		# TODO: Handle potential exception: signal handlers may preemptively delete included records. That's perfectly ok!
@@ -152,6 +150,7 @@ class TaxonomyQuerySet(QuerySet):
 		"""Add an asset, specified by the parameter, as a child of this asset."""
 		
 		parent = self.clone().first()
+		parent_ref = DBRef('asset', parent.id)
 		
 		log.info("Inserting asset.", extra=dict(asset=parent.id, index=index, child=getattr(child, 'id', child)))
 		
@@ -159,17 +158,17 @@ class TaxonomyQuerySet(QuerySet):
 		child = (self.base_query.get(id=child) if isinstance(child, ObjectId) else child).detach(False)
 		
 		if index < 0:
-			_max = self.base_query(parent=parent).order_by('-order').scalar('order').first()
+			_max = self.base_query(parent=parent_ref).order_by('-order').scalar('order').first()
 			index = 0 if _max is None else (_max + 1)
 		
-		q = self.base_query(parent=parent, order__gte=index).update(inc__order=1)
+		q = self.base_query(parent=parent_ref, order__gte=index).update(inc__order=1)
 		
 		child.order = index
 		
 		child.path = parent.path + '/' + child.name
-		child.parent = parent
+		child.parent = parent_ref
 		child.parents = list(parent.parents)
-		child.parents.append(parent)
+		child.parents.append(parent_ref)
 		
 		child = child.save()
 		
@@ -251,7 +250,7 @@ class TaxonomyQuerySet(QuerySet):
 	def replaceWith(self, source):
 		"""Replace this asset with an asset specified by the parameter."""
 		
-		source = self.clone().get(id=source) if isinstance(source, ObjectId) else source
+		source = self.clone().no_dereference().get(id=source) if isinstance(source, ObjectId) else source
 		obj = self.clone().first()
 		
 		source.name = obj.name
@@ -296,12 +295,12 @@ class TaxonomyQuerySet(QuerySet):
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self.base_query(parent__in=self.clone())
+		return self.base_query(parent__in=[DBRef('asset', i) for i in self.clone().scalar('id')])
 	
 	@property
 	def contents(self):
 		"""Yield all descendants of this asset."""
-		return self.base_query(parents__in=self.clone())
+		return self.base_query(parents__in=[DBRef('asset', i) for i in self.clone().scalar('id')])
 	
 	@property
 	def siblings(self):
@@ -309,8 +308,8 @@ class TaxonomyQuerySet(QuerySet):
 		
 		query = []
 		
-		for id, parent in self.clone().scalar('id', 'parent'):#.no_dereference():
-			query.append(Q(parent=parent, id__ne=id))
+		for id, parent in self.clone().no_dereference().scalar('id', 'parent'):
+			query.append(Q(parent=DBRef('asset', parent), id__ne=id))
 		
 		if not query:  # TODO: Armour everywhere.
 			return None
@@ -325,7 +324,7 @@ class TaxonomyQuerySet(QuerySet):
 		
 		query = []
 		
-		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
+		for parent, order in self.clone().no_dereference().scalar('parent', 'order'):
 			query.append(Q(parent=parent, order=order + 1))
 		
 		if not query:
@@ -343,7 +342,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		# Indexing note: (parent, order, id) for covered query and optimal re-use.
 		# Including id here to prevent an edge case (assets being shuffled) from including non-siblings.
-		for id, parent, order in self.clone().scalar('id', 'parent', 'order'):#.no_dereference():
+		for id, parent, order in self.clone().no_dereference().scalar('id', 'parent', 'order'):
 			query.append(Q(parent=parent, order__gt=order, id__ne=id))
 
 		if not query:
@@ -359,7 +358,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
+		for parent, order in self.clone().no_dereference().scalar('parent', 'order'):
 			query.append(Q(parent=parent, order=order - 1))
 
 		if not query:
@@ -376,7 +375,7 @@ class TaxonomyQuerySet(QuerySet):
 
 		query = []
 
-		for parent, order in self.clone().scalar('parent', 'order'):#.no_dereference():
+		for parent, order in self.clone().no_dereference().scalar('parent', 'order'):
 			query.append(Q(parent=parent, order__lt=order))
 
 		if not query:
@@ -391,7 +390,7 @@ class TaxonomyQuerySet(QuerySet):
 			from web.component.asset import Asset
 			assert isinstance(other, Asset) or isinstance(other, ObjectId), "Argument must be Asset or ObjectId instance."
 
-		parents = self.clone().scalar('id').no_dereference()
+		parents = [DBRef('asset', i) for i in self.clone().scalar('id').no_dereference()]
 		return bool(self.base_query(pk=getattr(other, 'pk', other), parents__in=parents).count())
 
 	def extend(self, *others):
@@ -457,6 +456,38 @@ class CustomListField(CustomDereferenceMixin, ListField):
 	pass
 
 
+class OldReferenceField(ReferenceField):
+	def to_mongo(self, document):
+		if isinstance(document, DBRef):
+			if not self.dbref:
+				return document.id
+			return document
+		
+		if isinstance(document, Document):
+			# We need the id from the saved object to create the DBRef
+			id_ = document.pk
+			
+			if id_ is None:
+				self.error('You can only reference documents once they have been saved to the database')
+			
+			# Use the attributes from the document instance, so that they
+			# override the attributes of this field's document type
+			cls = document
+		else:
+			id_ = document
+			cls = self.document_type
+		
+		id_field_name = cls._meta['id_field']
+		id_field = cls._fields[id_field_name]
+		
+		id_ = id_field.to_mongo(id_)
+		if self.dbref:
+			collection = cls._get_collection_name()
+			return DBRef(collection, id_)
+		
+		return id_
+
+
 class Taxonomy(Document):
 	meta = dict(
 		id_field = 'id',
@@ -466,11 +497,11 @@ class Taxonomy(Document):
 		queryset_class = TaxonomyQuerySet,
 	)
 	
-	parent = ReferenceField(
+	parent = OldReferenceField(
 			'self',
 			export = False
 		)
-	parents = CustomListField(ReferenceField(  # Serious quesiton as to why custom?  --A
+	parents = CustomListField(OldReferenceField(  # Serious quesiton as to why custom?  --A
 			'self',
 		), export=False)
 	
@@ -592,7 +623,7 @@ class Taxonomy(Document):
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self.tqs(id=self.id).children
+		return self.tqs(__raw__={'parent': self.to_dbref()})
 
 	@property
 	def contents(self):

@@ -22,9 +22,7 @@ class Asset(Taxonomy):
 			collection = 'asset',
 			ordering = ['parent', 'order'],
 			allow_inheritance = True,
-			index_cls = False,
 			queryset_class = TaxonomyQuerySet,
-			
 			indexes = [
 				]
 		)
