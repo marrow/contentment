@@ -33,8 +33,6 @@ class CustomDereference(DeReference):
 		:param items: The iterable (dict, list, queryset)
 		:param depth: The current depth of recursion
 		"""
-		# if items and isinstance(items, list) and getattr(items[0], 'name', '') == 'child2':
-		# 	import pudb; pudb.set_trace()
 		reference_map = {}
 		if not items or depth >= self.max_depth:
 			return reference_map
@@ -137,9 +135,8 @@ class TaxonomyQuerySet(QuerySet):
 		Warning: If run on all assets this will only leave the root element intact. It would also be expensive.
 		"""
 
-		# import ipdb; ipdb.set_trace()
-
 		parents = self.clone().filter(*q_objs, **query)
+		parents = [i.id for i in parents] + [i.to_dbref() for i in parents]
 
 		# Optimization note: this doesn't need to worry about normalizing paths, thus the _from_doc_delete.
 		# TODO: Handle potential exception: signal handlers may preemptively delete included records. That's perfectly ok!
@@ -296,7 +293,12 @@ class TaxonomyQuerySet(QuerySet):
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self.base_query(parent__in=self.clone())
+		
+		parents = list(self.clone().only('id'))
+		references = [i.id for i in parents]
+		references += [i.to_dbref() for i in parents]
+		
+		return self.base_query(parent__in=references)
 	
 	@property
 	def contents(self):
@@ -592,7 +594,9 @@ class Taxonomy(Document):
 	@property
 	def children(self):
 		"""Yield all direct children of this asset."""
-		return self.tqs(id=self.id).children
+		parents = [self.id, self.to_dbref()]
+		return self.tqs(__raw__={'parent': {'$in': parents}})
+		#return self.tqs(id=self.id).children
 
 	@property
 	def contents(self):

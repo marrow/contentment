@@ -49,7 +49,7 @@ class ContentmentExtension:
 	
 	def prepare(self, context):
 		dom = context.request.host.partition(':')[0]
-		parts = MAP.get(dom, (dom, 'en', ''))
+		parts = MAP.get(dom, MAP[None]) # (dom, 'en', ''))
 		context.domain = parts[0]
 		context.lang = parts[1]
 		context.otherlang = parts[2]

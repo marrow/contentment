@@ -15,6 +15,7 @@ class ContentmentDispatch:
 		return "{self.__class__.__name__}(0x{id})".format(self=self, id=id(self))
 	
 	def __call__(self, context, obj, path):
+		#__import__('wdb').set_trace()
 		# TODO: Move into web.dispatch.meta as "FallbackDispatch".
 		# First, try with object dispatch.  This handles custom root controller attachments such as statics.
 		try:
