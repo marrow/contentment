@@ -28,4 +28,4 @@ pytz==2019.3
 tox==3.14.3
 waitress==2.1.1
 webassets==2.0
-WebOb==1.8.5
+WebOb==1.8.8
